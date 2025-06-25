@@ -1,0 +1,22 @@
+# Python build artifacts and environment
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.env
+.venv
+env/
+venv/
+
+# C/C++ and CMake build artifacts
+build/
+*.o
+*.so
+*.out
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Project specific compiled files
+optpp_pic/
