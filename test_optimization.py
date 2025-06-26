@@ -8,10 +8,10 @@ Demonstrates working pybind11 bindings with:
 - Dictionary result format
 """
 
-import optpp_bindings
+import everest_optimizers
 
 def test_optimization():
-    print("OPTPP Python Bindings Test")
+    print("Everest Optimizers Python Bindings Test")
     print()
     
     # Test 1: Quadratic function
@@ -21,7 +21,7 @@ def test_optimization():
     print("Test 1: Quadratic function")
     print("f(x,y) = (x-1)² + (y-2)²")
     
-    result = optpp_bindings.optimize_python_func(quadratic, [0.0, 0.0])
+    result = everest_optimizers.optimize_python_func(quadratic, [0.0, 0.0])
     print(f"Solution: {result['x']}")
     print(f"Function value: {result['fun']:.2e}")
     print()
@@ -33,7 +33,7 @@ def test_optimization():
     print("Test 2: Rosenbrock function")
     print("f(x,y) = 100*(y-x²)² + (1-x)²")
     
-    result = optpp_bindings.optimize_python_func(rosenbrock, [-1.2, 1.0])
+    result = everest_optimizers.optimize_python_func(rosenbrock, [-1.2, 1.0])
     print(f"Solution: {result['x']}")
     print(f"Function value: {result['fun']:.2e}")
     print()
@@ -45,7 +45,7 @@ def test_optimization():
     print("Test 3: 5D Sphere function")
     print("f(x) = Σ xᵢ²")
     
-    result = optpp_bindings.optimize_python_func(sphere, [2.0, -1.0, 3.0, -2.0, 1.0])
+    result = everest_optimizers.optimize_python_func(sphere, [2.0, -1.0, 3.0, -2.0, 1.0])
     print(f"Solution: {[f'{x:.4f}' for x in result['x']]}")
     print(f"Function value: {result['fun']:.2e}")
 

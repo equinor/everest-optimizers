@@ -9,12 +9,12 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "optpp_bindings"
+name = "everest-optimizers"
 version = "1.0.0"
-description = "Python bindings for OPTPP optimization library"
+description = "Everest optimization algorithms for Python"
 readme = "README.md"
 authors = [
-    {name = "OPTPP Python Bindings Team"},
+    {name = "Everest Optimizers Team"},
 ]
 license = {text = "GPL-3.0"}
 classifiers = [
@@ -47,9 +47,9 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/your-repo/optpp-python-bindings"
-"Bug Tracker" = "https://github.com/your-repo/optpp-python-bindings/issues"
-"Documentation" = "https://optpp-python-bindings.readthedocs.io/"
+"Homepage" = "https://github.com/equinor/everest-optimizers"
+"Bug Tracker" = "https://github.com/equinor/everest-optimizers/issues"
+"Documentation" = "https://everest-optimizers.readthedocs.io/"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
