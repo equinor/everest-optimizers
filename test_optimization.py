@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OPTPP Python bindings test
+Everest Optimizers Python bindings test
 
 Demonstrates working pybind11 bindings with:
 - Python function optimization 
