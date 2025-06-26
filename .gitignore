@@ -20,3 +20,8 @@ Makefile
 
 # Project specific compiled files
 optpp_pic/
+
+# VSCode
+.vscode
+.claude
+.pytest_cache
