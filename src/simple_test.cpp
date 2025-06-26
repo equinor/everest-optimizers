@@ -372,11 +372,11 @@ py::dict optimize_with_optqnewton(py::function func, std::vector<double> x0) {
     return optimizer.optimize(x0);
 }
 
-PYBIND11_MODULE(optpp_bindings, m) {
-    m.doc() = "OPTPP Python bindings using OptQNewton algorithm";
+PYBIND11_MODULE(everest_optimizers, m) {
+    m.doc() = "Everest Optimizers using OptQNewton algorithm";
     
     m.def("test_optpp", []() {
-        return "OPTPP OptQNewton binding compilation successful!";
+        return "Everest Optimizers OptQNewton binding compilation successful!";
     });
     
     // Main optimization function using actual OptQNewton algorithm
@@ -402,7 +402,7 @@ PYBIND11_MODULE(optpp_bindings, m) {
     }, "Test optimization with quadratic function using OptQNewton");
     
     // Additional utility functions
-    m.def("get_optpp_version", []() {
-        return "OPTPP with OptQNewton BFGS implementation";
-    }, "Get version information about the OPTPP implementation");
+    m.def("get_everest_version", []() {
+        return "Everest Optimizers with OptQNewton BFGS implementation";
+    }, "Get version information about the Everest Optimizers implementation");
 }

@@ -9,7 +9,7 @@ import os
 # Self-contained OptQNewton implementation
 ext_modules = [
     Pybind11Extension(
-        "optpp_bindings",
+        "everest_optimizers",
         ["src/simple_test.cpp"],
         include_dirs=[pybind11.get_include()],
         language='c++',
@@ -18,18 +18,18 @@ ext_modules = [
 ]
 
 setup(
-    name="optpp_bindings",
+    name="everest-optimizers",
     version="1.0.0",
-    author="OPTPP Python Bindings",
+    author="Everest Optimizers",
     author_email="",
-    url="https://github.com/your-repo/optpp-python-bindings",
-    description="Python bindings for OPTPP optimization library",
+    url="https://github.com/equinor/everest-optimizers",
+    description="Everest optimization algorithms for Python",
     long_description="""
-    Python bindings for the OPTPP (OPTimization++) library from Sandia National Laboratories.
+    Everest optimization algorithms package providing high-performance optimization tools.
     
-    This package provides Python access to the OptQNewton quasi-Newton optimization algorithm
-    and related functionality from OPTPP, allowing easy integration of high-performance
-    optimization algorithms into Python workflows.
+    This package provides Python access to advanced optimization algorithms including
+    OptQNewton quasi-Newton optimization and related functionality, designed for
+    integration into Python workflows.
     
     Features:
     - Quasi-Newton optimization with BFGS Hessian approximation
