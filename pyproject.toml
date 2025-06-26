@@ -1,0 +1,80 @@
+[build-system]
+requires = [
+    "setuptools>=45",
+    "wheel",
+    "pybind11>=2.6.0",
+    "numpy>=1.15",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "everest-optimizers"
+version = "1.0.0"
+description = "Everest optimization algorithms for Python"
+readme = "README.md"
+authors = [
+    {name = "Everest Optimizers Team"},
+]
+license = {text = "GPL-3.0"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.15",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+    "pytest-cov",
+]
+dev = [
+    "cmake",
+    "ninja", 
+]
+
+[project.urls]
+"Homepage" = "https://github.com/equinor/everest-optimizers"
+"Bug Tracker" = "https://github.com/equinor/everest-optimizers/issues"
+"Documentation" = "https://everest-optimizers.readthedocs.io/"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.cibuildwheel]
+# Build for these Python versions
+build = "cp38-* cp39-* cp310-* cp311-*"
+# Skip 32-bit builds and PyPy
+skip = "*-win32 *-manylinux_i686 pp*"
+# Test command
+test-command = "pytest {project}/tests"
+test-requires = "pytest"
+
+[tool.cibuildwheel.linux]
+before-all = [
+    "yum install -y cmake gcc-c++ make",
+]
+
+[tool.cibuildwheel.macos]
+before-all = [
+    "brew install cmake",
+]
+
+[tool.cibuildwheel.windows]
+before-all = [
+    "choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'",
+]
