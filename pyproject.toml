@@ -3,7 +3,6 @@ requires = [
     "setuptools>=45",
     "wheel",
     "pybind11>=2.6.0",
-    "pybind11[global]",
     "numpy>=1.15",
 ]
 build-backend = "setuptools.build_meta"
@@ -43,7 +42,6 @@ test = [
 dev = [
     "cmake",
     "ninja", 
-    "pybind11[global]>=2.6.0",
 ]
 
 [project.urls]
