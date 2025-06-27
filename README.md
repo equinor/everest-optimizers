@@ -21,14 +21,21 @@
 
 ### Running the project
 
-To run the tests, execute the following command:
+To run tests, execute one of the following commands:
 
+- All tests
 ```bash
 pytest
 ```
 
-Alternatively, if you want to execute a specific test file:
+- One specific test file
 
 ```bash
 pytest path/to/your_file.py
+```
+
+- One specific test in a file
+
+```bash
+pytest path/to/your_file.py::name_of_test
 ```

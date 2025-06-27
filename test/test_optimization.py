@@ -7,14 +7,13 @@ Demonstrates working pybind11 bindings with:
 - Quasi-Newton algorithm
 - Dictionary result format
 """
-
+#Everest Optimizers Python Bindings Test
+    
 import everest_optimizers
 import pytest
 
-def test_optimization():
-    #Everest Optimizers Python Bindings Test
-    
-    # Test 1: Quadratic function
+# Test 1: Quadratic function
+def test_optimization_quadratic():    
     def quadratic(x):
         return (x[0] - 1)**2 + (x[1] - 2)**2
     
@@ -29,7 +28,8 @@ def test_optimization():
     assert x_sol[1] == pytest.approx(2.0, abs=1e-6)
     assert fval == pytest.approx(0.0, abs=1e-12)
     
-    # Test 2: Rosenbrock function  
+# Test 2: Rosenbrock function
+def test_optimization_rosenbrock():
     def rosenbrock(x):
         return 100.0 * (x[1] - x[0]**2)**2 + (1 - x[0])**2
     
@@ -40,8 +40,9 @@ def test_optimization():
 
     assert "x" in result
     assert "fun" in result
-    
-    # Test 3: Higher dimensional
+
+# Test 3: Higher dimensional
+def test_optimization_rosenbrock():
     def sphere(x):
         return sum(xi**2 for xi in x)
     
