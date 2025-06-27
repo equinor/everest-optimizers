@@ -41,7 +41,7 @@ test = [
 ]
 dev = [
     "cmake",
-    "ninja", 
+    "ninja",
 ]
 
 [project.urls]
