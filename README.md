@@ -21,10 +21,21 @@
 
 ### Running the project
 
-To run the optimization test, execute the following command:
+To run tests, execute one of the following commands:
 
+- All tests:
 ```bash
-python test_optimization.py
+pytest
 ```
 
+- One specific test file:
 
+```bash
+pytest path/to/your_file.py
+```
+
+- One specific test in a file:
+
+```bash
+pytest path/to/your_file.py::name_of_test
+```
