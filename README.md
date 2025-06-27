@@ -23,18 +23,18 @@
 
 To run tests, execute one of the following commands:
 
-- All tests
+- All tests:
 ```bash
 pytest
 ```
 
-- One specific test file
+- One specific test file:
 
 ```bash
 pytest path/to/your_file.py
 ```
 
-- One specific test in a file
+- One specific test in a file:
 
 ```bash
 pytest path/to/your_file.py::name_of_test
