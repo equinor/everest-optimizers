@@ -55,6 +55,9 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
+[tool.ruff]
+src = ["src"]
+
 [tool.cibuildwheel]
 # Build for these Python versions
 build = "cp38-* cp39-* cp310-* cp311-*"
