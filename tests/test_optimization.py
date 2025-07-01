@@ -14,6 +14,8 @@ import pytest
 
 # Test 1: Quadratic function
 def test_optimization_quadratic() -> None:
+    """Test optimization on a quadratic function."""
+
     def quadratic(x: float) -> float:
         return (x[0] - 1) ** 2 + (x[1] - 2) ** 2
 
@@ -31,6 +33,8 @@ def test_optimization_quadratic() -> None:
 
 # Test 2: Rosenbrock function
 def test_optimization_rosenbrock() -> None:
+    """Test optimization on a rosenbrock function."""
+
     def rosenbrock(x: float) -> float:
         return 100.0 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
 
@@ -43,6 +47,8 @@ def test_optimization_rosenbrock() -> None:
 
 # Test 3: Higher dimensional
 def test_optimization_sphere() -> None:
+    """Test optimization on a high-dimensional sphere function."""
+
     def sphere(x: float) -> float:
         return sum(xi**2 for xi in x)
 
