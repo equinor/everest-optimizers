@@ -55,9 +55,3 @@ def test_optimization_sphere() -> None:
     x0 = [2.0, -1.0, 3.0, -2.0, 1.0]
     result = everest_optimizers.optimize_python_func(sphere, x0)
     assert result["success"]
-
-
-if __name__ == "__main__":
-    test_optimization_quadratic()
-    test_optimization_rosenbrock()
-    test_optimization_sphere()
