@@ -1,11 +1,7 @@
 import everest_optimizers
 
 
-def test_add():
-    assert 1 + 1 == 2
-
-
-def test_test_optpp():
+def test_test_optpp() -> None:
     assert (
         everest_optimizers.test_optpp()
         == "Everest Optimizers OptQNewton binding compilation successful!"
