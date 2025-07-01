@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # setup.py
 
-from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, build_ext
+from setuptools import setup
 
 # Self-contained OptQNewton implementation
 ext_modules = [
