@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Everest Optimizers Python bindings test
+"""Everest Optimizers Python bindings test.
 
 Demonstrates working pybind11 bindings with:
 - Python function optimization
@@ -14,8 +13,8 @@ import pytest
 
 
 # Test 1: Quadratic function
-def test_optimization_quadratic():
-    def quadratic(x):
+def test_optimization_quadratic() -> None:
+    def quadratic(x: float) -> float:
         return (x[0] - 1) ** 2 + (x[1] - 2) ** 2
 
     x0 = [0.0, 0.0]
@@ -31,8 +30,8 @@ def test_optimization_quadratic():
 
 
 # Test 2: Rosenbrock function
-def test_optimization_rosenbrock():
-    def rosenbrock(x):
+def test_optimization_rosenbrock() -> None:
+    def rosenbrock(x: float) -> float:
         return 100.0 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
 
     x0 = [1.2, 1.2]
@@ -43,17 +42,12 @@ def test_optimization_rosenbrock():
 
 
 # Test 3: Higher dimensional
-def test_optimization_sphere():
-    def sphere(x):
+def test_optimization_sphere() -> None:
+    def sphere(x: float) -> float:
         return sum(xi**2 for xi in x)
-
-    print("Test 3: 5D Sphere function")
-    print("f(x) = Σ xᵢ²")
 
     x0 = [2.0, -1.0, 3.0, -2.0, 1.0]
     result = everest_optimizers.optimize_python_func(sphere, x0)
-    # print(f"Solution: {[f'{x:.4f}' for x in result['x']]}")
-    # print(f"Function value: {result['fun']:.2e}")
     assert result["success"]
 
 
