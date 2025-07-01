@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # setup.py
+"""Setup for everest optimizers."""
 
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import setup
