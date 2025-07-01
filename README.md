@@ -39,3 +39,19 @@ pytest path/to/your_file.py
 ```bash
 pytest path/to/your_file.py::name_of_test
 ```
+
+### Linting and Formatting
+
+- Python
+We use ruff for python linting. To install ruff, use:
+
+```bash
+pip install ruff
+```
+
+To run ruff, do the following commands:
+
+```bash
+ruff format .
+ruff check --select ALL
+```
