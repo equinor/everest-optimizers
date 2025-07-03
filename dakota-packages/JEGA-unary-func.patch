@@ -1,0 +1,18 @@
+diff --git a/JEGA/Utilities/include/inline/DesignGroup.hpp.inl b/JEGA/Utilities/include/inline/DesignGroup.hpp.inl
+index a21dd9c3..9fb3e170 100644
+--- a/JEGA/Utilities/include/inline/DesignGroup.hpp.inl
++++ b/JEGA/Utilities/include/inline/DesignGroup.hpp.inl
+@@ -585,8 +585,11 @@ DesignGroup::FlushIfFalse(
+     const BoolPredT& pred
+     )
+ {
+-    return this->Flush(std::unary_negate<BoolPredT>(pred));
+-
++#if __cplusplus >= 202002L
++    return this->Flush(std::not_fn(pred));
++#else
++    return this->Flush(std::not1(pred));
++#endif
+ } // DesignGroup::FlushIfFalse
+ 
+ inline
