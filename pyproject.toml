@@ -32,6 +32,8 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.15",
+    "carolina",
+    "ropt-dakota",
 ]
 
 [project.optional-dependencies]
