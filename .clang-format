@@ -1,0 +1,9 @@
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: BlockIndent
+
+---
+Language: Cpp
+Standard: c++20
+PointerAlignment: Left
+DerivePointerAlignment: false
+ColumnLimit: 100
