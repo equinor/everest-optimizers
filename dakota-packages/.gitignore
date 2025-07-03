@@ -1,0 +1,5 @@
+
+*.pyc
+*~
+*.swp
+muq2/MUQ/config.h

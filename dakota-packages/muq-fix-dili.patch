@@ -1,0 +1,110 @@
+diff --git a/muq2/modules/SamplingAlgorithms/src/DILIKernel.cpp b/muq2/modules/SamplingAlgorithms/src/DILIKernel.cpp
+index a3c57158..7053dea7 100644
+--- a/muq2/modules/SamplingAlgorithms/src/DILIKernel.cpp
++++ b/muq2/modules/SamplingAlgorithms/src/DILIKernel.cpp
+@@ -48,7 +48,19 @@ Eigen::MatrixXd AverageHessian::ApplyTranspose(Eigen::Ref<const Eigen::MatrixXd>
+ 
+ Eigen::MatrixXd CSProjector::Apply(Eigen::Ref<const Eigen::MatrixXd> const& x)
+ {
+-  return x - U->leftCols(lisDim)*W->leftCols(lisDim).transpose() * x;
++  Eigen::MatrixXd tmp(x - U->leftCols(lisDim) * W->leftCols(lisDim).transpose() * x);
++  if (x.cols() == 1) {
++    Eigen::VectorXd xVec(x.rows());
++    for (size_t i(0); i < x.rows(); ++i) {
++      xVec(i) = x(i,0);
++    }
++    Eigen::VectorXd tmpVec(xVec - U->leftCols(lisDim) * W->leftCols(lisDim).transpose() * xVec);
++    for (size_t i(0); i < tmp.rows(); ++i) {
++      tmp(i,0) = tmpVec(i,0);
++    }
++  }
++  return tmp;
++  //return x - U->leftCols(lisDim)*W->leftCols(lisDim).transpose() * x;
+ }
+ 
+ Eigen::MatrixXd CSProjector::ApplyTranspose(Eigen::Ref<const Eigen::MatrixXd> const& x)
+@@ -58,7 +70,19 @@ Eigen::MatrixXd CSProjector::ApplyTranspose(Eigen::Ref<const Eigen::MatrixXd> co
+ 
+ Eigen::MatrixXd LIS2Full::Apply(Eigen::Ref<const Eigen::MatrixXd> const& x)
+ {
+-  return U->leftCols(lisDim) * L->asDiagonal() * x;
++  Eigen::MatrixXd tmp(U->leftCols(lisDim) * L->asDiagonal() * x);
++  if (x.cols() == 1) {
++    Eigen::VectorXd xVec(x.rows());
++    for (size_t i(0); i < x.rows(); ++i) {
++      xVec(i) = x(i,0);
++    }
++    Eigen::VectorXd tmpVec(U->leftCols(lisDim) * L->asDiagonal() * xVec);
++    for (size_t i(0); i < tmp.rows(); ++i) {
++      tmp(i,0) = tmpVec(i,0);
++    }
++  }
++  return tmp;
++  //return U->leftCols(lisDim) * L->asDiagonal() * x;
+ }
+ 
+ Eigen::MatrixXd LIS2Full::ApplyTranspose(Eigen::Ref<const Eigen::MatrixXd> const& x)
+@@ -304,17 +328,45 @@ void DILIKernel::PrintStatus(std::string prefix) const
+ 
+ void DILIKernel::SetLIS(Eigen::VectorXd const& eigVals, Eigen::MatrixXd const& eigVecs)
+ {
++  if ((hessU == nullptr) &&
++      (hessW == nullptr) &&
++      (lisL  == nullptr)) {
++    // Ok
++  }
++  else if ((hessU != nullptr) &&
++           (hessW != nullptr) &&
++           (lisL  != nullptr)) {
++    //std::cout << ", *hessU = " << *hessU 
++    //          << ", *hessW = " << *hessW 
++    //          << ", *lisL = " << *lisL 
++    //          << std::endl;
++  }
++  else {
++    throw std::runtime_error("In DILIKernel::SetLIS: hessU, hessW, and lisL shall be either (i) all nullptr or (ii) all not nullptr");
++  }
+   bool subDimChange = false;
+   if(hessU==nullptr)
+     subDimChange = true;
+ 
+   assert(eigVals(1)<eigVals(0));
+ 
+-  hessU = std::make_shared<Eigen::MatrixXd>(eigVecs);
+-  hessUQR = std::make_shared<Eigen::ColPivHouseholderQR<Eigen::MatrixXd>>(eigVecs);
++  if (hessU == nullptr) {
++    hessU = std::make_shared<Eigen::MatrixXd>(eigVecs);
++    hessUQR = std::make_shared<Eigen::ColPivHouseholderQR<Eigen::MatrixXd>>(eigVecs);
++  }
++  else {
++    *hessU = eigVecs; 
++    *hessUQR = Eigen::ColPivHouseholderQR<Eigen::MatrixXd>(eigVecs);
++  }
+ 
+-  hessW = std::make_shared<Eigen::MatrixXd>(prior->ApplyPrecision(eigVecs));
+-  hessEigVals = std::make_shared<Eigen::VectorXd>(eigVals);
++  if (hessW == nullptr) {
++    hessW = std::make_shared<Eigen::MatrixXd>(prior->ApplyPrecision(eigVecs));
++    hessEigVals = std::make_shared<Eigen::VectorXd>(eigVals);
++  }
++  else {
++    *hessW = prior->ApplyPrecision(eigVecs);
++    *hessEigVals = eigVals;
++  }
+ 
+   // Figure out the dimension of the LIS
+   int oldLisDim = lisDim;
+@@ -328,7 +380,12 @@ void DILIKernel::SetLIS(Eigen::VectorXd const& eigVals, Eigen::MatrixXd const& e
+ 
+   // Estimate the subspace covariance based on the posterior Hessian
+   Eigen::VectorXd deltaVec = eigVals.head(lisDim).array()/(1.0+eigVals.head(lisDim).array());
+-  lisL = std::make_shared<Eigen::VectorXd>((Eigen::VectorXd::Ones(lisDim) - deltaVec).array().sqrt());
++  if (lisL == nullptr) {
++    lisL = std::make_shared<Eigen::VectorXd>((Eigen::VectorXd::Ones(lisDim) - deltaVec).array().sqrt());
++  }
++  else {
++    *lisL = (Eigen::VectorXd::Ones(lisDim) - deltaVec).array().sqrt();
++  }
+ 
+   // If the dimension of the subspace has changed, we need to recreate the transition kernels
+   if(subDimChange)
