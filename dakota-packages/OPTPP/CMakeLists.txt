@@ -180,6 +180,7 @@ include_directories(
 remove_definitions(-DHAVE_CONFIG_H)
 
 add_subdirectory(src)
+add_subdirectory(python)
 
 option(OPTPP_ENABLE_TESTS "Enable OPT++ tests." ON)
 if(OPTPP_ENABLE_TESTS)
