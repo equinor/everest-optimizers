@@ -52,14 +52,14 @@ These commands will configure the project with CMake and then compile the C++ li
 # Navigate to the OPTPP root directory
 cd /path/to/dakota-packages/OPTPP
 
-# Create a build directory and configure the project (remember to include the path of the pybind11_DIR)
+# Create a build directory and configure the project
+PYBIND11_DIR=$(python -m pybind11 --cmakedir)
 cmake -B build -S . \
       -D CMAKE_BUILD_TYPE=Release \
       -D DAKOTA_NO_FIND_TRILINOS=TRUE \
       -D BUILD_SHARED_LIBS=ON \
       -D Python3_EXECUTABLE=$(which python) \
-      -D pybind11_DIR=/path/to/site-packages/pybind11/share/cmake/pybind11 \
-
+      -D pybind11_DIR=${PYBIND11_DIR}
 
 # Compile the project
 cmake --build build -- -j
