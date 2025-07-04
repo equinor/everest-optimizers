@@ -73,6 +73,12 @@ This will create the Python module file (`pyopttpp.cpython-*.so`) in the `build/
   ```
 - **Wrong Python interpreter:** If CMake picks up the wrong Python interpreter, you can specify it with `-D Python3_EXECUTABLE=$(which python)`.
 
+- Install fortran
+
+- Update cmake to most recent version
+
+
+
 ### Step 5: Run the Test Script
 
 To verify that the module was built correctly, run the provided test script from the `python` directory.
