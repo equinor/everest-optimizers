@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "everest-optimizers"
-version = "1.0.0"
+version = "0.1.0"
 description = "Everest optimization algorithms for Python"
 readme = "README.md"
 authors = [
@@ -32,12 +32,14 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.15",
+    "pydantic",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest>=6.0",
     "pytest-cov",
+    "pydantic",
 ]
 dev = [
     "cmake",
