@@ -392,7 +392,7 @@ PYBIND11_MODULE(everest_optimizers, m) {
             return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0);
         };
 
-        // Convert to Python function for consistency
+        // Wrap C++ lambda as py::function
         py::function py_func = py::cpp_function([func](const std::vector<double>& x) {
             return func(x);
         });

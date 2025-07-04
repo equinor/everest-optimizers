@@ -5,6 +5,10 @@
 // meza@california.sandia.gov
 //------------------------------------------------------------------------
 
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/functional.h>
+
 #ifdef HAVE_CONFIG_H
 #include "OPT++_config.h"
 #endif
@@ -28,6 +32,11 @@
 using Teuchos::SerialDenseMatrix;
 using Teuchos::SerialDenseVector;
 using Teuchos::SerialSymDenseMatrix;
+
+namespace py = pybind11;
+
+// Forward declare your optimization function that uses OptQNewton
+std::vector<double> optimize_with_optqnewton(py::function func, const std::vector<double> &x0);
 
 namespace OPTPP
 {
@@ -230,3 +239,35 @@ namespace OPTPP
   }
 
 } // namespace OPTPP
+
+PYBIND11_MODULE(everest_optimizers_test, m)
+{
+  m.doc() = "Everest Optimizers using OptQNewton algorithm";
+
+  m.def("test_optpp", []()
+        { return "Everest Optimizers OptQNewton binding compilation successful!"; });
+
+  // Main optimization function using actual OptQNewton algorithm
+  m.def("optimize_python_func", [](py::function func, std::vector<double> x0)
+        { return optimize_with_optqnewton(func, x0); }, "Optimize a Python function using OPTPP's OptQNewton algorithm", py::arg("func"), py::arg("x0"));
+
+  // Backward compatibility: simple optimization function
+  m.def("optimize_simple", []()
+        {
+        // Test quadratic function: f(x,y) = (x-1)^2 + (y-2)^2
+        auto func = [](const std::vector<double>& x) -> double {
+            return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0);
+        };
+
+        // Wrap C++ lambda as py::function
+        py::function py_func = py::cpp_function([func](const std::vector<double>& x) {
+            return func(x);
+        });
+
+        std::vector<double> x0 = {0.0, 0.0};
+        return optimize_with_optqnewton(py_func, x0); }, "Test optimization with quadratic function using OptQNewton");
+
+  // Additional utility functions
+  m.def("get_everest_version", []()
+        { return "Everest Optimizers with OptQNewton BFGS implementation"; }, "Get version information about the Everest Optimizers implementation");
+}

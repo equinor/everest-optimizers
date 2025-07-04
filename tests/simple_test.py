@@ -1,6 +1,6 @@
 """Simple test for the everest_optimizers module."""
 
-import everest_optimizers
+import everest_optimizers_test
 
 
 def test_test_optpp() -> None:

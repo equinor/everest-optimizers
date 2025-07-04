@@ -5,13 +5,26 @@
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import setup
 
-# Self-contained OptQNewton implementation
+# Extensions
 ext_modules = [
     Pybind11Extension(
         "everest_optimizers",
         ["src/simple_test.cpp"],
         language="c++",
         cxx_std=17,
+    ),
+    Pybind11Extension(
+        "everest_optimizers_test",
+        ["src/OPTQNewton.cpp"],
+        language="c++",
+        cxx_std=17,
+        include_dirs=[
+      "include",
+      "trilinos/packages/teuchos/core/src",
+      "trilinos/packages/teuchos/core/cmake",
+      "trilinos/packages/teuchos/numerics/src",
+      "trilinos/packages/teuchos/comm/src",
+  ]
     ),
 ]
 

@@ -8,7 +8,7 @@ Demonstrates working pybind11 bindings with:
 """
 # Everest Optimizers Python Bindings Test
 
-import everest_optimizers
+import everest_optimizers_test
 import pytest
 
 
