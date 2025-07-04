@@ -34,16 +34,15 @@ ln -sfn ../trilinos trilinos
 
 ### Step 3: Enable the Python Wrapper Build
 
-Before configuring the project, you must enable the Python wrapper build in the main `CMakeLists.txt` file.
-
-1.  Open `/path/to/dakota-packages/OPTPP/CMakeLists.txt`.
-2.  Find the line `add_subdirectory(src)`.
-3.  Add the following line immediately after it:
-    ```cmake
-    add_subdirectory(python)
-    ```
-
+```bash
+python -m pybind11 --cmakedir
+```
 This ensures that the build system will compile the `pyopttpp` module.
+
+which will produce a path something like
+```
+  /path/to/site-packages/pybind11/share/cmake/pybind11
+```
 
 ### Step 4: Configure with CMake and Compile
 
@@ -53,11 +52,13 @@ These commands will configure the project with CMake and then compile the C++ li
 # Navigate to the OPTPP root directory
 cd /path/to/dakota-packages/OPTPP
 
-# Create a build directory and configure the project
+# Create a build directory and configure the project (remmeber to include the path of the )
 cmake -B build -S . \
       -D CMAKE_BUILD_TYPE=Release \
       -D DAKOTA_NO_FIND_TRILINOS=TRUE \
-      -D BUILD_SHARED_LIBS=ON
+      -D BUILD_SHARED_LIBS=ON \
+      -D Python3_EXECUTABLE=$(which python) \
+      -D pybind11_DIR=/path/to/site-packages/pybind11/share/cmake/pybind11 \
 
 # Compile the project
 cmake --build build -- -j
