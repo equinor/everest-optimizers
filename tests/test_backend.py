@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from numpy.typing import ArrayLike, NDArray
 from pydantic import ValidationError
-from everest_optimizers.dummy_implementation import (
+from everest_optimizers_utils.dummy_implementation import (
     EnOptConfig, EventType, ExitCode, BasicOptimizer, Event,
     PluginManager, FunctionResults, GradientResults, Results,
     OptModelTransforms, NonLinearConstraintTransform, ObjectiveTransform,
