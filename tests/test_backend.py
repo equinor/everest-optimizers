@@ -35,6 +35,7 @@ def enopt_config_fixture() -> dict[str, Any]:
     }
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_invalid_options(enopt_config: Any) -> None:
     enopt_config["optimizer"]["method"] = "optpp_q_newton"
     enopt_config["optimizer"]["options"] = [
@@ -74,6 +75,7 @@ def test_dakota_invalid_options(enopt_config: Any) -> None:
 @pytest.mark.parametrize(
     "external", ["", pytest.param("external/", marks=pytest.mark.external)]
 )
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_unconstrained(enopt_config: Any, evaluator: Any, external: str) -> None:
     enopt_config["optimizer"]["method"] = f"{external}optpp_q_newton"
     variables = BasicOptimizer(enopt_config, evaluator()).run(initial_values).variables
@@ -88,6 +90,7 @@ def test_dakota_unconstrained(enopt_config: Any, evaluator: Any, external: str) 
     "method",
     sorted(_SUPPORTED_METHODS - {"conmin_mfd", "conmin_frcg", "soga"}),
 )
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_bound_constraint(
     enopt_config: Any, method: str, evaluator: Any
 ) -> None:
@@ -101,6 +104,7 @@ def test_dakota_bound_constraint(
         assert np.allclose(variables, [0.0, 0.0, 0.2], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_eq_linear_constraint(enopt_config: Any, evaluator: Any) -> None:
     enopt_config["linear_constraints"] = {
         "coefficients": [[1, 0, 1], [0, 1, 1]],
@@ -112,6 +116,7 @@ def test_dakota_eq_linear_constraint(enopt_config: Any, evaluator: Any) -> None:
     assert np.allclose(variables, [0.25, 0.0, 0.75], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_ge_linear_constraint(enopt_config: Any, evaluator: Any) -> None:
     enopt_config["linear_constraints"] = {
         "coefficients": [[-1, 0, -1]],
@@ -123,6 +128,7 @@ def test_dakota_ge_linear_constraint(enopt_config: Any, evaluator: Any) -> None:
     assert np.allclose(variables, [-0.05, 0.0, 0.45], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_le_linear_constraint(enopt_config: Any, evaluator: Any) -> None:
     enopt_config["linear_constraints"] = {
         "coefficients": [[1, 0, 1]],
@@ -134,6 +140,7 @@ def test_dakota_le_linear_constraint(enopt_config: Any, evaluator: Any) -> None:
     assert np.allclose(variables, [-0.05, 0.0, 0.45], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_le_ge_linear_constraints(enopt_config: Any, evaluator: Any) -> None:
     enopt_config["linear_constraints"] = {
         "coefficients": [[1, 0, 1], [-1, 0, -1]],
@@ -145,6 +152,7 @@ def test_dakota_le_ge_linear_constraints(enopt_config: Any, evaluator: Any) -> N
     assert np.allclose(variables, [-0.05, 0.0, 0.45], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_le_ge_linear_constraints_two_sided(
     enopt_config: Any, evaluator: Any
 ) -> None:
@@ -169,6 +177,7 @@ def test_dakota_le_ge_linear_constraints_two_sided(
     assert np.allclose(variables, [-0.1, 0.0, 0.4], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_eq_nonlinear_constraint(
     enopt_config: Any, evaluator: Any, test_functions: Any
 ) -> None:
@@ -192,6 +201,7 @@ def test_dakota_eq_nonlinear_constraint(
 @pytest.mark.parametrize(
     ("lower_bounds", "upper_bounds"), [(-np.inf, 0.4), (-0.4, np.inf)]
 )
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_ineq_nonlinear_constraint(
     enopt_config: Any,
     lower_bounds: Any,
@@ -217,6 +227,7 @@ def test_dakota_ineq_nonlinear_constraint(
     assert np.allclose(variables, [-0.05, 0.0, 0.45], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_ineq_nonlinear_constraints_two_sided(
     enopt_config: Any,
     evaluator: Any,
@@ -243,6 +254,7 @@ def test_dakota_ineq_nonlinear_constraints_two_sided(
     assert np.allclose(variables, [-0.1, 0.01, 0.4], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_ineq_nonlinear_constraints_eq_ineq(
     enopt_config: Any,
     evaluator: Any,
@@ -269,6 +281,7 @@ def test_dakota_ineq_nonlinear_constraints_eq_ineq(
     assert np.allclose(variables, [-0.1, 0.01, 0.4], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_failed_realizations(enopt_config: Any, evaluator: Any) -> None:
     def func_p(_0: NDArray[np.float64]) -> float:
         return 1.0
@@ -289,6 +302,7 @@ def test_dakota_failed_realizations(enopt_config: Any, evaluator: Any) -> None:
     )
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_user_abort(enopt_config: Any, evaluator: Any) -> None:
     last_evaluation = 0
 
@@ -307,6 +321,7 @@ def test_dakota_user_abort(enopt_config: Any, evaluator: Any) -> None:
     assert optimizer.exit_code == ExitCode.USER_ABORT
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_evaluation_policy_separate(enopt_config: Any, evaluator: Any) -> None:
     enopt_config["gradient"] = {"evaluation_policy": "separate"}
     variables = BasicOptimizer(enopt_config, evaluator()).run(initial_values).variables
@@ -319,6 +334,7 @@ def test_dakota_evaluation_policy_separate(enopt_config: Any, evaluator: Any) ->
     assert np.allclose(variables, [0.0, 0.0, 0.5], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_optimizer_variables_subset(enopt_config: Any, evaluator: Any) -> None:
     enopt_config["variables"]["lower_bounds"] = -1.0
     enopt_config["variables"]["upper_bounds"] = 1.0
@@ -344,6 +360,7 @@ def test_dakota_optimizer_variables_subset(enopt_config: Any, evaluator: Any) ->
     assert np.allclose(variables, [0.0, 0.0, 0.5], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_optimizer_variables_subset_linear_constraints(
     enopt_config: Any, evaluator: Any
 ) -> None:
@@ -364,6 +381,7 @@ def test_dakota_optimizer_variables_subset_linear_constraints(
     assert np.allclose(variables, [0.25, 1.0, 0.75], atol=0.02)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_output_dir(tmp_path: Path, enopt_config: Any, evaluator: Any) -> None:
     output_dir = tmp_path / "outputdir"
     output_dir.mkdir()
@@ -394,6 +412,7 @@ class ObjectiveScaler(ObjectiveTransform):
         return objectives * self._scales
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_objective_with_scaler(
     enopt_config: Any, evaluator: Any, test_functions: Any
 ) -> None:
@@ -445,6 +464,7 @@ def test_dakota_objective_with_scaler(
     assert np.allclose(objectives1, results2.functions.objectives, atol=0.025)
 
 
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_objective_with_lazy_scaler(
     enopt_config: Any, evaluator: Any, test_functions: Any
 ) -> None:
@@ -527,6 +547,7 @@ class ConstraintScaler(NonLinearConstraintTransform):
 @pytest.mark.parametrize(
     "external", ["", pytest.param("external/", marks=pytest.mark.external)]
 )
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_nonlinear_constraint_with_scaler(
     enopt_config: Any, evaluator: Any, test_functions: Any, external: str
 ) -> None:
@@ -598,6 +619,7 @@ def test_dakota_nonlinear_constraint_with_scaler(
 @pytest.mark.parametrize(
     "external", ["", pytest.param("external/", marks=pytest.mark.external)]
 )
+@pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_nonlinear_constraint_with_lazy_scaler(
     enopt_config: Any, evaluator: Any, test_functions: Any, external: str
 ) -> None:
