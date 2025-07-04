@@ -24,6 +24,7 @@ ext_modules = [
       "trilinos/packages/teuchos/core/cmake",
       "trilinos/packages/teuchos/numerics/src",
       "trilinos/packages/teuchos/comm/src",
+      "/usr/include/trilinos/",
   ]
     ),
 ]
