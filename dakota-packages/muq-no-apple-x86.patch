@@ -1,0 +1,17 @@
+diff --git a/muq2/CMakeLists.txt b/muq2/CMakeLists.txt
+index ccec77b8..aa60f125 100644
+--- a/muq2/CMakeLists.txt
++++ b/muq2/CMakeLists.txt
+@@ -19,9 +19,9 @@ IF(APPLE)
+ 		# If arm64 is supported, set the CMAKE_OSX_ARCHITECTURES variable
+ 	  if("${ARM_TEST}" STREQUAL "hw.optional.arm64: 1")
+ 	    message(STATUS "FOUND APPLE M1.  Setting architecture to ARM64")
+-			set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Architecture" FORCE)
+-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -arch arm64 -arch x86_64")
+-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -arch arm64 -arch x86_64")
++			set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Architecture" FORCE)
++			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -arch arm64")
++			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -arch arm64")
+ 			set(BUILD_SHARED_LIBS ON)
+ 	  endif()
+ 

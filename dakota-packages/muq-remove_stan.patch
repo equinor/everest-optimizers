@@ -1,0 +1,43 @@
+commit ef5baa3f882d01af7043e2a58f2e6b7aea4445f5
+Author: Brian M. Adams <briadam@sandia.gov>
+Date:   Mon Sep 26 14:07:44 2022 -0600
+
+    MUQ: proposed patch for stan dep in Diagnostics
+    
+    DP-920: Patch proposed to MUQ upstream with note:
+    
+      Remove SamplingAlgorithms dependence on stan
+    
+      Replace stan::math::inv_Phi with boost::math::quantile
+
+diff --git a/muq2/modules/SamplingAlgorithms/src/Diagnostics.cpp b/muq2/modules/SamplingAlgorithms/src/Diagnostics.cpp
+index 0181b0c..c98ad46 100644
+--- a/muq2/modules/SamplingAlgorithms/src/Diagnostics.cpp
++++ b/muq2/modules/SamplingAlgorithms/src/Diagnostics.cpp
+@@ -4,7 +4,7 @@
+ #include "MUQ/SamplingAlgorithms/MarkovChain.h"
+ #include "MUQ/SamplingAlgorithms/SampleCollection.h"
+ 
+-#include <stan/math/fwd/scal.hpp>
++#include <boost/math/distributions/normal.hpp>
+ #include <algorithm>
+ #include <vector>
+ 
+@@ -97,6 +97,8 @@ std::vector<std::shared_ptr<SampleCollection>> muq::SamplingAlgorithms::Diagnost
+ /** Performas a Gaussianization of the chains based on ranking the samples and applying a Gaussian transform. */
+ std::vector<std::shared_ptr<SampleCollection>> muq::SamplingAlgorithms::Diagnostics::TransformChains(std::vector<std::shared_ptr<SampleCollection>> const& origChains)
+ {
++  const boost::math::normal std_normal(0.0, 1.0);
++
+   const unsigned int dim = origChains.at(0)->at(0)->TotalDim();
+ 
+   unsigned int numChains = origChains.size();
+@@ -113,7 +115,7 @@ std::vector<std::shared_ptr<SampleCollection>> muq::SamplingAlgorithms::Diagnost
+ 
+     // Apply a normal transformation to the ranks and compute chain means and variances.  See eqn. (14) in https://arxiv.org/pdf/1903.08008.pdf
+     for(unsigned int chainInd=0; chainInd<ranks.size(); ++chainInd){
+-      ranks.at(chainInd) = ( (ranks.at(chainInd).array()+0.625)/(totalSamps + 0.25) ).unaryExpr([](double v){return stan::math::inv_Phi(v);});
++      ranks.at(chainInd) = ( (ranks.at(chainInd).array()+0.625)/(totalSamps + 0.25) ).unaryExpr([&std_normal](double v){return boost::math::quantile(std_normal, v);});
+ 
+       for(unsigned int sampInd=0; sampInd<chains.at(chainInd)->size(); ++sampInd)
+         chains.at(chainInd)->at(sampInd)->StateValue(i) = ranks.at(chainInd)(sampInd);

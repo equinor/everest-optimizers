@@ -42,16 +42,32 @@ pytest path/to/your_file.py::name_of_test
 
 ### Linting and Formatting
 
-- Python
-We use ruff for python linting. To install ruff, use:
+Python:
+
+- We use ruff for python linting. To install ruff, use:
 
 ```bash
 pip install ruff
 ```
 
-To run ruff, do the following commands:
+- To run ruff, do the following commands:
 
 ```bash
 ruff format .
 ruff check --select ALL
+```
+
+Clang:
+
+
+- Install clang-format:
+
+```bash
+sudo apt install clang-format
+```
+
+- You can run the following command to format all files in your project!
+
+```bash
+find . -regex '.*\.\(cpp\|hpp\|cc\|c\|h\)' -exec clang-format -i {} +
 ```

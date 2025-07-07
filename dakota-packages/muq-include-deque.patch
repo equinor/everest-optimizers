@@ -1,0 +1,25 @@
+diff --git a/muq2/MUQ/Modeling/ModGraphPiece.h b/muq2/MUQ/Modeling/ModGraphPiece.h
+index 68ff4751..4fb0c1e6 100644
+--- a/muq2/MUQ/Modeling/ModGraphPiece.h
++++ b/muq2/MUQ/Modeling/ModGraphPiece.h
+@@ -4,6 +4,7 @@
+ #include <boost/graph/adjacency_list.hpp>
+ #include <boost/graph/filtered_graph.hpp>
+ 
++#include <deque>
+ #include <map>
+ 
+ #include "MUQ/Modeling/ModPiece.h"
+diff --git a/muq2/MUQ/Modeling/WorkGraphPiece.h b/muq2/MUQ/Modeling/WorkGraphPiece.h
+index dcd3955c..cbd31a92 100644
+--- a/muq2/MUQ/Modeling/WorkGraphPiece.h
++++ b/muq2/MUQ/Modeling/WorkGraphPiece.h
+@@ -4,6 +4,8 @@
+ #include <boost/graph/adjacency_list.hpp>
+ #include <boost/graph/filtered_graph.hpp>
+ 
++#include <deque>
++
+ #include "MUQ/Modeling/WorkPiece.h"
+ #include "MUQ/Modeling/ConstantPiece.h"
+ #include "MUQ/Modeling/NodeNameFinder.h"

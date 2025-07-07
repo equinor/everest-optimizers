@@ -1,0 +1,601 @@
+diff --git a/OPTPP/include/Opt.h b/OPTPP/include/Opt.h
+index 879633a0..78363929 100644
+--- a/OPTPP/include/Opt.h
++++ b/OPTPP/include/Opt.h
+@@ -134,7 +134,7 @@ protected:
+   /// What method is being used
+   char method[80];  
+   /// Optional message
+-  char mesg[80];    
++  char mesg[94];    
+   /// Return code from Optimization class
+   int  ret_code;    
+   /// Number of iterations taken 
+diff --git a/OPTPP/src/PDS/pdsdone.c b/OPTPP/src/PDS/pdsdone.c
+index 097ad79f..4768dceb 100644
+--- a/OPTPP/src/PDS/pdsdone.c
++++ b/OPTPP/src/PDS/pdsdone.c
+@@ -90,7 +90,7 @@ int pdsdone(int maxitr, int count, int n, double stol, double *length,
+   /* Function Body */
+ 
+   ret_val = 0;
+-  strcpy(emesg, "");
++  strncpy(emesg, "", sizeof(emesg));
+ 
+ #ifdef OPTPP_HAVE_MPI
+ 
+@@ -117,19 +117,19 @@ int pdsdone(int maxitr, int count, int n, double stol, double *length,
+   if (count >= maxitr) {
+     ret_val = 3;
+     *conv = -stol;
+-    strcpy(emesg, "Algorithm terminated - Number of iterations exceeds the specified limit");
++    strncpy(emesg, "Algorithm terminated - Number of iterations exceeds the specified limit", 80);
+   }
+   else if (total_fevals >= max_fevals) {
+     ret_val = 4;
+     *conv = -stol;
+-    strcpy(emesg, "Algorithm terminated - Number of fcn evaluations exceeds the specified limit");
++    strncpy(emesg, "Algorithm terminated - Number of fcn evaluations exceeds the specified limit", 80);
+   }
+   else {
+     norm = dnrm2(&n, v0, &incx);
+     delta = max(1.,norm);
+     *conv = *length / delta;
+     ret_val = *conv <= stol;
+-    strcpy(emesg, "pdsdone: Step tolerance passed");
++    strncpy(emesg, "pdsdone: Step tolerance passed", 80);
+   }
+ 
+   /* check for function decrease - If TRPDS, compare to initial
+@@ -143,7 +143,7 @@ int pdsdone(int maxitr, int count, int n, double stol, double *length,
+ 
+     if (fbest <= (ftol*finit)) {
+       ret_val = 2;
+-      strcpy(emesg, "pdsdone: Function tolerance passed");
++      strncpy(emesg, "pdsdone: Function tolerance passed", 80);
+     }
+   }
+   else {
+@@ -151,7 +151,7 @@ int pdsdone(int maxitr, int count, int n, double stol, double *length,
+     rftol = ftol*max(1.0,fabs(fbest));
+ 
+     if (deltaf <= rftol) {
+-      strcpy(emesg,"pdsdone: Function tolerance test passed");
++      strncpy(emesg,"pdsdone: Function tolerance test passed", 80);
+       ret_val = 2;
+     }
+   }
+diff --git a/acro/packages/colin/src/colin/reformulation/ConstraintPenalty.h b/acro/packages/colin/src/colin/reformulation/ConstraintPenalty.h
+index 3f53aff7..c7d68229 100644
+--- a/acro/packages/colin/src/colin/reformulation/ConstraintPenalty.h
++++ b/acro/packages/colin/src/colin/reformulation/ConstraintPenalty.h
+@@ -283,8 +283,8 @@ private: // callback methods
+       while ( row > 0 )
+       {
+          --row;
+-         size_t i = cg.get_matbeg()[row];
+-         size_t n = cg.get_matcnt()[row];
++         size_t i = static_cast<size_t>(cg.get_matbeg()[row]);
++         size_t n = static_cast<size_t>(cg.get_matcnt()[row]);
+          while ( n > 0 )
+          {
+             g_val[cg.get_matind()[i]] += p*2.0*cv[row]*cg.get_matval()[i];
+diff --git a/acro/packages/colin/src/colin/reformulation/UnconMultiobj.h b/acro/packages/colin/src/colin/reformulation/UnconMultiobj.h
+index f23f861e..f9e8db58 100644
+--- a/acro/packages/colin/src/colin/reformulation/UnconMultiobj.h
++++ b/acro/packages/colin/src/colin/reformulation/UnconMultiobj.h
+@@ -347,8 +347,8 @@ private: // methods
+       while ( row > 0 )
+       {
+          --row;
+-         size_t i = cg.get_matbeg()[row];
+-         size_t n = cg.get_matcnt()[row];
++         size_t i = static_cast<size_t>(cg.get_matbeg()[row]);
++         size_t n = static_cast<size_t>(cg.get_matcnt()[row]);
+          while ( n > 0 )
+          {
+             g[cg.get_matind()[i]] += 2.0*cv[row]*cg.get_matval()[i];
+diff --git a/acro/packages/colin/src/libs/Application_LinearConstraints.cpp b/acro/packages/colin/src/libs/Application_LinearConstraints.cpp
+index 814ac769..5483e8f1 100644
+--- a/acro/packages/colin/src/libs/Application_LinearConstraints.cpp
++++ b/acro/packages/colin/src/libs/Application_LinearConstraints.cpp
+@@ -1028,7 +1028,7 @@ cb_jacobian_info( Application_Jacobian::EqualityFilter equality,
+       }
+ 
+       components.push_back(part);
+-      return ans.get_nrows();
++      return static_cast<size_t>(ans.get_nrows());
+    }
+ 
+ }
+diff --git a/acro/packages/colin/src/libs/Application_NonD_Constraints.cpp b/acro/packages/colin/src/libs/Application_NonD_Constraints.cpp
+index 9920b16f..a3737734 100644
+--- a/acro/packages/colin/src/libs/Application_NonD_Constraints.cpp
++++ b/acro/packages/colin/src/libs/Application_NonD_Constraints.cpp
+@@ -880,7 +880,7 @@ cb_jacobian_info( Application_Jacobian::EqualityFilter equality,
+       }
+ 
+       components.push_back(part);
+-      return ans.get_nrows();
++      return static_cast<size_t>(ans.get_nrows());
+    }
+ 
+ }
+diff --git a/acro/packages/colin/src/libs/Cache_View_Pareto.cpp b/acro/packages/colin/src/libs/Cache_View_Pareto.cpp
+index aeea01fa..1fd094fc 100644
+--- a/acro/packages/colin/src/libs/Cache_View_Pareto.cpp
++++ b/acro/packages/colin/src/libs/Cache_View_Pareto.cpp
+@@ -306,7 +306,7 @@ View_Pareto::cb_insert(cache_t::iterator src)
+    //
+    unsigned long info_type = 
+       ( appHandle->problem_type() & ProblemTraitValue_multiple_objectives ) 
+-      ? mf_info : f_info;
++      ? static_cast<unsigned long>(mf_info) : static_cast<unsigned long>(f_info);
+    if ( ! response.is_computed(info_type) )
+       return;
+ 
+diff --git a/acro/packages/colin/xml/ColinInput.xsd b/acro/packages/colin/xml/ColinInput.xsd
+index 54f97c8a..d9e1a063 100755
+--- a/acro/packages/colin/xml/ColinInput.xsd
++++ b/acro/packages/colin/xml/ColinInput.xsd
+@@ -129,14 +129,14 @@
+     </xsd:complexType>
+     <xsd:complexType name="SolverType">
+         <xsd:sequence>
+-            <xsd:element name="Problem" type="tns:NameType" minOccurs="1" maxOccurs="unbounded" default="default"/>
++            <xsd:element name="Problem" type="tns:NameType" minOccurs="1" maxOccurs="999999" default="default"/>
+             <xsd:element name="Options" type="tns:OptionsType" minOccurs="0"/>
+         </xsd:sequence>
+         <xsd:attribute name="type" type="tns:NameType" use="required"/>
+     </xsd:complexType>
+     <xsd:complexType name="OptionsType">
+         <xsd:sequence>
+-            <xsd:element name="Option" maxOccurs="unbounded" minOccurs="1">
++            <xsd:element name="Option" maxOccurs="999999" minOccurs="1">
+                 <xsd:complexType mixed="true">
+                     <xsd:simpleContent>
+                         <xsd:extension base="xsd:string">
+@@ -150,7 +150,7 @@
+     <xsd:element name="ColinInput">
+         <xsd:complexType>
+             <xsd:sequence>
+-                <xsd:element ref="tns:Problem" maxOccurs="unbounded"/>
++                <xsd:element ref="tns:Problem" maxOccurs="999999"/>
+                 <xsd:element name="Solver" type="tns:SolverType"></xsd:element>
+             </xsd:sequence>
+         </xsd:complexType>
+diff --git a/acro/packages/colin/xml/ColinRequest.xsd b/acro/packages/colin/xml/ColinRequest.xsd
+index f8e93676..cd5c6c4b 100755
+--- a/acro/packages/colin/xml/ColinRequest.xsd
++++ b/acro/packages/colin/xml/ColinRequest.xsd
+@@ -24,7 +24,7 @@
+         </xsd:all>
+     </xsd:complexType>
+     <xsd:complexType name="RequestsType">
+-        <xsd:sequence maxOccurs="unbounded">
++        <xsd:sequence maxOccurs="999999">
+             <xsd:element name="FunctionValues" minOccurs="0"/>
+             <xsd:element name="FunctionValue" minOccurs="0">
+                 <xsd:complexType>
+@@ -43,10 +43,10 @@
+                     <xsd:attribute name="index" use="required" type="xsd:string"/>
+                 </xsd:complexType>
+             </xsd:element>
+-            <xsd:element name="Generic" maxOccurs="unbounded" minOccurs="0">
++            <xsd:element name="Generic" maxOccurs="999999" minOccurs="0">
+                 <xsd:complexType>
+                     <xsd:sequence>
+-                        <xsd:element name="Data" maxOccurs="unbounded">
++                        <xsd:element name="Data" maxOccurs="999999">
+                             <xsd:complexType>
+                                 <xsd:attribute name="id" type="xsd:string"/>
+                             </xsd:complexType>
+diff --git a/acro/packages/pebbl/src/bb/pebbl/branching.h b/acro/packages/pebbl/src/bb/pebbl/branching.h
+index 4c180c6e..a8a91ac6 100644
+--- a/acro/packages/pebbl/src/bb/pebbl/branching.h
++++ b/acro/packages/pebbl/src/bb/pebbl/branching.h
+@@ -1077,7 +1077,7 @@ public:
+ 
+   // Basic repository functions
+ 
+-  size_type repositorySize() { return reposHeap.size(); };
++  size_type repositorySize() { return static_cast<size_t>(reposHeap.size()); };
+ 
+   solution* worstReposSol();
+ 
+diff --git a/acro/packages/scolib/src/libs/DockingPS.cpp b/acro/packages/scolib/src/libs/DockingPS.cpp
+index f2e280c7..b6788cf0 100755
+--- a/acro/packages/scolib/src/libs/DockingPS.cpp
++++ b/acro/packages/scolib/src/libs/DockingPS.cpp
+@@ -68,8 +68,11 @@ if (Delta_init > 1.0)
+ 
+ basis_str = "coordinate";
+ 
+-ntrials = ncore_trials = 2*problem->num_real_vars.as<size_t>() 
+-   - 4 + num_rotations;
++size_t tmp = 2 * problem->num_real_vars.as<size_t>()
++   - 4 + static_cast<unsigned int>(num_rotations);
++ntrials = static_cast<unsigned int>(tmp);
++ncore_trials = static_cast<int>(tmp);
++
+ ex_factor=1.0;
+ }
+ 
+diff --git a/acro/packages/scolib/src/scolib/DirectMisc.h b/acro/packages/scolib/src/scolib/DirectMisc.h
+index 608094f8..4f77c3f0 100755
+--- a/acro/packages/scolib/src/scolib/DirectMisc.h
++++ b/acro/packages/scolib/src/scolib/DirectMisc.h
+@@ -59,7 +59,7 @@ class boxsort
+    	boxsort()
+     	   {numb = 0; o1 = 0; o2 = 0; o3 = 0; }
+     	boxsort(int a, double b, double c, double d)
+-    	   {numb = a; o1 = b; o2 = c; o3 = d; }
++    	   {numb = static_cast<unsigned int>(a); o1 = b; o2 = c; o3 = d; }
+       
+     	friend bool operator<(const boxsort &b1, const boxsort &b2);
+    	friend bool operator>(const boxsort &b1, const boxsort &b2);
+@@ -283,7 +283,7 @@ public:
+ 	{}
+ 
+   NeighborHood(std::vector<double>& v, int nn[3], double d)
+-	{V = v; n[0] = nn[0]; n[1] = nn[1]; n[2] = nn[2]; dist = d;}
++	{V = v; n[0] = static_cast<unsigned int>(nn[0]); n[1] = static_cast<unsigned int>(nn[1]); n[2] = static_cast<unsigned int>(nn[2]); dist = d;}
+ 
+   NeighborHood(const NeighborHood &N)
+   	{*this = N;}
+diff --git a/acro/packages/utilib/src/libs/BinarySerialStream.cpp b/acro/packages/utilib/src/libs/BinarySerialStream.cpp
+index 53bf0974..e95228a4 100644
+--- a/acro/packages/utilib/src/libs/BinarySerialStream.cpp
++++ b/acro/packages/utilib/src/libs/BinarySerialStream.cpp
+@@ -405,7 +405,7 @@ oBinarySerialStream::put(const SerialObject &so)
+          write(reinterpret_cast<char*>(&pod_size), sizeof(pod_size));
+       }
+       else
+-         pod_size = len;
++         pod_size = static_cast<size_t>(len);
+       write(pod.data(),  static_cast<std::streamsize>(pod_size));
+    }
+    else
+diff --git a/acro/packages/utilib/src/libs/BitArray.cpp b/acro/packages/utilib/src/libs/BitArray.cpp
+index b3de66a5..35cd6ea0 100755
+--- a/acro/packages/utilib/src/libs/BitArray.cpp
++++ b/acro/packages/utilib/src/libs/BitArray.cpp
+@@ -96,7 +96,7 @@ void BitArray::set()
+ { 
+   size_type nwords = alloc_size(Len);
+   for(size_type i=0; i<nwords; i++)
+-    Data[i] = ~0;
++    Data[i] = ~0u;
+ }
+ 
+ 
+diff --git a/acro/packages/utilib/src/libs/PackBuf.cpp b/acro/packages/utilib/src/libs/PackBuf.cpp
+index 85af7756..daedabaa 100755
+--- a/acro/packages/utilib/src/libs/PackBuf.cpp
++++ b/acro/packages/utilib/src/libs/PackBuf.cpp
+@@ -82,6 +82,11 @@ void PackBuffer::writeBinary(ostream& ostr)
+ 
+ void UnPackBuffer::resize(const size_type newsize)
+ {
++  if (newsize > std::numeric_limits<size_type>::max()) {
++    // handle integer overflow error
++    throw std::overflow_error("integer overflow in UnPackBuffer::resize()");
++  }
++  
+   if (newsize != Size) {
+     if (buffer && own_flag)
+       delete [] buffer;
+diff --git a/acro/packages/utilib/src/libs/ParameterSet.cpp b/acro/packages/utilib/src/libs/ParameterSet.cpp
+index 2c1cfdf3..0923d486 100755
+--- a/acro/packages/utilib/src/libs/ParameterSet.cpp
++++ b/acro/packages/utilib/src/libs/ParameterSet.cpp
+@@ -339,6 +339,7 @@ while (tcurr != tlast) {
+   }
+ char tformat[32];
+ #ifdef _MSC_VER
++if (len > 1024) len = 1024;
+ sprintf_s(tformat,32,"%%-%lds",(long int)len);
+ #else
+ sprintf(tformat,"%%-%lds",(long int)len);
+diff --git a/acro/packages/utilib/src/libs/Serialize.cpp b/acro/packages/utilib/src/libs/Serialize.cpp
+index d5b5f677..490cc4d3 100644
+--- a/acro/packages/utilib/src/libs/Serialize.cpp
++++ b/acro/packages/utilib/src/libs/Serialize.cpp
+@@ -791,7 +791,10 @@ Serialization_Manager::resolve_user_name(std::string mangled)
+          uname += ',';
+          sep = next_sep;
+       }
+-      *uname.rbegin() = '>';
++      if (uname.length() != 0)
++      {
++         *uname.rbegin() = '>';
++      }  
+    }
+ 
+    // insert the newly-resolved name...
+diff --git a/acro/packages/utilib/src/libs/XMLSerialStream.cpp b/acro/packages/utilib/src/libs/XMLSerialStream.cpp
+index ddad35ee..78ba7a7f 100644
+--- a/acro/packages/utilib/src/libs/XMLSerialStream.cpp
++++ b/acro/packages/utilib/src/libs/XMLSerialStream.cpp
+@@ -706,7 +706,7 @@ oXMLSerialStream::put_xml(const SerialObject &so, std::string indent)
+            << std::hex << std::setfill('0');
+          const unsigned char *c 
+             = reinterpret_cast<const unsigned char*>(pod.data()) - 1;
+-         size_t mod = ( (m_format & XML::noindent) ? 1 : 25 );
++         size_t mod = ( (m_format & XML::noindent) ? 1u : 25u );
+          size_t pod_size = pod.size();
+          for( size_t i = 1; i <= pod_size; ++i )
+          {
+diff --git a/acro/packages/utilib/src/libs/math_basic.cpp b/acro/packages/utilib/src/libs/math_basic.cpp
+index dd6eb1ae..7b763324 100755
+--- a/acro/packages/utilib/src/libs/math_basic.cpp
++++ b/acro/packages/utilib/src/libs/math_basic.cpp
+@@ -67,6 +67,11 @@ std::string pscientific(const double t, int mantissa, int expwidth,
+     negexp = false;
+ 
+   std::string format;
++  if (mantissa < 0) mantissa = 0;
++  if (expwidth < 0) expwidth = 0;
++  if (mantissa > 20) mantissa = 20;
++  if (expwidth > 20) expwidth = 20;
++
+   char* ss = new char [mantissa + expwidth + 10];
+ 
+   // Ex: cout.setf(std::ios::showpos); cout << pscientific(.0123,4,3,&cout)
+diff --git a/acro/packages/utilib/src/utilib/AnyRNG.h b/acro/packages/utilib/src/utilib/AnyRNG.h
+index a5608c93..a3f63bc1 100644
+--- a/acro/packages/utilib/src/utilib/AnyRNG.h
++++ b/acro/packages/utilib/src/utilib/AnyRNG.h
+@@ -148,7 +148,7 @@ public:
+   /// Return long in 0...LONG_MAX
+   unsigned long asLong()
+ 	{
+-	return content ? content->asLong() : 0;
++	return content ? static_cast<unsigned long>(content->asLong()) : 0u;
+ 	}
+ 
+   /// A generic API for setting seeds for the RNG
+diff --git a/acro/packages/utilib/src/utilib/ArrayBase.h b/acro/packages/utilib/src/utilib/ArrayBase.h
+index 59b082fa..7af503d0 100755
+--- a/acro/packages/utilib/src/utilib/ArrayBase.h
++++ b/acro/packages/utilib/src/utilib/ArrayBase.h
+@@ -350,7 +350,7 @@ void ArrayBase<A,P>::resize(const size_type newl,int set_new_contents)
+   
+   if (new_alloc == alloc_size(Len))
+     d = Data;
+-  else if (newl > 0) 
++  else if (newl > 0 && newl <= std::numeric_limits<int>::max()) 
+     {
+       d = new A[new_alloc];
+       if (d == 0)
+diff --git a/acro/packages/utilib/src/utilib/PackBuf.h b/acro/packages/utilib/src/utilib/PackBuf.h
+index e59d89d7..f84f10bc 100755
+--- a/acro/packages/utilib/src/utilib/PackBuf.h
++++ b/acro/packages/utilib/src/utilib/PackBuf.h
+@@ -72,7 +72,7 @@ class PackBuffer {
+ public:
+  
+   /// Constructor, which allows the default buffer size to be set.
+-  PackBuffer(int size_=1024) {Index=0; Size=size_; buffer = new char [size_];}
++  PackBuffer(int size_=1024) {Index=0; Size=static_cast<size_type>(size_); buffer = new char [size_];}
+ 
+   /// Constructor that copies an UnPackBuffer
+   PackBuffer(UnPackBuffer& copyBuf);
+diff --git a/acro/packages/utilib/src/utilib/SparseMatrix.h b/acro/packages/utilib/src/utilib/SparseMatrix.h
+index 9c4812c2..19f66841 100644
+--- a/acro/packages/utilib/src/utilib/SparseMatrix.h
++++ b/acro/packages/utilib/src/utilib/SparseMatrix.h
+@@ -723,7 +723,7 @@ void RMSparseMatrix<T>::delete_rows(const size_t i, const size_t count)
+    if ( offset )
+    {
+       nnzeros -= offset;
+-      for (size_t j=matbeg[i]; j<static_cast<size_t>(nnzeros); j++) {
++      for (size_t j=static_cast<size_t>(matbeg[i]); j<static_cast<size_t>(nnzeros); j++) {
+          matind[j] = matind[j+offset];
+          matval[j] = matval[j+offset];
+       }
+@@ -983,7 +983,7 @@ void CMSparseMatrix<T>::delete_cols(const size_t i, const size_t count)
+    if ( offset )
+    {
+       nnzeros -= offset;
+-      for (size_t j=matbeg[i]; j<static_cast<size_t>(nnzeros); j++) {
++      for (size_t j=static_cast<size_t>(matbeg[i]); j<static_cast<size_t>(nnzeros); j++) {
+          matind[j] = matind[j+offset];
+          matval[j] = matval[j+offset];
+       }
+@@ -1151,7 +1151,7 @@ void RMSparseMatrix<T>::adjoinRows(const RMSparseMatrix &rhs)
+       matind.resize(newNNZeros);
+    }
+ 
+-   size_t i = rhs.nrows;
++   size_t i = static_cast<size_t>(rhs.nrows);
+    while ( i > 0 )
+    {
+       --i;
+@@ -1159,7 +1159,7 @@ void RMSparseMatrix<T>::adjoinRows(const RMSparseMatrix &rhs)
+       matbeg[nrows + i] = nnzeros + rhs.matbeg[i];
+    }
+ 
+-   i = rhs.nnzeros;
++   i = static_cast<size_t>(rhs.nnzeros);
+    while ( i > 0 )
+    {
+       --i;
+@@ -1247,7 +1247,7 @@ int cast_from_rm_to_dense(const Any& from_, Any& to_)
+    {
+       for (size_t i = 0; i < nr; i++)
+       {
+-         size_t k = from.get_matcnt()[i];
++         size_t k = static_cast<size_t>(from.get_matcnt()[i]);
+          if ( ! k )
+             continue;
+ 
+diff --git a/approxnn/src/kd_dump.cpp b/approxnn/src/kd_dump.cpp
+index e7015efe..48626e39 100644
+--- a/approxnn/src/kd_dump.cpp
++++ b/approxnn/src/kd_dump.cpp
+@@ -31,6 +31,7 @@
+ // desired.)
+ //----------------------------------------------------------------------
+ 
++#include <limits>
+ #include "kd_tree.h"					// kd-tree declarations
+ #include "bd_tree.h"					// bd-tree declarations
+ 
+@@ -270,7 +271,7 @@ static ANNkd_ptr annReadDump(
+ 	//	Input file header
+ 	//------------------------------------------------------------------
+ 	in >> str;									// input header
+-	if (strcmp(str, "#ANN") != 0) {				// incorrect header
++	if (strncmp(str, "#ANN", 4) != 0) {				// incorrect header
+ 		annError("Incorrect header for dump file", ANNabort);
+ 	}
+ 	in.getline(version, STRING_LEN);			// get version (ignore)
+@@ -281,7 +282,7 @@ static ANNkd_ptr annReadDump(
+ 	//			the dump file.
+ 	//------------------------------------------------------------------
+ 	in >> str;									// get major heading
+-	if (strcmp(str, "points") == 0) {			// points section
++	if (strncmp(str, "points", 6) == 0) {			// points section
+ 		in >> the_dim;							// input dimension
+ 		in >> the_n_pts;						// number of points
+ 												// allocate point storage
+@@ -310,7 +311,7 @@ static ANNkd_ptr annReadDump(
+ 	//			but we do not deallocate them.	They will be deallocated
+ 	//			when the tree is destroyed.
+ 	//------------------------------------------------------------------
+-	if (strcmp(str, "tree") == 0) {				// tree section
++	if (strncmp(str, "tree", 4) == 0) {				// tree section
+ 		in >> the_dim;							// read dimension
+ 		in >> the_n_pts;						// number of points
+ 		in >> the_bkt_size;						// bucket size
+@@ -323,6 +324,9 @@ static ANNkd_ptr annReadDump(
+ 		for (j = 0; j < the_dim; j++) {			// read bounding box low
+ 			in >> the_bnd_box_hi[j];
+ 		}
++                if (the_n_pts < 0) {
++                        the_n_pts = std::numeric_limits<int>::max();
++                }
+ 		the_pidx = new ANNidx[the_n_pts];		// allocate point index array
+ 		int next_idx = 0;						// number of indices filled
+ 												// read the tree and indices
+@@ -382,7 +386,7 @@ static ANNkd_ptr annReadTree(
+ 
+ 	in >> tag;									// input node tag
+ 
+-	if (strcmp(tag, "null") == 0) {				// null tree
++	if (strncmp(tag, "null", 4) == 0) {				// null tree
+ 		return NULL;
+ 	}
+ 	//------------------------------------------------------------------
+@@ -405,7 +409,7 @@ static ANNkd_ptr annReadTree(
+ 	//------------------------------------------------------------------
+ 	//	Read a splitting node
+ 	//------------------------------------------------------------------
+-	else if (strcmp(tag, "split") == 0) {		// splitting node
++	else if (strncmp(tag, "split", 5) == 0) {		// splitting node
+ 
+ 		in >> cd >> cv >> lb >> hb;
+ 
+@@ -418,13 +422,15 @@ static ANNkd_ptr annReadTree(
+ 	//------------------------------------------------------------------
+ 	//	Read a shrinking node (bd-tree only)
+ 	//------------------------------------------------------------------
+-	else if (strcmp(tag, "shrink") == 0) {		// shrinking node
++	else if (strncmp(tag, "shrink", 6) == 0) {		// shrinking node
+ 		if (tree_type != BD_TREE) {
+ 			annError("Shrinking node not allowed in kd-tree", ANNabort);
+ 		}
+ 
+ 		in >> n_bnds;							// number of bounding sides
+-												// allocate bounds array
++                if (n_bnds < 0) {
++                        n_bnds = std::numeric_limits<int>::max();
++                }		
+ 		ANNorthHSArray bds = new ANNorthHalfSpace[n_bnds];
+ 		for (int i = 0; i < n_bnds; i++) {
+ 			in >> cd >> cv >> sd;				// input bounding halfspace
+diff --git a/queso/src/contrib/ANN/src/kd_dump.cpp b/queso/src/contrib/ANN/src/kd_dump.cpp
+index f08c9d6d..4a18dc66 100644
+--- a/queso/src/contrib/ANN/src/kd_dump.cpp
++++ b/queso/src/contrib/ANN/src/kd_dump.cpp
+@@ -270,7 +270,7 @@ static ANNkd_ptr annReadDump(
+ 	//	Input file header
+ 	//------------------------------------------------------------------
+ 	in >> str;									// input header
+-	if (strcmp(str, "#ANN") != 0) {				// incorrect header
++	if (strncmp(str, "#ANN", 4) != 0) {				// incorrect header
+ 		annError("Incorrect header for dump file", ANNabort);
+ 	}
+ 	in.getline(version, STRING_LEN);			// get version (ignore)
+@@ -281,7 +281,7 @@ static ANNkd_ptr annReadDump(
+ 	//			the dump file.
+ 	//------------------------------------------------------------------
+ 	in >> str;									// get major heading
+-	if (strcmp(str, "points") == 0) {			// points section
++	if (strncmp(str, "points", 6) == 0) {			// points section
+ 		in >> the_dim;							// input dimension
+ 		in >> the_n_pts;						// number of points
+ 												// allocate point storage
+@@ -310,7 +310,7 @@ static ANNkd_ptr annReadDump(
+ 	//			but we do not deallocate them.	They will be deallocated
+ 	//			when the tree is destroyed.
+ 	//------------------------------------------------------------------
+-	if (strcmp(str, "tree") == 0) {				// tree section
++	if (strncmp(str, "tree", 4) == 0) {				// tree section
+ 		in >> the_dim;							// read dimension
+ 		in >> the_n_pts;						// number of points
+ 		in >> the_bkt_size;						// bucket size
+@@ -324,6 +324,9 @@ static ANNkd_ptr annReadDump(
+ 			in >> the_bnd_box_hi[j];
+ 		}
+ 		the_pidx = new ANNidx[the_n_pts];		// allocate point index array
++                if (the_n_pts < 0) {
++                        the_n_pts = std::numeric_limits<int>::max();
++                }
+ 		int next_idx = 0;						// number of indices filled
+ 												// read the tree and indices
+ 		the_root = annReadTree(in, tree_type, the_pidx, next_idx);
+@@ -382,13 +385,13 @@ static ANNkd_ptr annReadTree(
+ 
+ 	in >> tag;									// input node tag
+ 
+-	if (strcmp(tag, "null") == 0) {				// null tree
++	if (strncmp(tag, "null", 4) == 0) {				// null tree
+ 		return NULL;
+ 	}
+ 	//------------------------------------------------------------------
+ 	//	Read a leaf
+ 	//------------------------------------------------------------------
+-	if (strcmp(tag, "leaf") == 0) {				// leaf node
++	if (strncmp(tag, "leaf", 4) == 0) {				// leaf node
+ 
+ 		in >> n_pts;							// input number of points
+ 		int old_idx = next_idx;					// save next_idx
+@@ -405,7 +408,7 @@ static ANNkd_ptr annReadTree(
+ 	//------------------------------------------------------------------
+ 	//	Read a splitting node
+ 	//------------------------------------------------------------------
+-	else if (strcmp(tag, "split") == 0) {		// splitting node
++	else if (strncmp(tag, "split", 5) == 0) {		// splitting node
+ 
+ 		in >> cd >> cv >> lb >> hb;
+ 
+@@ -418,13 +421,15 @@ static ANNkd_ptr annReadTree(
+ 	//------------------------------------------------------------------
+ 	//	Read a shrinking node (bd-tree only)
+ 	//------------------------------------------------------------------
+-	else if (strcmp(tag, "shrink") == 0) {		// shrinking node
++	else if (strncmp(tag, "shrink", 6) == 0) {		// shrinking node
+ 		if (tree_type != BD_TREE) {
+ 			annError("Shrinking node not allowed in kd-tree", ANNabort);
+ 		}
+ 
+ 		in >> n_bnds;							// number of bounding sides
+-												// allocate bounds array
++                if (n_bnds < 0) {
++                        n_bnds = std::numeric_limits<int>::max();
++                }												// allocate bounds array
+ 		ANNorthHSArray bds = new ANNorthHalfSpace[n_bnds];
+ 		for (int i = 0; i < n_bnds; i++) {
+ 			in >> cd >> cv >> sd;				// input bounding halfspace
