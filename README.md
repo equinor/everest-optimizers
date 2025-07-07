@@ -8,16 +8,16 @@
 
 1.  (optional) Create and activate a virtual environment:
 
-    ```bash
-    uv venv
-    source .venv/bin/activate
-    ```
+```bash
+uv venv
+source .venv/bin/activate
+```
 
 2.  Install the project:
 
-    ```bash
-    pip install .
-    ```
+```bash
+pip install .
+```
 
 ### Running the project
 
