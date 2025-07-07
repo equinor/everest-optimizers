@@ -51,5 +51,9 @@ jobs:
         run: |
           uv pip install ".[test]"
 
+      - name: Run custom build step
+        run: |
+          python setup.py custom_build 
+
       - name: "Run tests"
         run: pytest tests/
