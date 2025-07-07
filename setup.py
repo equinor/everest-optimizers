@@ -12,10 +12,6 @@ import os
 class CustomTestCommand(TestCommand):
     def run_tests(self):
       
-        # Step 0: Ensure dependencies are installed
-        print("Installing dependencies: pybind11, numpy...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "pybind11", "numpy"], check=True)
-      
         # Step 1: Create symlink
         print("Linking trilinos...")
         subprocess.run(["ln", "-sfn", "../trilinos", "trilinos"], cwd="dakota-packages/OPTPP", check=True)
