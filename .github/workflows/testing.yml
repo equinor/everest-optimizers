@@ -50,12 +50,6 @@ jobs:
       - name: Install test dependencies
         run: |
           uv pip install ".[test]"
-          pip install pybind11
-          pip install setuptools
-
-      - name: Run custom build step
-        run: |
-          python setup.py custom_build 
 
       - name: "Run tests"
         run: pytest tests/
