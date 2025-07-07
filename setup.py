@@ -1,45 +1,68 @@
 #!/usr/bin/env python3
 # setup.py
-"""Setup for everest optimizers."""
 
-from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
+from pybind11.setup_helpers import Pybind11Extension, build_ext
 import subprocess
-import sys
 import os
+import sys
 
-class CustomTestCommand(TestCommand):
-    def run_tests(self):
-      
-        # Step 1: Create symlink
-        print("Linking trilinos...")
-        subprocess.run(["ln", "-sfn", "../trilinos", "trilinos"], cwd="dakota-packages/OPTPP", check=True)
 
-        # Step 2: Get pybind11 cmake directory
-        print("Finding pybind11 cmake dir...")
-        result = subprocess.run(["python3", "-m", "pybind11", "--cmakedir"], capture_output=True, text=True, check=True)
-        pybind11_dir = result.stdout.strip()
+class CustomBuildExt(build_ext):
+    def run(self):
+        # Step 0: Ensure dependencies
+        print("Installing Python dependencies (pybind11, numpy)...")
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "pybind11", "numpy"],
+            check=True, stdout=sys.stdout, stderr=sys.stderr
+        )
 
-        # Step 3: Configure with CMake
-        print("Configuring project with CMake...")
-        build_dir = os.path.abspath("dakota-packages/OPTPP/build")
-        source_dir = os.path.abspath("dakota-packages/OPTPP")
+        # Step 1: Link trilinos if needed
+        optpp_dir = os.path.abspath("dakota-packages/OPTPP")
+        trilinos_src = os.path.abspath("dakota-packages/trilinos")
+        trilinos_link = os.path.join(optpp_dir, "trilinos")
 
-        subprocess.run([
-            "cmake", "-B", build_dir, "-S", source_dir,
+        if not os.path.exists(trilinos_link):
+            print(f"Creating symlink: {trilinos_link} -> {trilinos_src}")
+            os.makedirs(optpp_dir, exist_ok=True)
+            os.symlink(trilinos_src, trilinos_link)
+
+        # Step 2: Get pybind11 cmake dir
+        print("Querying pybind11 CMake directory...")
+        cmake_dir = subprocess.run(
+            [sys.executable, "-m", "pybind11", "--cmakedir"],
+            check=True, capture_output=True, text=True
+        ).stdout.strip()
+        print(f"pybind11 CMake directory: {cmake_dir}")
+
+        # Step 3: Run CMake configure
+        build_dir = os.path.join(optpp_dir, "build")
+        os.makedirs(build_dir, exist_ok=True)
+
+        cmake_cmd = [
+            "cmake", "-B", build_dir, "-S", optpp_dir,
             "-D", "CMAKE_BUILD_TYPE=Release",
             "-D", "DAKOTA_NO_FIND_TRILINOS=TRUE",
             "-D", "BUILD_SHARED_LIBS=ON",
             "-D", f"Python3_EXECUTABLE={sys.executable}",
-            "-D", f"pybind11_DIR={pybind11_dir}"
-        ], check=True)
+            "-D", f"pybind11_DIR={cmake_dir}"
+        ]
 
-        # Step 4: Compile
-        print("Building project...")
-        subprocess.run(["cmake", "--build", build_dir, "--", "-j"], check=True)
+        print("Running CMake configuration...")
+        subprocess.run(cmake_cmd, check=True, stdout=sys.stdout, stderr=sys.stderr)
 
-# Self-contained OptQNewton implementation
+        # Step 4: Build with CMake
+        print("Building project with CMake...")
+        subprocess.run(
+            ["cmake", "--build", build_dir, "--", "-j"],
+            check=True, stdout=sys.stdout, stderr=sys.stderr
+        )
+
+        # Finally call regular build_ext
+        print("Running standard build_ext...")
+        super().run()
+
+
 ext_modules = [
     Pybind11Extension(
         "everest_optimizers",
@@ -51,9 +74,6 @@ ext_modules = [
 
 setup(
     ext_modules=ext_modules,
-    cmdclass={
-    "build_ext": build_ext,
-    "custom_build": CustomTestCommand
-},
+    cmdclass={"build_ext": CustomBuildExt},
     zip_safe=False,
 )
