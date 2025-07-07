@@ -25,3 +25,8 @@ optpp_pic/
 .vscode
 .claude
 .pytest_cache
+
+# Dakota
+dakota_tabular.dat
+dakota.in
+dakota.rst
