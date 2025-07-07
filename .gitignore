@@ -30,3 +30,6 @@ optpp_pic/
 dakota_tabular.dat
 dakota.in
 dakota.rst
+
+# Workflow
+docs/llm/
