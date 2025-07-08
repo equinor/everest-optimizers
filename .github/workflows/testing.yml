@@ -40,16 +40,25 @@ jobs:
           cache-dependency-glob: pyproject.toml
           python-version: "${{ matrix.python-version }}"
 
-      - name: Install Ubuntu dependencies
+      # Install build tools for Ubuntu
+      - name: Install build tools (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install libegl1
+          sudo apt-get install -y build-essential cmake libegl1
         shell: bash
+
+      # Install CMake for macOS
+      - name: Install CMake (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install cmake
+
+      - name: Install package with native extension
+        run: uv pip install .
 
       - name: Install test dependencies
         run: |
           uv pip install ".[test]"
 
-      - name: "Run tests"
+      - name: Run tests
         run: pytest tests/
