@@ -45,13 +45,15 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake libegl1
+          sudo apt-get install -y build-essential cmake libegl1 gfortran
         shell: bash
 
-      # Install CMake for macOS
-      - name: Install CMake (macOS)
+      # Install CMake and gfortran for macOS
+      - name: Install CMake and gfortran (macOS)
         if: matrix.os == 'macos-latest'
-        run: brew install cmake
+        run: |
+          brew install cmake
+          brew install gcc  # gcc includes gfortran
 
       - name: Install package with native extension
         run: uv pip install .
