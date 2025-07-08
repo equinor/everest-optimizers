@@ -45,7 +45,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake libegl1 gfortran
+          sudo apt-get install -y build-essential cmake libegl1 liblapack-dev libblas-dev gfortran
         shell: bash
 
       # Install CMake and gfortran for macOS
