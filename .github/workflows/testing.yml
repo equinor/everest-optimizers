@@ -40,16 +40,14 @@ jobs:
           cache-dependency-glob: pyproject.toml
           python-version: "${{ matrix.python-version }}"
 
-      # Install build tools for Ubuntu
-      - name: Install build tools (Ubuntu)
+      - name: Install Ubuntu dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake doxygen libegl1 liblapack-dev libblas-dev gfortran
         shell: bash
 
-      # Install CMake and gfortran for macOS
-      - name: Install CMake and gfortran (macOS)
+      - name: Install CMake and gfortran for macOS
         if: matrix.os == 'macos-latest'
         run: |
           brew install cmake
