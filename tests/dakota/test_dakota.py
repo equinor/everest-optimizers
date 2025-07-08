@@ -159,7 +159,7 @@ class TestCase(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             try:
                 driver.run_dakota()
-            except RuntimeError as ex:
+            except RuntimeError:
                 print_exc(file=sys.stdout)
                 raise
 
