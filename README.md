@@ -57,6 +57,13 @@ ruff format .
 ruff check --select ALL
 ```
 
+- To only run ruff on a select folder or file, do these commands (for example):
+
+```bash
+ruff check src/
+ruff check src/everest_optimizers_utils/dummy_implementation.py
+```
+
 Clang:
 
 
