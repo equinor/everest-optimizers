@@ -10,13 +10,6 @@ import sys
 
 class CustomBuildExt(build_ext):
     def run(self):
-        # Step 0: Ensure dependencies
-        print("Installing Python dependencies (pybind11, numpy)...")
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "pybind11", "numpy"],
-            check=True, stdout=sys.stdout, stderr=sys.stderr
-        )
-
         # Step 1: Link trilinos if needed
         optpp_dir = os.path.abspath("dakota-packages/OPTPP")
         trilinos_src = os.path.abspath("dakota-packages/trilinos")
