@@ -24,7 +24,7 @@ pyopttpp_available = False
 try:
     import pyopttpp
     pyopttpp_available = True
-except ImportError as e:
+except ImportError:
     pass  # The error message will be shown when the test is run
 
 
@@ -47,9 +47,9 @@ def test_pyopttpp_import():
                     # Check if the file is for a different Python version
                     if f"cpython-{current_py_version}" not in f:
                         py_version_mismatch = True
-                        print(f"WARNING: Python version mismatch. Module built for a different Python version.")
+                        print("WARNING: Python version mismatch. Module built for a different Python version.")
                         print(f"Current Python version: {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
-                        print(f"Module appears to be built for a different Python version.")
+                        print("Module appears to be built for a different Python version.")
                     break
         
         if not so_file_found:

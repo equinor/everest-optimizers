@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # src/everest_optimizers_utils/dummy_implementation.py
 
-from typing import Any, Dict, List, Optional, Union
 
 # ropt.config
 class EnOptConfig:
