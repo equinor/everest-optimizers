@@ -55,9 +55,6 @@ jobs:
           brew install cmake
           brew install gcc  # gcc includes gfortran
 
-      - name: Install package with native extension
-        run: uv pip install .
-
       - name: Install test dependencies
         run: |
           uv pip install ".[test]"
