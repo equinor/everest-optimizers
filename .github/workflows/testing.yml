@@ -45,7 +45,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake libegl1 liblapack-dev libblas-dev gfortran
+          sudo apt-get install -y build-essential cmake doxygen libegl1 liblapack-dev libblas-dev gfortran
         shell: bash
 
       # Install CMake and gfortran for macOS
@@ -58,9 +58,9 @@ jobs:
       - name: Install package with native extension
         run: uv pip install .
 
-      # - name: Install test dependencies
-      #   run: |
-      #     uv pip install ".[test]"
+      - name: Install test dependencies
+        run: |
+          uv pip install ".[test]"
 
       - name: Run tests
         run: pytest tests/
