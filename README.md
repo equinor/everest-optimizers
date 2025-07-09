@@ -64,13 +64,18 @@ ruff check src/
 ruff check src/everest_optimizers_utils/dummy_implementation.py
 ```
 
-Clang:
+C++:
 
-
-- Install clang-format:
+- We use clang-format for c++ formatting. Install clang-format like this:
 
 ```bash
 sudo apt install clang-format
+```
+
+- To format a c++ or c file (or header file), use
+
+```bash
+clang-format -i your_file.cpp
 ```
 
 - You can run the following command to format all files in your project!
