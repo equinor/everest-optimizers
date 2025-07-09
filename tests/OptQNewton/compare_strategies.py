@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 import tempfile
+import scipy.optimize as opt
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -57,6 +58,35 @@ if pyopttpp_available:
             grad[0] = -400 * x_np[0] * (x_np[1] - x_np[0]**2) - 2 * (1 - x_np[0])
             grad[-1] = 200 * (x_np[-1] - x_np[-2]**2)
             return grad
+
+def run_scipy_bfgs_optimization(start_point):
+    """Run optimization using SciPy's BFGS."""
+    path = [start_point]
+    def callback(xk):
+        path.append(xk)
+
+    # The objective function for scipy
+    def objective_function(x):
+        return sum(100.0 * (x[1:] - x[:-1]**2.0)**2.0 + (1 - x[:-1])**2.0)
+
+    # The gradient of the objective function
+    def objective_gradient(x):
+        grad = np.zeros_like(x)
+        xm = x[1:-1]
+        xm_m1 = x[:-2]
+        xm_p1 = x[2:]
+        grad[1:-1] = 200 * (xm - xm_m1**2) - 400 * (xm_p1 - xm**2) * xm - 2 * (1 - xm)
+        grad[0] = -400 * x[0] * (x[1] - x[0]**2) - 2 * (1 - x[0])
+        grad[-1] = 200 * (x[-1] - x[-2]**2)
+        return grad
+
+    result = opt.minimize(objective_function, start_point, method='BFGS', jac=objective_gradient, callback=callback)
+    
+    solution_np = result.x
+    iterations = result.nit
+    func_evals = result.nfev
+    
+    return solution_np, iterations, func_evals, path
 
 def run_optimization(strategy, start_point):
     """Run optimization for a given strategy and starting point."""
@@ -130,7 +160,7 @@ def run_optimization(strategy, start_point):
 def compare_strategies():
     """Compare the search strategies."""
     if not pyopttpp_available:
-        return
+        logging.warning("pyopttpp not available, will run SciPy BFGS only.")
 
     start_points = [
         np.array([-1.2, 1.0]),
@@ -139,20 +169,28 @@ def compare_strategies():
         np.array([0.0, 0.0]),
     ]
     
-    strategies = {
-        "LineSearch": pyopttpp.SearchStrategy.LineSearch,
-        "TrustRegion": pyopttpp.SearchStrategy.TrustRegion,
-        "TrustPDS": pyopttpp.SearchStrategy.TrustPDS,
-    }
-    
-    results = {}
+    strategies = {}
+    if pyopttpp_available:
+        strategies.update({
+            "LineSearch": pyopttpp.SearchStrategy.LineSearch,
+            "TrustRegion": pyopttpp.SearchStrategy.TrustRegion,
+            #"TrustPDS": pyopttpp.SearchStrategy.TrustPDS,
+        })
 
-    for name, strategy in strategies.items():
-        results[name] = []
+    all_strategy_names = list(strategies.keys()) + ["SciPy BFGS"]
+    
+    results = {name: [] for name in all_strategy_names}
+
+    for name in all_strategy_names:
         for start_point in start_points:
             logging.info(f"Running {name} from {start_point}")
             try:
-                solution, iters, f_evals, path = run_optimization(strategy, start_point)
+                if name == "SciPy BFGS":
+                    solution, iters, f_evals, path = run_scipy_bfgs_optimization(start_point)
+                else:
+                    strategy = strategies[name]
+                    solution, iters, f_evals, path = run_optimization(strategy, start_point)
+                
                 results[name].append({
                     'start': start_point,
                     'solution': solution,
@@ -176,9 +214,10 @@ def compare_strategies():
         Z = (1 - X)**2 + 100 * (Y - X**2)**2
         plt.contour(X, Y, Z, levels=np.logspace(0, 5, 35), cmap='gray')
         
-        for name in strategies.keys():
-            path = np.array(results[name][i]['path'])
-            plt.plot(path[:, 0], path[:, 1], 'o-', label=name, alpha=0.7)
+        for name in all_strategy_names:
+            if results[name]:
+                path = np.array(results[name][i]['path'])
+                plt.plot(path[:, 0], path[:, 1], 'o-', label=name, alpha=0.7)
         
         plt.plot(1, 1, 'r*', markersize=15, label='Optimum') # Optimum
         plt.xlabel('x1')
