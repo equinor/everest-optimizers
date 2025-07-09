@@ -92,6 +92,25 @@ def test_optqnewton_trustregion():
 
 
 @pytest.mark.skipif(not pyopttpp_available, reason="pyopttpp module not available")
+def test_optqnewton_trustpds():
+    """Test OptQNewton with the TrustPDS strategy."""
+    ndim = 2
+    rosen_problem = Rosenbrock(ndim, np.array([-1.2, 1.0]))
+    
+    optimizer = pyopttpp.OptQNewton(rosen_problem)
+    optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
+    
+    optimizer.optimize()
+    optimizer.cleanup()
+    
+    solution_np = rosen_problem.getXc().to_numpy()
+    expected_solution = np.array([1.0, 1.0])
+    
+    assert np.allclose(solution_np, expected_solution, rtol=1e-4), \
+        f"TrustPDS solution {solution_np} is not close to expected {expected_solution}"
+
+
+@pytest.mark.skipif(not pyopttpp_available, reason="pyopttpp module not available")
 def test_optqnewton_output_file():
     """Test if OptQNewton can write to an output file."""
     ndim = 2
@@ -116,24 +135,6 @@ def test_optqnewton_output_file():
     finally:
         # Clean up the temporary directory
         shutil.rmtree(temp_dir)
-
-@pytest.mark.skipif(not pyopttpp_available, reason="pyopttpp module not available")
-def test_optqnewton_trustpds():
-    """Test OptQNewton with the TrustPDS strategy. Expect to fail for now."""
-    ndim = 2
-    rosen_problem = Rosenbrock(ndim, np.array([-1.2, 1.0]))
-    
-    optimizer = pyopttpp.OptQNewton(rosen_problem)
-    optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
-    
-    optimizer.optimize()
-    optimizer.cleanup()
-    
-    solution_np = rosen_problem.getXc().to_numpy()
-    expected_solution = np.array([1.0, 1.0])
-    
-    assert np.allclose(solution_np, expected_solution, rtol=1e-4), \
-        f"TrustPDS solution {solution_np} is not close to expected {expected_solution}"
 
 @pytest.mark.skipif(not pyopttpp_available, reason="pyopttpp module not available")
 def test_optqnewton_set_debug():
