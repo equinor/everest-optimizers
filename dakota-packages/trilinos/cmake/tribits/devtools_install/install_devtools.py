@@ -13,9 +13,8 @@
 # Imports
 #
 
-from FindGeneralScriptSupport import *
 import InstallProgramDriver
-
+from FindGeneralScriptSupport import *
 
 #
 # Defaults and constants
@@ -34,19 +33,20 @@ gcc_version_default = "4.8.3"
 mpich_version_default = "3.1.3"
 
 # Common (compile independent) tools
-commonToolsArray = [ "gitdist", "autoconf", "cmake" ]
-commonToolsChoices = (["all"] + commonToolsArray + [""])
+commonToolsArray = ["gitdist", "autoconf", "cmake"]
+commonToolsChoices = ["all"] + commonToolsArray + [""]
 
 # Compiler toolset
-compilerToolsetArray = [ "gcc", "mpich" ];
-compilerToolsetChoices = (["all"] + compilerToolsetArray + [""])
+compilerToolsetArray = ["gcc", "mpich"]
+compilerToolsetChoices = ["all"] + compilerToolsetArray + [""]
 
 
 #
 # Utility functions
 #
 
-usageHelp = r"""install-devtools.py [OPTIONS]
+usageHelp = (
+    r"""install-devtools.py [OPTIONS]
 
 This script drives the installation of a number of tools needed by many
 TriBITS-based projects.  The most typical usage is to first create a scratch
@@ -76,10 +76,18 @@ directory:
 
 The default versions of the tools installed are:
 
-* autoconf-"""+autoconf_version_default+"""
-* cmake-"""+cmake_version_default+"""
-* gcc-"""+gcc_version_default+"""
-* mpich-"""+mpich_version_default+"""
+* autoconf-"""
+    + autoconf_version_default
+    + """
+* cmake-"""
+    + cmake_version_default
+    + """
+* gcc-"""
+    + gcc_version_default
+    + """
+* mpich-"""
+    + mpich_version_default
+    + """
 
 The tools installed under common_tools/ only need to be installed once
 independent of any compilers that may be used to build TriBITS-based projects.
@@ -119,7 +127,9 @@ The informational arguments to this function are:
   
     Gives the base URL for to get the tool sources from.  The default is:
   
-      """+sourceGitUrlBase_default+"""
+      """
+    + sourceGitUrlBase_default
+    + """
   
     This is used to build the full git URL as:
   
@@ -140,7 +150,11 @@ The informational arguments to this function are:
     This will download and install the default versions of these tools.  To
     select specific versions, use:
   
-      --common-tools=autoconf:"""+autoconf_version_default+""",cmake:"""+cmake_version_default+""",...
+      --common-tools=autoconf:"""
+    + autoconf_version_default
+    + """,cmake:"""
+    + cmake_version_default
+    + """,...
 
     The default is 'all'.  To install none of these, pass in empty:
 
@@ -164,7 +178,11 @@ The informational arguments to this function are:
   
     or specific versions with:
   
-      --compiler-toolset=gcc:"""+gcc_version_default+""",mpich:"""+mpich_version_default+"""
+      --compiler-toolset=gcc:"""
+    + gcc_version_default
+    + """,mpich:"""
+    + mpich_version_default
+    + """
   
     Of course if one is only installing GCC with an existing installed MPICH,
     one will need to also reinstall MPICH as well.
@@ -209,235 +227,293 @@ More information about what versions are installed, how they are installed,
 etc. is found in these scripts.  Note that some of these scripts apply patches
 for certain versions.  For details, look at the --help output from these
 scripts and look at the implementation of these scripts.
-"""        
+"""
+)
 
 
 # Get and process command-line arguments
 def getCmndLineOptions(cmndLineArgs, skipEchoCmndLine=False):
+    from optparse import OptionParser
 
-  from optparse import OptionParser
-  
-  clp = OptionParser(usage=usageHelp)
+    clp = OptionParser(usage=usageHelp)
 
-  clp.add_option(
-    "--install-dir", dest="installDir", type="string", default="",
-    help="The base directory <dev_env_base> that will be used for the install." \
-      +"  There is not default.  If this is not specified then will abort.")
+    clp.add_option(
+        "--install-dir",
+        dest="installDir",
+        type="string",
+        default="",
+        help="The base directory <dev_env_base> that will be used for the install."
+         "  There is not default.  If this is not specified then will abort.",
+    )
 
-  InstallProgramDriver.insertInstallPermissionsOptions(clp)
+    InstallProgramDriver.insertInstallPermissionsOptions(clp)
 
-  clp.add_option(
-    "--source-git-url-base", dest="sourceGitUrlBase", type="string",
-    default=sourceGitUrlBase_default,
-    help="Gives the base URL <url_base> for the git repos to object the source from.")
+    clp.add_option(
+        "--source-git-url-base",
+        dest="sourceGitUrlBase",
+        type="string",
+        default=sourceGitUrlBase_default,
+        help="Gives the base URL <url_base> for the git repos to object the source from.",
+    )
 
-  clp.add_option(
-    "--load-dev-env-file-base-name", dest="loadDevEnvFileBaseName",
-    type="string", default="load_dev_env",
-    help="Base name of the load dev env script that will be installed." \
-      "  (Default = 'load_dev_env')" )
+    clp.add_option(
+        "--load-dev-env-file-base-name",
+        dest="loadDevEnvFileBaseName",
+        type="string",
+        default="load_dev_env",
+        help="Base name of the load dev env script that will be installed."
+        "  (Default = 'load_dev_env')",
+    )
 
-  clp.add_option(
-    "--common-tools", dest="commonTools", type="string", default="all",
-    help="Specifies the common tools to download and install under common_tools/." \
-      "  Can be 'all', or empty '', or any combination of" \
-      " '"+(",".join(commonToolsArray))+"' (separated by commas, no spaces).")
+    clp.add_option(
+        "--common-tools",
+        dest="commonTools",
+        type="string",
+        default="all",
+        help="Specifies the common tools to download and install under common_tools/."
+        "  Can be 'all', or empty '', or any combination of"
+        " '" + (",".join(commonToolsArray)) + "' (separated by commas, no spaces).",
+    )
 
-  clp.add_option(
-    "--compiler-toolset", dest="compilerToolset", type="string", default="all",
-    help="Specifies GCC and MPICH and other compiler-specific tools to" \
-      " download and install under gcc-<gcc-version>/toolset/." \
-      "  Can be 'all', or empty '', or any combination of" \
-      " '"+(",".join(compilerToolsetArray))+"' (separated by commas, no spaces).")
+    clp.add_option(
+        "--compiler-toolset",
+        dest="compilerToolset",
+        type="string",
+        default="all",
+        help="Specifies GCC and MPICH and other compiler-specific tools to"
+        " download and install under gcc-<gcc-version>/toolset/."
+        "  Can be 'all', or empty '', or any combination of"
+        " '" + (",".join(compilerToolsetArray)) + "' (separated by commas, no spaces).",
+    )
 
-  clp.add_option(
-    "--parallel", dest="parallelLevel", type="string", default="1",
-    help="Number of parallel processes to use in the build.  The default is" \
-      " just '1'.  Use something like '8' to get faster parallel builds." )
+    clp.add_option(
+        "--parallel",
+        dest="parallelLevel",
+        type="string",
+        default="1",
+        help="Number of parallel processes to use in the build.  The default is"
+        " just '1'.  Use something like '8' to get faster parallel builds.",
+    )
 
-  clp.add_option(
-    "--do-op", dest="skipOp", action="store_false",
-    help="Do all of the requested actions [default].")
-  clp.add_option(
-    "--no-op", dest="skipOp", action="store_true", default=False,
-    help="Skip all of the requested actions and just print what would be done.")
-    
-  clp.add_option(
-    "--show-defaults", dest="showDefaults", action="store_true", default=False,
-    help="[ACTION] Show the defaults and exit." )
+    clp.add_option(
+        "--do-op",
+        dest="skipOp",
+        action="store_false",
+        help="Do all of the requested actions [default].",
+    )
+    clp.add_option(
+        "--no-op",
+        dest="skipOp",
+        action="store_true",
+        default=False,
+        help="Skip all of the requested actions and just print what would be done.",
+    )
 
-  clp.add_option(
-    "--initial-setup", dest="doInitialSetup", action="store_true", default=False,
-    help="[ACTION] Create base directories under <dev_env_base>/ and install" \
-      " load_dev_env.[sh,csh].")
+    clp.add_option(
+        "--show-defaults",
+        dest="showDefaults",
+        action="store_true",
+        default=False,
+        help="[ACTION] Show the defaults and exit.",
+    )
 
-  clp.add_option(
-    "--download", dest="doDownload", action="store_true", default=False,
-    help="[ACTION] Download all of the tools specified by --common-tools" \
-      " and --compiler-toolset.  WARNING:  If the source for a tool has" \
-      " already been downloaded, it will be deleted (along with the build" \
-      " directory) and downloaded from scratch!")
+    clp.add_option(
+        "--initial-setup",
+        dest="doInitialSetup",
+        action="store_true",
+        default=False,
+        help="[ACTION] Create base directories under <dev_env_base>/ and install"
+        " load_dev_env.[sh,csh].",
+    )
 
-  clp.add_option(
-    "--install", dest="doInstall", action="store_true", default=False,
-    help="[ACTION] Configure, build, and install all of the tools specified by" \
-      " --common-tools and --compiler-toolset.")
-    
-  clp.add_option(
-    "--show-final-instructions", dest="showFinalInstructions", action="store_true",
-    default=False,
-    help="[ACTION] Show final instructions for using the installed dev env." )
+    clp.add_option(
+        "--download",
+        dest="doDownload",
+        action="store_true",
+        default=False,
+        help="[ACTION] Download all of the tools specified by --common-tools"
+        " and --compiler-toolset.  WARNING:  If the source for a tool has"
+        " already been downloaded, it will be deleted (along with the build"
+        " directory) and downloaded from scratch!",
+    )
 
-  clp.add_option(
-    "--do-all", dest="doAll", action="store_true", default=False,
-    help="[AGGR ACTION] Do everything.  Implies --initial-setup --downlaod" \
-      +" --install --show-final-instructions")
+    clp.add_option(
+        "--install",
+        dest="doInstall",
+        action="store_true",
+        default=False,
+        help="[ACTION] Configure, build, and install all of the tools specified by"
+        " --common-tools and --compiler-toolset.",
+    )
 
-  (options, args) = clp.parse_args(args=cmndLineArgs)
+    clp.add_option(
+        "--show-final-instructions",
+        dest="showFinalInstructions",
+        action="store_true",
+        default=False,
+        help="[ACTION] Show final instructions for using the installed dev env.",
+    )
 
-  # NOTE: Above, in the pairs of boolean options, the *last* add_option(...) 
-  # takes effect!  That is why the commands are ordered the way they are!
+    clp.add_option(
+        "--do-all",
+        dest="doAll",
+        action="store_true",
+        default=False,
+        help="[AGGR ACTION] Do everything.  Implies --initial-setup --downlaod"
+         " --install --show-final-instructions",
+    )
 
-  #
-  # Echo the command-line
-  #
+    (options, args) = clp.parse_args(args=cmndLineArgs)
 
-  if not skipEchoCmndLine:
+    # NOTE: Above, in the pairs of boolean options, the *last* add_option(...)
+    # takes effect!  That is why the commands are ordered the way they are!
 
-    cmndLine = "**************************************************************************\n"
-    cmndLine +=  "Script: install-devtools.py \\\n"
-    cmndLine +=  "  --install-dir='"+options.installDir+"' \\\n"
-    cmndLine += InstallProgramDriver.echoInsertPermissionsOptions(options)
-    cmndLine +=  "  --source-git-url-base='"+options.sourceGitUrlBase+"' \\\n"
-    cmndLine +=  "  --load-dev-env-file-base-name='"+options.loadDevEnvFileBaseName+"' \\\n"
-    cmndLine +=  "  --common-tools='"+options.commonTools+"' \\\n"
-    cmndLine +=  "  --compiler-toolset='"+options.compilerToolset+"' \\\n"
-    cmndLine +=  "  --parallel='"+options.parallelLevel+"' \\\n"
-    if not options.skipOp:
-      cmndLine +=  "  --do-op \\\n"
-    else:
-      cmndLine +=  "  --no-op \\\n"
-    if options.doInitialSetup:
-      cmndLine +=  "  --initial-setup \\\n"
-    if options.doDownload:
-      cmndLine +=  "  --download \\\n"
-    if options.doInstall:
-      cmndLine +=  "  --install \\\n"
-    if options.showFinalInstructions:
-      cmndLine +=  "  --show-final-instructions \\\n"
+    #
+    # Echo the command-line
+    #
+
+    if not skipEchoCmndLine:
+        cmndLine = "**************************************************************************\n"
+        cmndLine += "Script: install-devtools.py \\\n"
+        cmndLine += "  --install-dir='" + options.installDir + "' \\\n"
+        cmndLine += InstallProgramDriver.echoInsertPermissionsOptions(options)
+        cmndLine += "  --source-git-url-base='" + options.sourceGitUrlBase + "' \\\n"
+        cmndLine += (
+            "  --load-dev-env-file-base-name='"
+            + options.loadDevEnvFileBaseName
+            + "' \\\n"
+        )
+        cmndLine += "  --common-tools='" + options.commonTools + "' \\\n"
+        cmndLine += "  --compiler-toolset='" + options.compilerToolset + "' \\\n"
+        cmndLine += "  --parallel='" + options.parallelLevel + "' \\\n"
+        if not options.skipOp:
+            cmndLine += "  --do-op \\\n"
+        else:
+            cmndLine += "  --no-op \\\n"
+        if options.doInitialSetup:
+            cmndLine += "  --initial-setup \\\n"
+        if options.doDownload:
+            cmndLine += "  --download \\\n"
+        if options.doInstall:
+            cmndLine += "  --install \\\n"
+        if options.showFinalInstructions:
+            cmndLine += "  --show-final-instructions \\\n"
+        if options.doAll:
+            cmndLine += "  --do-all \\\n"
+
+        print(cmndLine)
+
+        if options.showDefaults:
+            sys.exit(0)
+
+    #
+    # Check the input arguments
+    #
+
+    if options.installDir == "":
+        print("\nError, you must set --install-dir=<dev_env_base>!")
+        raise Exception("Bad input option --install-dir")
+    options.installDir = os.path.abspath(os.path.expanduser(options.installDir))
+
+    if options.commonTools == "all":
+        options.commonTools = ",".join(commonToolsArray)
+    # print("options.commonTools = '"+options.commonTools+"'")
+
+    if options.compilerToolset == "all":
+        options.compilerToolset = ",".join(compilerToolsetArray)
+    # print("options.compilerToolset = '"+options.compilerToolset+"'")
+
     if options.doAll:
-      cmndLine +=  "  --do-all \\\n"
+        options.doInitialSetup = True
+        options.doDownload = True
+        options.doInstall = True
+        options.showFinalInstructions = True
 
-    print(cmndLine)
+    #
+    # Return the options
+    #
 
-    if options.showDefaults:
-      sys.exit(0);
-
-  #
-  # Check the input arguments
-  #
-
-  if options.installDir == "":
-    print("\nError, you must set --install-dir=<dev_env_base>!")
-    raise Exception("Bad input option --install-dir")
-  options.installDir = os.path.abspath(os.path.expanduser(options.installDir))
-
-  if options.commonTools == "all":
-    options.commonTools = ",".join(commonToolsArray)
-  #print("options.commonTools = '"+options.commonTools+"'")
-
-  if options.compilerToolset == "all":
-    options.compilerToolset = ",".join(compilerToolsetArray)
-  #print("options.compilerToolset = '"+options.compilerToolset+"'")
-
-  if options.doAll:
-    options.doInitialSetup = True
-    options.doDownload = True
-    options.doInstall = True
-    options.showFinalInstructions = True
-
-  #
-  # Return the options
-  #
-
-  return options
+    return options
 
 
 #
 # Get array of selected tools (can be empty)
 #
 def getToolsSelectedArray(toolsSelectedStr, validToolsArray):
-  validToolsArraySet = set(validToolsArray)
-  if toolsSelectedStr == "":
-    return []
-  toolsArray = []
-  for toolName in toolsSelectedStr.split(","):
-    if not toolName in validToolsArraySet:
-      raise Exception("Error, '"+toolName+"' is not one of" \
-        " '"+(",".join(validToolsArray))+"'")
-    toolsArray.append(toolName)
-  return toolsArray
+    validToolsArraySet = set(validToolsArray)
+    if toolsSelectedStr == "":
+        return []
+    toolsArray = []
+    for toolName in toolsSelectedStr.split(","):
+        if toolName not in validToolsArraySet:
+            raise Exception(
+                "Error, '" + toolName + "' is not one of"
+                " '" + (",".join(validToolsArray)) + "'",
+            )
+        toolsArray.append(toolName)
+    return toolsArray
 
 
 #
 # Do substututions in a string given replacements
 #
 def substituteStrings(inputStr, subPairArray):
-  outputStr = ""
-  inputStrArray = inputStr.splitlines()
-  if inputStrArray[-1] == "": inputStrArray = inputStrArray[0:-1]
-  for line in inputStrArray:
-    #print("line = '"+line+"'")
-    for (str1, str2) in subPairArray:
-      #print("(str1, str2) =", (str1, str2))
-      line = line.replace(str1, str2)
-    outputStr += (line + "\n")
-  return outputStr
+    outputStr = ""
+    inputStrArray = inputStr.splitlines()
+    if inputStrArray[-1] == "":
+        inputStrArray = inputStrArray[0:-1]
+    for line in inputStrArray:
+        # print("line = '"+line+"'")
+        for str1, str2 in subPairArray:
+            # print("(str1, str2) =", (str1, str2))
+            line = line.replace(str1, str2)
+        outputStr += line + "\n"
+    return outputStr
 
 
 #
 # Configure a file by substituting strings
 #
 def configureFile(fileInPath, subPairArray, fileOutPath):
-  fileInStr = open(fileInPath, 'r').read()
-  fileOutStr = substituteStrings(fileInStr, subPairArray)
-  open(fileOutPath, 'w').write(fileOutStr)
+    fileInStr = open(fileInPath).read()
+    fileOutStr = substituteStrings(fileInStr, subPairArray)
+    open(fileOutPath, "w").write(fileOutStr)
+
 
 #
 # Assert an install directory exists
 #
 def assertInstallDirExists(dirPath, inOptions):
-  if not os.path.exists(dirPath) and not inOptions.skipOp:
-    raise Exception(
-      "Error, the install directory '"+dirPath+"'" \
-       " does not exist!")
+    if not os.path.exists(dirPath) and not inOptions.skipOp:
+        raise Exception(
+            "Error, the install directory '" + dirPath + "' does not exist!",
+        )
 
 
 #
 # Write the files load_dev_env.[sh,csh]
 #
 def writeLoadDevEnvFiles(devEnvBaseDir, compilersToolsetBaseDir, inOptions):
-
-  subPairArray = [
-    ("@DEV_ENV_BASE@", devEnvBaseDir),
-    ("@CMAKE_VERSION@", cmake_version_default),
-    ("@AUTOCONF_VERSION@", autoconf_version_default),
-    ("@GCC_VERSION@", gcc_version_default),
-    ("@MPICH_VERSION@", mpich_version_default)
+    subPairArray = [
+        ("@DEV_ENV_BASE@", devEnvBaseDir),
+        ("@CMAKE_VERSION@", cmake_version_default),
+        ("@AUTOCONF_VERSION@", autoconf_version_default),
+        ("@GCC_VERSION@", gcc_version_default),
+        ("@MPICH_VERSION@", mpich_version_default),
     ]
 
-  load_dev_env_base = inOptions.loadDevEnvFileBaseName
+    load_dev_env_base = inOptions.loadDevEnvFileBaseName
 
-  configureFile(
-    os.path.join(devtools_install_dir, "load_dev_env.sh.in"),
-    subPairArray,
-    os.path.join(compilersToolsetBaseDir, load_dev_env_base+".sh")
+    configureFile(
+        os.path.join(devtools_install_dir, "load_dev_env.sh.in"),
+        subPairArray,
+        os.path.join(compilersToolsetBaseDir, load_dev_env_base + ".sh"),
     )
 
-  configureFile(
-    os.path.join(devtools_install_dir, "load_dev_env.csh.in"),
-    subPairArray,
-    os.path.join(compilersToolsetBaseDir, load_dev_env_base+".csh")
+    configureFile(
+        os.path.join(devtools_install_dir, "load_dev_env.csh.in"),
+        subPairArray,
+        os.path.join(compilersToolsetBaseDir, load_dev_env_base + ".csh"),
     )
 
 
@@ -445,254 +521,281 @@ def writeLoadDevEnvFiles(devEnvBaseDir, compilersToolsetBaseDir, inOptions):
 # Download the source for tool
 #
 def downloadToolSource(toolName, toolVer, gitUrlBase, inOptions):
+    toolDir = toolName + "-" + toolVer
 
-  toolDir = toolName+"-"+toolVer
+    print("\nDownloading the source for " + toolDir + " ...")
 
-  print("\nDownloading the source for " + toolDir + " ...")
+    outFile = toolDir + "-download.log"
+    workingDir = scratch_dir
+    toolSrcBaseDir = toolDir + "-base"
+    targetToolSrcDir = workingDir + "/" + toolSrcBaseDir
 
-  outFile = toolDir+"-download.log"
-  workingDir=scratch_dir
-  toolSrcBaseDir = toolDir+"-base"
-  targetToolSrcDir = workingDir+"/"+toolSrcBaseDir
+    if os.path.exists(targetToolSrcDir):
+        print("\nRemoving existing directory '" + targetToolSrcDir + "' ...")
+        cmnd = "rm -rf " + targetToolSrcDir
+        if not inOptions.skipOp:
+            echoRunSysCmnd(cmnd)
+        else:
+            print("\nRunning: " + cmnd)
 
-  if os.path.exists(targetToolSrcDir):
-    print("\nRemoving existing directory '" + targetToolSrcDir + "' ...")
-    cmnd = "rm -rf "+targetToolSrcDir
+    cmnd = "git clone " + gitUrlBase + toolSrcBaseDir + " " + targetToolSrcDir
     if not inOptions.skipOp:
-      echoRunSysCmnd(cmnd)
+        echoRunSysCmnd(cmnd, workingDir=workingDir, outFile=outFile, timeCmnd=True)
     else:
-      print("\nRunning: " + cmnd)
-
-  cmnd = "git clone "+gitUrlBase+toolSrcBaseDir+" "+targetToolSrcDir
-  if not inOptions.skipOp:
-    echoRunSysCmnd(cmnd, workingDir=workingDir, outFile=outFile, timeCmnd=True)
-  else:
-    print("\nRunning: " + cmnd)
-    print("\n  Running in working directory: " + workingDir)
-    print("\n   Writing console output to file " + outFile)
+        print("\nRunning: " + cmnd)
+        print("\n  Running in working directory: " + workingDir)
+        print("\n   Writing console output to file " + outFile)
 
 
 #
 # Install downloaded tool from source
 #
-def installToolFromSource(toolName, toolVer, installBaseDir,
-  extraEnv, inOptions \
-  ):
+def installToolFromSource(toolName, toolVer, installBaseDir, extraEnv, inOptions):
+    toolDir = toolName + "-" + toolVer
 
-  toolDir = toolName+"-"+toolVer
+    print("\nInstalling " + toolDir + " ...")
 
-  print("\nInstalling " + toolDir + " ...")
+    outFile = toolDir + "-install.log"
+    workingDir = scratch_dir
+    toolInstallDir = installBaseDir + "/" + toolDir
 
-  outFile = toolDir+"-install.log"
-  workingDir=scratch_dir
-  toolInstallDir = installBaseDir+"/"+toolDir
-
-  cmnd = devtools_install_dir+"/install-"+toolName+".py" \
-    +" --"+toolName+"-version="+toolVer \
-    +" --untar --configure --build --install --show-final-instructions" \
-    +" --install-dir="+toolInstallDir \
-    +" --parallel="+inOptions.parallelLevel \
-    +" --install-owner="+inOptions.installOwner \
-    +" --install-group="+inOptions.installGroup
-  if inOptions.installForAll:
-    cmnd += "  --install-for-all"
-  if not inOptions.skipOp:
-    echoRunSysCmnd(cmnd, workingDir=workingDir, outFile=outFile, timeCmnd=True,
-      extraEnv=extraEnv)
-  else:
-    print("\nRunning: " + cmnd)
-    print("\n  Running in working directory: " + workingDir)
-    print("\n  Appending environment: " + str(extraEnv))
-    print("\n  Writing console output to file " + outFile)
+    cmnd = (
+        devtools_install_dir
+        + "/install-"
+        + toolName
+        + ".py"
+        + " --"
+        + toolName
+        + "-version="
+        + toolVer
+        + " --untar --configure --build --install --show-final-instructions"
+        + " --install-dir="
+        + toolInstallDir
+        + " --parallel="
+        + inOptions.parallelLevel
+        + " --install-owner="
+        + inOptions.installOwner
+        + " --install-group="
+        + inOptions.installGroup
+    )
+    if inOptions.installForAll:
+        cmnd += "  --install-for-all"
+    if not inOptions.skipOp:
+        echoRunSysCmnd(
+            cmnd,
+            workingDir=workingDir,
+            outFile=outFile,
+            timeCmnd=True,
+            extraEnv=extraEnv,
+        )
+    else:
+        print("\nRunning: " + cmnd)
+        print("\n  Running in working directory: " + workingDir)
+        print("\n  Appending environment: " + str(extraEnv))
+        print("\n  Writing console output to file " + outFile)
 
 
 #
 # Main
 #
 
+
 def main(cmndLineArgs):
+    #
+    # Get the command-line options
+    #
 
-  #
-  # Get the command-line options
-  #
+    inOptions = getCmndLineOptions(cmndLineArgs)
 
-  inOptions = getCmndLineOptions(cmndLineArgs)
-
-  if inOptions.skipOp:
-    print("\n***")
-    print("*** NOTE: --no-op provided, will only trace actions and not touch the filesystem!")
-    print("***\n")
-
-  commonToolsSelected = \
-    getToolsSelectedArray(inOptions.commonTools, commonToolsArray)
-  print("\nSelected common tools = " + str(commonToolsSelected))
-  commonToolsSelectedSet = set(commonToolsSelected)
-
-  compilerToolsetSelected = \
-    getToolsSelectedArray(inOptions.compilerToolset, compilerToolsetArray)
-  print("\nSelected compiler toolset = " + str(compilerToolsetSelected))
-  compilerToolsetSelectedSet = set(compilerToolsetSelected)
-
-  gccVersion=gcc_version_default #ToDo: Make variable!
-
-  dev_env_base_dir = inOptions.installDir
-
-  ###
-  print("\n\nA) Setup the install directory <dev_env_base> ='" +
-        dev_env_base_dir + "':\n")
-  ###
-
-  dev_env_base_exists = os.path.exists(dev_env_base_dir)
-
-  common_tools_dir = os.path.join(dev_env_base_dir, "common_tools")
-  common_tools_exists = os.path.exists(common_tools_dir)
-
-  compiler_toolset_base_dir = os.path.join(dev_env_base_dir, "gcc-"+gccVersion)
-  compiler_toolset_base_exists = os.path.exists(compiler_toolset_base_dir)
-
-  compiler_toolset_dir = os.path.join(compiler_toolset_base_dir, "toolset")
-  compiler_toolset_exists = os.path.exists(compiler_toolset_dir)
-
-  if inOptions.doInitialSetup:
-
-    if not dev_env_base_exists:
-      print("Creating directory '" + dev_env_base_dir + "' ...")
-      if not inOptions.skipOp:
-        os.makedirs(dev_env_base_dir)
-
-    if not common_tools_exists:
-      print("Creating directory '" + common_tools_dir + "' ...")
-      if not inOptions.skipOp:
-        os.makedirs(common_tools_dir)
-
-    # Always create this directory so we can write the load_dev_env.sh script!
-    if not compiler_toolset_base_exists:
-      print("Creating directory '" + compiler_toolset_base_dir + "' ...")
-      if not inOptions.skipOp:
-        os.makedirs(compiler_toolset_base_dir)
-
-    if not compiler_toolset_exists:
-      print("Creating directory '" + compiler_toolset_dir + "' ...")
-      if not inOptions.skipOp:
-        os.makedirs(compiler_toolset_dir)
-
-    print("Writing new files " + inOptions.loadDevEnvFileBaseName +
-          ".[sh,csh] ...")
-    if not inOptions.skipOp:
-      writeLoadDevEnvFiles(dev_env_base_dir, compiler_toolset_base_dir, inOptions)
-
-  else:
-
-    print("Skipping setup of the install directory by request!")
-
-    assertInstallDirExists(dev_env_base_dir, inOptions)
-    assertInstallDirExists(common_tools_dir, inOptions)
-    assertInstallDirExists(compiler_toolset_base_dir, inOptions)
-    assertInstallDirExists(compiler_toolset_dir, inOptions)
-
-  ###
-  print("\n\nB) Download all sources for each selected tool:\n")
-  ###
-
-  if inOptions.doDownload:
-
-    if "cmake" in commonToolsSelectedSet:
-      downloadToolSource("cmake", cmake_version_default,
-        inOptions.sourceGitUrlBase, inOptions)
-
-    if "autoconf" in commonToolsSelectedSet:
-      downloadToolSource("autoconf", autoconf_version_default,
-        inOptions.sourceGitUrlBase, inOptions)
-
-    if "gcc" in compilerToolsetSelectedSet:
-      downloadToolSource("gcc", gcc_version_default,
-        inOptions.sourceGitUrlBase, inOptions)
-
-    if "mpich" in compilerToolsetSelectedSet:
-      downloadToolSource("mpich", mpich_version_default,
-        inOptions.sourceGitUrlBase, inOptions)
-
-  else:
-
-    print("Skipping download of the source for the tools on request!")
-    if inOptions.doInstall:
-      print("NOTE: The downloads had better be there for the install!")
-
-  ###
-  print("\n\nC) Untar, configure, build and install each selected tool:\n")
-  ###
-
-  if inOptions.doInstall:
-
-    if "gitdist" in commonToolsSelectedSet:
-      print("\nInstalling gitdist ...")
-      echoRunSysCmnd("cp "+pythonUtilsDir+"/gitdist "+common_tools_dir+"/")
-      InstallProgramDriver.fixupInstallPermissions(inOptions, common_tools_dir)
-
-    if "cmake" in commonToolsSelectedSet:
-      installToolFromSource("cmake", cmake_version_default,
-        common_tools_dir, None, inOptions )
-
-    if "autoconf" in commonToolsSelectedSet:
-      installToolFromSource("autoconf", autoconf_version_default,
-        common_tools_dir, None, inOptions )
-
-    if "gcc" in compilerToolsetSelectedSet:
-      installToolFromSource("gcc", gcc_version_default,
-        compiler_toolset_dir, None, inOptions )
-
-    if "mpich" in compilerToolsetSelectedSet:
-      gccInstallDir = compiler_toolset_dir+"/gcc-"+gcc_version_default
-      if not os.path.exists(gccInstallDir) and not inOptions.skipOp:
-        raise Exception("Error, gcc has not been installed yet." \
-          "  Missing directory '"+gccInstallDir+"'") 
-      LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH", "")
-      installToolFromSource(
-        "mpich",
-        mpich_version_default,
-        compiler_toolset_dir,
-        {
-          "CC" : gccInstallDir+"/bin/gcc",
-          "CXX" : gccInstallDir+"/bin/g++",
-          "FC" : gccInstallDir+"/bin/gfortran",
-          "LD_LIBRARY_PATH" : gccInstallDir+"/lib64:"+LD_LIBRARY_PATH
-         },
-        inOptions
+    if inOptions.skipOp:
+        print("\n***")
+        print(
+            "*** NOTE: --no-op provided, will only trace actions and not touch the filesystem!",
         )
+        print("***\n")
 
-  else:
+    commonToolsSelected = getToolsSelectedArray(inOptions.commonTools, commonToolsArray)
+    print("\nSelected common tools = " + str(commonToolsSelected))
+    commonToolsSelectedSet = set(commonToolsSelected)
 
-    print("Skipping install of the tools on request!")
+    compilerToolsetSelected = getToolsSelectedArray(
+        inOptions.compilerToolset, compilerToolsetArray,
+    )
+    print("\nSelected compiler toolset = " + str(compilerToolsetSelected))
+    compilerToolsetSelectedSet = set(compilerToolsetSelected)
 
-  ###
-  print("\n\nD) Final instructions for using installed dev env:")
-  ###
-    
-  if inOptions.showFinalInstructions:
-    print("\nTo use the new dev env, just source the file:\n")
-    print("  source " + compiler_toolset_base_dir + "/load_dev_env.sh\n")
-    print("for sh or bash shells (or load_dev_env.csh for csh shell).\n")
-    print("TIP: Add this source to your ~/.bash_profile!")
-  else:
-    print("Skipping on request ...")
+    gccVersion = gcc_version_default  # TODO: Make variable!
 
-  if inOptions.skipOp:
-    print("\n***")
-    print("*** NOTE: --no-op provided, only traced actions that would have been taken!")
-    print("***")
-  
-  print("\n[End]")
+    dev_env_base_dir = inOptions.installDir
+
+    ###
+    print(
+        "\n\nA) Setup the install directory <dev_env_base> ='"
+        + dev_env_base_dir
+        + "':\n",
+    )
+    ###
+
+    dev_env_base_exists = os.path.exists(dev_env_base_dir)
+
+    common_tools_dir = os.path.join(dev_env_base_dir, "common_tools")
+    common_tools_exists = os.path.exists(common_tools_dir)
+
+    compiler_toolset_base_dir = os.path.join(dev_env_base_dir, "gcc-" + gccVersion)
+    compiler_toolset_base_exists = os.path.exists(compiler_toolset_base_dir)
+
+    compiler_toolset_dir = os.path.join(compiler_toolset_base_dir, "toolset")
+    compiler_toolset_exists = os.path.exists(compiler_toolset_dir)
+
+    if inOptions.doInitialSetup:
+        if not dev_env_base_exists:
+            print("Creating directory '" + dev_env_base_dir + "' ...")
+            if not inOptions.skipOp:
+                os.makedirs(dev_env_base_dir)
+
+        if not common_tools_exists:
+            print("Creating directory '" + common_tools_dir + "' ...")
+            if not inOptions.skipOp:
+                os.makedirs(common_tools_dir)
+
+        # Always create this directory so we can write the load_dev_env.sh script!
+        if not compiler_toolset_base_exists:
+            print("Creating directory '" + compiler_toolset_base_dir + "' ...")
+            if not inOptions.skipOp:
+                os.makedirs(compiler_toolset_base_dir)
+
+        if not compiler_toolset_exists:
+            print("Creating directory '" + compiler_toolset_dir + "' ...")
+            if not inOptions.skipOp:
+                os.makedirs(compiler_toolset_dir)
+
+        print("Writing new files " + inOptions.loadDevEnvFileBaseName + ".[sh,csh] ...")
+        if not inOptions.skipOp:
+            writeLoadDevEnvFiles(dev_env_base_dir, compiler_toolset_base_dir, inOptions)
+
+    else:
+        print("Skipping setup of the install directory by request!")
+
+        assertInstallDirExists(dev_env_base_dir, inOptions)
+        assertInstallDirExists(common_tools_dir, inOptions)
+        assertInstallDirExists(compiler_toolset_base_dir, inOptions)
+        assertInstallDirExists(compiler_toolset_dir, inOptions)
+
+    ###
+    print("\n\nB) Download all sources for each selected tool:\n")
+    ###
+
+    if inOptions.doDownload:
+        if "cmake" in commonToolsSelectedSet:
+            downloadToolSource(
+                "cmake", cmake_version_default, inOptions.sourceGitUrlBase, inOptions,
+            )
+
+        if "autoconf" in commonToolsSelectedSet:
+            downloadToolSource(
+                "autoconf",
+                autoconf_version_default,
+                inOptions.sourceGitUrlBase,
+                inOptions,
+            )
+
+        if "gcc" in compilerToolsetSelectedSet:
+            downloadToolSource(
+                "gcc", gcc_version_default, inOptions.sourceGitUrlBase, inOptions,
+            )
+
+        if "mpich" in compilerToolsetSelectedSet:
+            downloadToolSource(
+                "mpich", mpich_version_default, inOptions.sourceGitUrlBase, inOptions,
+            )
+
+    else:
+        print("Skipping download of the source for the tools on request!")
+        if inOptions.doInstall:
+            print("NOTE: The downloads had better be there for the install!")
+
+    ###
+    print("\n\nC) Untar, configure, build and install each selected tool:\n")
+    ###
+
+    if inOptions.doInstall:
+        if "gitdist" in commonToolsSelectedSet:
+            print("\nInstalling gitdist ...")
+            echoRunSysCmnd(
+                "cp " + pythonUtilsDir + "/gitdist " + common_tools_dir + "/",
+            )
+            InstallProgramDriver.fixupInstallPermissions(inOptions, common_tools_dir)
+
+        if "cmake" in commonToolsSelectedSet:
+            installToolFromSource(
+                "cmake", cmake_version_default, common_tools_dir, None, inOptions,
+            )
+
+        if "autoconf" in commonToolsSelectedSet:
+            installToolFromSource(
+                "autoconf", autoconf_version_default, common_tools_dir, None, inOptions,
+            )
+
+        if "gcc" in compilerToolsetSelectedSet:
+            installToolFromSource(
+                "gcc", gcc_version_default, compiler_toolset_dir, None, inOptions,
+            )
+
+        if "mpich" in compilerToolsetSelectedSet:
+            gccInstallDir = compiler_toolset_dir + "/gcc-" + gcc_version_default
+            if not os.path.exists(gccInstallDir) and not inOptions.skipOp:
+                raise Exception(
+                    "Error, gcc has not been installed yet."
+                    "  Missing directory '" + gccInstallDir + "'",
+                )
+            LD_LIBRARY_PATH = os.environ.get("LD_LIBRARY_PATH", "")
+            installToolFromSource(
+                "mpich",
+                mpich_version_default,
+                compiler_toolset_dir,
+                {
+                    "CC": gccInstallDir + "/bin/gcc",
+                    "CXX": gccInstallDir + "/bin/g++",
+                    "FC": gccInstallDir + "/bin/gfortran",
+                    "LD_LIBRARY_PATH": gccInstallDir + "/lib64:" + LD_LIBRARY_PATH,
+                },
+                inOptions,
+            )
+
+    else:
+        print("Skipping install of the tools on request!")
+
+    ###
+    print("\n\nD) Final instructions for using installed dev env:")
+    ###
+
+    if inOptions.showFinalInstructions:
+        print("\nTo use the new dev env, just source the file:\n")
+        print("  source " + compiler_toolset_base_dir + "/load_dev_env.sh\n")
+        print("for sh or bash shells (or load_dev_env.csh for csh shell).\n")
+        print("TIP: Add this source to your ~/.bash_profile!")
+    else:
+        print("Skipping on request ...")
+
+    if inOptions.skipOp:
+        print("\n***")
+        print(
+            "*** NOTE: --no-op provided, only traced actions that would have been taken!",
+        )
+        print("***")
+
+    print("\n[End]")
 
 
 #
 # Script driver
 #
 
-if __name__ == '__main__':
-  try:
-    sys.exit(main(sys.argv[1:]))
-  except Exception as e:
-    print(e)
-    print()
-    printStackTrace()
-    sys.exit(1)
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except Exception as e:
+        print(e)
+        print()
+        printStackTrace()
+        sys.exit(1)

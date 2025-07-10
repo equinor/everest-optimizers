@@ -1,6 +1,6 @@
 import numpy as np
-from PyROL.vectors import npVector
 from PyROL import Objective_SimOpt, Vector_SimOpt
+from PyROL.vectors import npVector
 
 
 class MyObjective(Objective_SimOpt):
@@ -9,9 +9,7 @@ class MyObjective(Objective_SimOpt):
             x, tol = args
             # return self.value(x.get_1(), x.get_2(), tol)
             return super().value(*args)
-        else:
-            return 0.
-
+        return 0.0
 
 
 u = npVector(np.ones(3))
@@ -20,5 +18,5 @@ x = Vector_SimOpt(u, z)
 tol = 1e-12
 
 obj = MyObjective()
-assert obj.value(u, z, tol) == 0.
-assert obj.value(x, tol) == 0.
+assert obj.value(u, z, tol) == 0.0
+assert obj.value(x, tol) == 0.0

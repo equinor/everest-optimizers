@@ -1,55 +1,54 @@
 # compare with src/zoo/testproblems/ROL_TestProblem.hpp
 
-import numpy as np
-
 from abc import ABC, abstractmethod
-from pyrol import Problem, Bounds
+
+import numpy as np
+from pyrol import Bounds, Problem
 from pyrol.vectors import NumPyVector
 
 
 class TestProblem(ABC):
-
     @abstractmethod
     def getObjective(self):
         pass
 
-    @abstractmethod 
+    @abstractmethod
     def getInitialGuess(self):
         pass
 
     @abstractmethod
-    def getSolution(self, i = 0):
+    def getSolution(self, i=0):
         pass
 
     def getNumSolutions(self):
-       return 1
+        return 1
 
     def getBoundConstraint(self):
-       return None
+        return None
 
     def getLinearEqualityConstraint(self):
-       return None
+        return None
 
     def getLinearEqualityMultiplier(self):
-       return None
-    
+        return None
+
     def getEqualityConstraint(self):
-       return None
+        return None
 
     def getEqualityMultiplier(self):
-       return None
+        return None
 
     def getLinearInequalityConstraint(self):
-       return None
+        return None
 
     def getLinearInequalityMultiplier(self):
-       return None
+        return None
 
     def getInequalityConstraint(self):
-       return None
+        return None
 
     def getInequalityMultiplier(self):
-       return None
+        return None
 
     def get(self):
         x0 = self.getInitialGuess()
@@ -72,11 +71,12 @@ class TestProblem(ABC):
         if linear_econ is not None:
             linear_emul = self.getLinearEqualityMultiplier()
             assert linear_emul is not None
-            problem.addLinearConstraint("linear equality constraint", 
-                                        linear_econ, linear_emul)
+            problem.addLinearConstraint(
+                "linear equality constraint", linear_econ, linear_emul,
+            )
 
         icon = self.getInequalityConstraint()
-        if icon is not None: 
+        if icon is not None:
             imul = self.getInequalityMultiplier()
             assert imul is not None
             b = NumPyVector(np.zeros(imul.array.size))
@@ -89,7 +89,8 @@ class TestProblem(ABC):
             assert linear_imul is not None
             b = NumPyVector(np.zeros(linear_imul.array.size))
             bcon = Bounds(b, True)
-            problem.addLinearConstraint("linear inquality constraint", 
-                                        linear_icon, linear_imul, bcon)
+            problem.addLinearConstraint(
+                "linear inquality constraint", linear_icon, linear_imul, bcon,
+            )
 
         return problem, x0, x

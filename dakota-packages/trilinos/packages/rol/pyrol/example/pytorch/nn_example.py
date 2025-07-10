@@ -1,13 +1,10 @@
-from TorchVectors    import TensorDictVector
-from TorchObjectives import LeastSquaresObjective
-from Models          import NN
-
-from pyrol import getCout, Problem, Solver
-from pyrol.pyrol.Teuchos import ParameterList
-
 import numpy as np
-
 import torch
+from Models import NN
+from pyrol import Problem, Solver, getCout
+from pyrol.pyrol.Teuchos import ParameterList
+from TorchObjectives import LeastSquaresObjective
+from TorchVectors import TensorDictVector
 
 
 def generate_data(model):
@@ -24,12 +21,12 @@ def generate_data(model):
 
 def build_parameter_list():
     params = ParameterList()
-    params['General'] =  ParameterList()
-    params['General']['Output Level'] = 1
-    params['Step'] = ParameterList()
-    params['Step']['Trust Region'] = ParameterList()
-    params['Step']['Trust Region']['Subproblem Solver'] = 'Truncated CG'
-    params['Step']['Trust Region']['Initial Radius'] = 1e2
+    params["General"] = ParameterList()
+    params["General"]["Output Level"] = 1
+    params["Step"] = ParameterList()
+    params["Step"]["Trust Region"] = ParameterList()
+    params["Step"]["Trust Region"]["Subproblem Solver"] = "Truncated CG"
+    params["Step"]["Trust Region"]["Initial Radius"] = 1e2
     return params
 
 
@@ -40,7 +37,7 @@ def check_result(x, alpha):
         target.append(alpha)
         actual.append(x[i])
     np.testing.assert_allclose(actual, target)
-    print('Check passed! Correctly optimized.')
+    print("Check passed! Correctly optimized.")
 
 
 def main():
@@ -70,5 +67,5 @@ def main():
     check_result(x, alpha)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

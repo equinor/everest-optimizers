@@ -8,11 +8,8 @@
 # *****************************************************************************
 # @HEADER
 
-import sys
 import os
 import re
-import traceback
-
 
 #
 # Read in the command-line arguments
@@ -62,17 +59,29 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-  "--copyright-header", dest="copyrightHeader", type="string", default="",
-  help="File containing the copyright header the be used." )
+    "--copyright-header",
+    dest="copyrightHeader",
+    type="string",
+    default="",
+    help="File containing the copyright header the be used.",
+)
 
 clp.add_option(
-  "--file", dest="fileName", type="string", default="",
-  help="File to have the copyright header replaced in." )
+    "--file",
+    dest="fileName",
+    type="string",
+    default="",
+    help="File to have the copyright header replaced in.",
+)
 
 clp.add_option(
-  "--script-mode", dest="scriptMode", action="store_true", default=False,
-  help="Enable script mode. This prevents the addition of c style comment " +
-       "markers at the begining and end of the copyright notice" )
+    "--script-mode",
+    dest="scriptMode",
+    action="store_true",
+    default=False,
+    help="Enable script mode. This prevents the addition of c style comment "
+     "markers at the begining and end of the copyright notice",
+)
 
 (options, args) = clp.parse_args()
 
@@ -82,17 +91,17 @@ clp.add_option(
 #
 
 if not options.copyrightHeader:
-  raise Exception("Error, must set --copyrightHeader")
+    raise Exception("Error, must set --copyrightHeader")
 
 if not options.fileName:
-  raise Exception("Error, must set --fileName")
+    raise Exception("Error, must set --fileName")
 
 if options.scriptMode:
-  commentBegin = ""
-  commentEnd   = ""
+    commentBegin = ""
+    commentEnd = ""
 else:
-  commentBegin = "/*" + os.linesep
-  commentEnd   = "*/" + os.linesep
+    commentBegin = "/*" + os.linesep
+    commentEnd = "*/" + os.linesep
 
 
 #
@@ -101,21 +110,21 @@ else:
 
 # A) Read in the standard copyright header
 
-copyrightHeaderStr = open(options.copyrightHeader, 'r').read()
-#print "copyrightHeaderStr:\n----------\n" + copyrightHeaderStr+"-----------\n"
+copyrightHeaderStr = open(options.copyrightHeader).read()
+# print "copyrightHeaderStr:\n----------\n" + copyrightHeaderStr+"-----------\n"
 
 # B) Read in the given file line by line looking to replace the copyright header
 
 reHeaderLine = re.compile(r".*@HEADER.*")
 
-fileLines = open(options.fileName, 'r').readlines()
+fileLines = open(options.fileName).readlines()
 
 # See if the first line is #!
-#print "fileLines[0] = '"+fileLines[0]+"'"
+# print "fileLines[0] = '"+fileLines[0]+"'"
 if options.scriptMode and fileLines[0][0:2] == "#!":
-  firstLineIsSheBang = True
+    firstLineIsSheBang = True
 else:
-  firstLineIsSheBang = False
+    firstLineIsSheBang = False
 
 # Look for the header
 foundSheBang = False
@@ -124,45 +133,54 @@ inHeaderBlock = False
 firstLineStr = ""
 lowerNewFileStr = ""
 for line in fileLines:
-  #print "line: '"+line+"'"
-  if firstLineIsSheBang and not foundSheBang:
-    #print "Found #!"
-    firstLineStr = line
-    foundSheBang = True
-  elif reHeaderLine.match(line) and not inHeaderBlock:
-    #print "Found first @HEADER!"
-    if foundExistingHeaderBlock:
-      raise Exception("Error, the file '"+options.fileName+"'" + \
-        " contains more than one header block!");
-    foundExistingHeaderBlock = True
-    inHeaderBlock = True
-    lowerNewFileStr += copyrightHeaderStr
-  elif reHeaderLine.match(line) and inHeaderBlock:
-    #print "Found last @HEADER!"
-    inHeaderBlock = False
-  elif inHeaderBlock:
-    #print "Skipping line in existing header block!"
-    None
-  else:
-    #print "Augmenting line!"
-    lowerNewFileStr += line
+    # print "line: '"+line+"'"
+    if firstLineIsSheBang and not foundSheBang:
+        # print "Found #!"
+        firstLineStr = line
+        foundSheBang = True
+    elif reHeaderLine.match(line) and not inHeaderBlock:
+        # print "Found first @HEADER!"
+        if foundExistingHeaderBlock:
+            raise Exception(
+                "Error, the file '"
+                + options.fileName
+                + "'"
+                + " contains more than one header block!",
+            )
+        foundExistingHeaderBlock = True
+        inHeaderBlock = True
+        lowerNewFileStr += copyrightHeaderStr
+    elif reHeaderLine.match(line) and inHeaderBlock:
+        # print "Found last @HEADER!"
+        inHeaderBlock = False
+    elif inHeaderBlock:
+        # print "Skipping line in existing header block!"
+        None
+    else:
+        # print "Augmenting line!"
+        lowerNewFileStr += line
 
-#print "\n\nfirstLineStr =", firstLineStr
-#print "\n\nlowerNewFileStr:\n----------\n"+lowerNewFileStr+"-----------\n"
+# print "\n\nfirstLineStr =", firstLineStr
+# print "\n\nlowerNewFileStr:\n----------\n"+lowerNewFileStr+"-----------\n"
 
 
 # C) If an existing header was never found, then add one at the top of the
 # file.
 
 if not foundExistingHeaderBlock:
-  newFileStr = firstLineStr + \
-    commentBegin + copyrightHeaderStr + commentEnd + os.linesep + \
-    lowerNewFileStr
+    newFileStr = (
+        firstLineStr
+        + commentBegin
+        + copyrightHeaderStr
+        + commentEnd
+        + os.linesep
+        + lowerNewFileStr
+    )
 else:
-  newFileStr = firstLineStr + lowerNewFileStr
+    newFileStr = firstLineStr + lowerNewFileStr
 
 
 # D) Write the new file
 
-#print "\n\nnewFileStr:\n----------\n"+newFileStr+"-----------\n"
-open(options.fileName, 'w').write(newFileStr)
+# print "\n\nnewFileStr:\n----------\n"+newFileStr+"-----------\n"
+open(options.fileName, "w").write(newFileStr)

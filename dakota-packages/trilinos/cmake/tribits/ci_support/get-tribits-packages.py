@@ -10,16 +10,14 @@
 # @HEADER
 
 from FindGeneralScriptSupport import *
-from TribitsPackageFilePathUtils import *
 from gitdist import addOptionParserChoiceOption
-
+from TribitsPackageFilePathUtils import *
 
 #
 # Read in the commandline arguments
 #
 
-usageHelp = \
-r"""get-tribits-packages.py --deps-xml-file=<DEPS_XML_FILE> \
+usageHelp = r"""get-tribits-packages.py --deps-xml-file=<DEPS_XML_FILE> \
   --only-top-level-packages=[on|off]
 
 This script returns a comma-separated list of all of the project's top-level
@@ -31,26 +29,32 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-  "--deps-xml-file", dest="depsXmlFile", type="string",
-  help="File containing TriBITS-generated XML data-structure the listing"+\
-    " of packages, dir names, dependencies, etc.")
+    "--deps-xml-file",
+    dest="depsXmlFile",
+    type="string",
+    help="File containing TriBITS-generated XML data-structure the listing"
+     " of packages, dir names, dependencies, etc.",
+)
 
 addOptionParserChoiceOption(
-  "--only-top-level-packages", "onlyTopLevelPackagesStr",
-  ("on", "off"), 0,
-  "If 'on', then only top-level packages will be included.  If 'off', then"+\
-  " top-level and subpackages will be included in the list (in order).",
-  clp )
+    "--only-top-level-packages",
+    "onlyTopLevelPackagesStr",
+    ("on", "off"),
+    0,
+    "If 'on', then only top-level packages will be included.  If 'off', then"
+     " top-level and subpackages will be included in the list (in order).",
+    clp,
+)
 
 (options, args) = clp.parse_args()
 
 if options.onlyTopLevelPackagesStr == "on":
-  onlyTopLevelPackages = True
+    onlyTopLevelPackages = True
 else:
-  onlyTopLevelPackages = False
+    onlyTopLevelPackages = False
 
 trilinosDependencies = getProjectDependenciesFromXmlFile(options.depsXmlFile)
 
 packagesNamesList = trilinosDependencies.getPackagesNamesList(onlyTopLevelPackages)
 
-print(','.join(packagesNamesList))
+print(",".join(packagesNamesList))

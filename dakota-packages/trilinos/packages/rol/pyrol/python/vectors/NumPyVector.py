@@ -1,10 +1,9 @@
 import numpy as np
-from numpy import linalg as LA
-from pyrol.pyrol import ROL
 from pyrol.getTypeName import *
+from pyrol.pyrol import ROL
 
 
-class NumPyVector(getTypeName('Vector')):
+class NumPyVector(getTypeName("Vector")):
     def __init__(self, array=None):
         assert isinstance(array, np.ndarray)
         assert array.ndim == 1
@@ -12,7 +11,7 @@ class NumPyVector(getTypeName('Vector')):
         super().__init__()
 
     @staticmethod
-    def full(dimension=1, default_value=0.):
+    def full(dimension=1, default_value=0.0):
         array = np.full((dimension,), fill_value=default_value)
         return NumPyVector(array)
 
@@ -29,10 +28,10 @@ class NumPyVector(getTypeName('Vector')):
         return np.sqrt(self.dot(self))
 
     def zero(self):
-        self.setScalar(0.)
+        self.setScalar(0.0)
 
     def clone(self):
-        tmp = type(self)(np.full(self.array.shape, fill_value=0.))
+        tmp = type(self)(np.full(self.array.shape, fill_value=0.0))
         return tmp
 
     def axpy(self, scale_factor, x):
@@ -52,16 +51,15 @@ class NumPyVector(getTypeName('Vector')):
         reductionType = op.reductionType()
         if reductionType == ROL.Elementwise.REDUCE_MIN:
             return self.array.min()
-        elif reductionType == ROL.Elementwise.REDUCE_MAX:
+        if reductionType == ROL.Elementwise.REDUCE_MAX:
             return self.array.max()
-        elif reductionType == ROL.Elementwise.REDUCE_SUM:
+        if reductionType == ROL.Elementwise.REDUCE_SUM:
             return self.array.sum()
-        elif reductionType == ROL.Elementwise.REDUCE_AND:
+        if reductionType == ROL.Elementwise.REDUCE_AND:
             return np.logical_and.reduce(self.array)
-        elif reductionType == ROL.Elementwise.REDUCE_BOR:
+        if reductionType == ROL.Elementwise.REDUCE_BOR:
             return np.bitwise_or.reduce(self.array)
-        else:
-            raise NotImplementedError(reductionType)
+        raise NotImplementedError(reductionType)
 
     def applyUnary(self, op):
         for i in range(self.dimension()):
@@ -80,7 +78,7 @@ class NumPyVector(getTypeName('Vector')):
 
     def basis(self, i):
         b = self.clone()
-        b.array[:] = 0.
-        b.array[i] = 1.
+        b.array[:] = 0.0
+        b.array[i] = 1.0
         self._basis = b
         return b

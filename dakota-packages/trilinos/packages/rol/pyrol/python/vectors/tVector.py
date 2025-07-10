@@ -1,16 +1,38 @@
 from mpi4py import MPI
 from PyROL.PyROL import ROL
-from PyTrilinos2.PyTrilinos2 import Teuchos
 from PyTrilinos2.getTpetraTypeName import *
+from PyTrilinos2.PyTrilinos2 import Teuchos
+
 
 class tVector(ROL.Vector_double_t):
-    def __init__(self, dimension=1, default_value=0., map=None, comm=None, scalar_type=getDefaultScalarType(), local_ordinal_type=getDefaultLocalOrdinalType(), global_ordinal_type=getDefaultGlobalOrdinalType(), node_type=getDefaultNodeType()):
+    def __init__(
+        self,
+        dimension=1,
+        default_value=0.0,
+        map=None,
+        comm=None,
+        scalar_type=getDefaultScalarType(),
+        local_ordinal_type=getDefaultLocalOrdinalType(),
+        global_ordinal_type=getDefaultGlobalOrdinalType(),
+        node_type=getDefaultNodeType(),
+    ):
         self.scalar_type = scalar_type
         self.local_ordinal_type = local_ordinal_type
         self.global_ordinal_type = global_ordinal_type
         self.node_type = node_type
-        self.mapType = getTypeName('Map', local_ordinal_type=self.local_ordinal_type, global_ordinal_type=self.global_ordinal_type, node_type=self.node_type)
-        self.vectorType = getTypeName('Vector', scalar_type=self.scalar_type, local_ordinal_type=self.local_ordinal_type, global_ordinal_type=self.global_ordinal_type, node_type=self.node_type)
+        self.mapType = getTypeName(
+            "Map",
+            local_ordinal_type=self.local_ordinal_type,
+            global_ordinal_type=self.global_ordinal_type,
+            node_type=self.node_type,
+        )
+        self.vectorType = getTypeName(
+            "Vector",
+            scalar_type=self.scalar_type,
+            local_ordinal_type=self.local_ordinal_type,
+            global_ordinal_type=self.global_ordinal_type,
+            node_type=self.node_type,
+        )
         if map is None:
             if comm is None:
                 comm = Teuchos.getTeuchosComm(MPI.COMM_WORLD)
@@ -20,7 +42,7 @@ class tVector(ROL.Vector_double_t):
         super().__init__()
 
     def plus(self, b):
-        self.tvector.update(1., b.tvector, 1.)
+        self.tvector.update(1.0, b.tvector, 1.0)
 
     def scale(self, scale_factor):
         self.tvector.scale(scale_factor)
@@ -32,11 +54,17 @@ class tVector(ROL.Vector_double_t):
         return self.tvector.norm2()
 
     def clone(self):
-        tmp = tVector(map=self.tvector.getMap(), scalar_type=self.scalar_type, local_ordinal_type=self.local_ordinal_type, global_ordinal_type=self.global_ordinal_type, node_type=self.node_type)
+        tmp = tVector(
+            map=self.tvector.getMap(),
+            scalar_type=self.scalar_type,
+            local_ordinal_type=self.local_ordinal_type,
+            global_ordinal_type=self.global_ordinal_type,
+            node_type=self.node_type,
+        )
         return tmp
 
     def axpy(self, scale_factor, x):
-        self.tvector.update(scale_factor, x.tvector, 1.)
+        self.tvector.update(scale_factor, x.tvector, 1.0)
 
     def dimension(self):
         return self.tvector.getMap().getGlobalNumElements()
@@ -45,18 +73,18 @@ class tVector(ROL.Vector_double_t):
         self.tvector.putScalar(new_value)
 
     def __getitem__(self, index):
-        if isinstance( index, int ):
+        if isinstance(index, int):
             map = self.tvector.getMap()
             if map.isNodeGlobalElement(index):
                 local_index = map.getLocalElement(index)
                 view = self.tvector.getLocalViewHost()
                 return view[local_index]
-        if isinstance( index, slice ):
+        if isinstance(index, slice):
             map = self.tvector.getMap()
             view = self.tvector.getLocalViewHost()
             global_indices = range(*index.indices(self.dimension()))
             local_indices = np.empty(np.size(global_indices), dtype=int)
-            for i in range(0, len(global_indices)):
+            for i in range(len(global_indices)):
                 if map.isNodeGlobalElement(global_indices[i]):
                     local_indices[i] = map.getLocalElement(global_indices[i])
                 else:
@@ -64,14 +92,14 @@ class tVector(ROL.Vector_double_t):
             return view[local_indices]
 
     def __setitem__(self, index, val):
-        if isinstance( index, int ):
+        if isinstance(index, int):
             map = self.tvector.getMap()
             if map.isNodeGlobalElement(index):
                 self.tvector.replaceGlobalValue(index, val)
-        if isinstance( index, slice ):
+        if isinstance(index, slice):
             map = self.tvector.getMap()
             global_indices = range(*index.indices(self.dimension()))
-            for i in range(0, len(global_indices)):
+            for i in range(len(global_indices)):
                 if map.isNodeGlobalElement(global_indices[i]):
                     if len(val) > 1:
                         self.tvector.replaceGlobalValue(global_indices[i], val[i])

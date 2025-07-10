@@ -11,13 +11,11 @@
 
 from TribitsPackageFilePathUtils import *
 
-
 #
 # Read in the command-line arguments
 #
 
-usageHelp = \
-r"""filter-packages-list.py --deps-xml-file=<PROJECT_DEPS_FILE> \
+usageHelp = r"""filter-packages-list.py --deps-xml-file=<PROJECT_DEPS_FILE> \
   --input-packages-list=<P1>,<P2>,... --keep-test-test-categories=<T1>,<T2>,...
 
 This script takes in a comma-separated list of TriBITS package names in
@@ -48,16 +46,27 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-  "--deps-xml-file", dest="depsXmlFile", type="string",
-  help="TriBITS generated XML file containing the listing of packages, dir names, dependencies, etc.")
+    "--deps-xml-file",
+    dest="depsXmlFile",
+    type="string",
+    help="TriBITS generated XML file containing the listing of packages, dir names, dependencies, etc.",
+)
 
 clp.add_option(
-  "--input-packages-list", dest="inputPackagesList", type="string", default="",
-  help="Comma-seprated List of packages that needs to be filtered (i.e. \"P1,P2,...\")." )
+    "--input-packages-list",
+    dest="inputPackagesList",
+    type="string",
+    default="",
+    help='Comma-seprated List of packages that needs to be filtered (i.e. "P1,P2,...").',
+)
 
 clp.add_option(
-  "--keep-test-test-categories", dest="keepTestTestCategories", type="string", default="",
-  help="List of package types to keep (i.e. \"PT,ST,EX\"." )
+    "--keep-test-test-categories",
+    dest="keepTestTestCategories",
+    type="string",
+    default="",
+    help='List of package types to keep (i.e. "PT,ST,EX".',
+)
 
 (options, args) = clp.parse_args()
 
@@ -65,6 +74,7 @@ trilinosDependencies = getProjectDependenciesFromXmlFile(options.depsXmlFile)
 
 inputPackagesList = options.inputPackagesList.split(",")
 keepTestTestCategoriesList = options.keepTestTestCategories.split(",")
-outputPackagesList = \
-  trilinosDependencies.filterPackageNameList(inputPackagesList, keepTestTestCategoriesList)
-print(','.join(outputPackagesList))
+outputPackagesList = trilinosDependencies.filterPackageNameList(
+    inputPackagesList, keepTestTestCategoriesList,
+)
+print(",".join(outputPackagesList))
