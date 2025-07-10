@@ -1,3 +1,0 @@
-int *ivector(), **imatrix();
-
-
