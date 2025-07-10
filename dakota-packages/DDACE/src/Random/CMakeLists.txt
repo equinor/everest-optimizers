@@ -1,9 +1,0 @@
-set(Random_sources
-  dcdflib.c 
-  Distribution.cpp 
-  dlaran.f 
-  ipmpar.c 
-  NormalDistribution.cpp 
-  PseudoRandomTestsOnly.cpp 
-  UniformDistribution.cpp
-)

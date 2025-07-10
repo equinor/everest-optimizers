@@ -1,3 +1,0 @@
-set(LHS_INCLUDE_DIRS "@LHS_BINARY_DIR@/include")
-include("@LHS_BINARY_DIR@/${ExportTarget}.cmake")
-@LHS_GNUtoMS_BUILD@

@@ -57,13 +57,25 @@ ruff format .
 ruff check --select ALL
 ```
 
-Clang:
+- To only run ruff on a select folder or file, do these commands (for example):
 
+```bash
+ruff check src/
+ruff check src/everest_optimizers_utils/dummy_implementation.py
+```
 
-- Install clang-format:
+C++:
+
+- We use clang-format for c++ formatting. Install clang-format like this:
 
 ```bash
 sudo apt install clang-format
+```
+
+- To format a c++ or c file (or header file), use
+
+```bash
+clang-format -i your_file.cpp
 ```
 
 - You can run the following command to format all files in your project!
