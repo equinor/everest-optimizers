@@ -1,7 +1,7 @@
-import sys
-import subprocess
-import re
 import argparse
+import re
+import subprocess
+import sys
 
 
 def parse_diff_output(changed_files):
@@ -55,7 +55,7 @@ def parse_diff_output(changed_files):
                     if line.startswith("+"):
                         if (
                             "MPI_COMM_WORLD" in line
-                            and not "CHECK: ALLOW MPI_COMM_WORLD" in line
+                            and "CHECK: ALLOW MPI_COMM_WORLD" not in line
                         ):
                             # Only include lines where "MPI_COMM_WORLD" is added
                             # and "CHECK: ALLOW MPI_COMM_WORLD" is not present
@@ -77,14 +77,7 @@ def get_common_ancestor(target_branch, feature_branch):
 def get_changed_files(target_branch, feature_branch):
     """Get a dictionary of files and their changed lines between the common ancestor and feature_branch."""
     start_commit = get_common_ancestor(target_branch, feature_branch)
-    cmd = [
-        "git",
-        "diff",
-        "-U0",
-        "--ignore-all-space",
-        start_commit,
-        feature_branch
-    ]
+    cmd = ["git", "diff", "-U0", "--ignore-all-space", start_commit, feature_branch]
     result = subprocess.check_output(cmd).decode("utf-8")
 
     return parse_diff_output(result)
@@ -103,10 +96,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--base", default="origin/develop", help="BASE commit (default: %(default)s)"
+        "--base", default="origin/develop", help="BASE commit (default: %(default)s)",
     )
     parser.add_argument(
-        "--head", default="HEAD", help="HEAD commit (default: %(default)s)"
+        "--head", default="HEAD", help="HEAD commit (default: %(default)s)",
     )
 
     start_commit = parser.parse_args().base
@@ -119,7 +112,7 @@ if __name__ == "__main__":
 
     if mpi_comm_world_detected:
         print_occurences(
-            mpi_comm_world_detected, "Detected MPI_COMM_WORLD in the following files:"
+            mpi_comm_world_detected, "Detected MPI_COMM_WORLD in the following files:",
         )
 
         sys.exit(1)  # Exit with an error code to fail the GitHub Action

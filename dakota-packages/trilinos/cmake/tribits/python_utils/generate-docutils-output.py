@@ -14,8 +14,8 @@ NOTE: The right default programs for --generate-html, --generate-latex, and
 --generate-pdf will try to be chosen for given system automatically.
 """
 
-import sys
 import os
+import sys
 from optparse import OptionParser
 
 #
@@ -23,14 +23,15 @@ from optparse import OptionParser
 #
 
 thisFilePath = __file__
-thisFileRealAbsBasePath = \
-  os.path.dirname(os.path.abspath(os.path.realpath(thisFilePath)))
-#print("thisFileRealAbsBasePath = '" + thisFileRealAbsBasePath + "'")
+thisFileRealAbsBasePath = os.path.dirname(
+    os.path.abspath(os.path.realpath(thisFilePath)),
+)
+# print("thisFileRealAbsBasePath = '" + thisFileRealAbsBasePath + "'")
 
-tribitsBaseDir = os.path.abspath(os.path.join(thisFileRealAbsBasePath, '..'))
+tribitsBaseDir = os.path.abspath(os.path.join(thisFileRealAbsBasePath, ".."))
 
-sys.path.append(os.path.join(tribitsBaseDir, 'python'))
-#print("sys.path = " + str(sys.path))
+sys.path.append(os.path.join(tribitsBaseDir, "python"))
+# print("sys.path = " + str(sys.path))
 
 
 from GenerateDocUtilsOutput import *
@@ -46,9 +47,9 @@ addCmndLineOptions(clp)
 (options, args) = clp.parse_args(sys.argv)
 
 if not options.fileBase:
-  print("Error, --file-base=<fileBase> must be specified!")
-  sys.exit(1)
-  
+    print("Error, --file-base=<fileBase> must be specified!")
+    sys.exit(1)
+
 #
 # C) Generate the output files
 #

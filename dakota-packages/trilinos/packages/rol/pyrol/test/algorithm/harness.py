@@ -1,7 +1,6 @@
 import numpy as np
+from pyrol import Solver, getCout
 
-from pyrol import getCout, Solver
-from pyrol.vectors import NumPyVector
 
 def harness(testProblem, parameterList):
     stream = getCout()
@@ -19,6 +18,7 @@ def harness(testProblem, parameterList):
         e = min(e, error.norm())
     print(f"Norm of Error: {e:<15.6e}")
     return e
+
 
 def harnessLoop(testProblems, parameterLists):
     e = -np.inf

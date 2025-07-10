@@ -14,10 +14,7 @@
 # NOTE: Included first to check the version of python!
 #
 
-from TribitsDependencies import getProjectDependenciesFromXmlFile
 from GeneralScriptSupport import *
-import time
-
 
 #
 # Default logic to determine if a changed file should trigger testing all of
@@ -50,115 +47,117 @@ import time
 # global rebuild.
 #
 
-class DefaultProjectCiFileChangeLogic:
 
-  def isGlobalBuildFileRequiringGlobalRebuild(self, modifiedFileFullPath):
-    modifiedFileFullPathArray = getFilePathArray(modifiedFileFullPath)
-    if len(modifiedFileFullPathArray)==1:
-      # Files sitting directly under <projectDir>/
-      if modifiedFileFullPathArray[0] == "CMakeLists.txt":
-        return True
-      if modifiedFileFullPathArray[0] == 'PackagesList.cmake':
+class DefaultProjectCiFileChangeLogic:
+    def isGlobalBuildFileRequiringGlobalRebuild(self, modifiedFileFullPath):
+        modifiedFileFullPathArray = getFilePathArray(modifiedFileFullPath)
+        if len(modifiedFileFullPathArray) == 1:
+            # Files sitting directly under <projectDir>/
+            if modifiedFileFullPathArray[0] == "CMakeLists.txt":
+                return True
+            if modifiedFileFullPathArray[0] == "PackagesList.cmake":
+                return False
+            if modifiedFileFullPathArray[0] == "TPLsList.cmake":
+                return False
+            if modifiedFileFullPathArray[0].rfind(".cmake") != -1:
+                return True
+        elif modifiedFileFullPathArray[0] == "cmake":
+            # Files under <projectDir>/cmake/
+            if modifiedFileFullPathArray[1] == "ExtraRepositoriesList.cmake":
+                return False
+            if modifiedFileFullPathArray[1] == "ctest":
+                return False
+            if modifiedFileFullPathArray[1] == "TPLs":
+                return False
+            if modifiedFileFullPath.rfind("UnitTests/") != -1:
+                return False
+            if modifiedFileFullPath.rfind(".cmake") != -1:
+                return True
         return False
-      if modifiedFileFullPathArray[0] == 'TPLsList.cmake':
-        return False
-      if modifiedFileFullPathArray[0].rfind(".cmake") != -1:
-        return True
-    elif modifiedFileFullPathArray[0] == 'cmake':
-      # Files under <projectDir>/cmake/
-      if modifiedFileFullPathArray[1]=='ExtraRepositoriesList.cmake':
-        return False
-      if modifiedFileFullPathArray[1] == 'ctest':
-        return False
-      if modifiedFileFullPathArray[1] == 'TPLs':
-        return False
-      if modifiedFileFullPath.rfind("UnitTests/") != -1:
-        return False
-      if modifiedFileFullPath.rfind(".cmake") != -1:
-        return True
-    return False
 
 
 def getProjectCiFileChangeLogic(projectDir):
-
-  if not projectDir:
-    return DefaultProjectCiFileChangeLogic()
-  else:
+    if not projectDir:
+        return DefaultProjectCiFileChangeLogic()
     projectCiFileChangeLogicFileBaseDir = os.path.join(projectDir, "cmake")
     projectCiFileChangeLogicFile = os.path.join(
-      projectCiFileChangeLogicFileBaseDir, "ProjectCiFileChangeLogic.py")
+        projectCiFileChangeLogicFileBaseDir, "ProjectCiFileChangeLogic.py",
+    )
     if not os.path.isfile(projectCiFileChangeLogicFile):
-      return DefaultProjectCiFileChangeLogic()
+        return DefaultProjectCiFileChangeLogic()
 
-  # Else, if we get here, then the file
-  # <projectDir>/cmake/ProjectCiFileChangeLogic.py exists so lets read it in!
+    # Else, if we get here, then the file
+    # <projectDir>/cmake/ProjectCiFileChangeLogic.py exists so lets read it in!
 
-  tribitsDirPath = os.path.abspath(
-    os.path.join(
-      os.path.dirname(os.path.abspath(__file__)),
-      "../..", "tribits"
-      )
+    tribitsDirPath = os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..", "tribits"),
     )
 
-  old_sys_path = sys.path
+    old_sys_path = sys.path
 
-  try:
-    sys.path = [projectCiFileChangeLogicFileBaseDir] + sys.path
-    import ProjectCiFileChangeLogic
-    return ProjectCiFileChangeLogic.ProjectCiFileChangeLogic()
-  finally:
-    sys.path = old_sys_path
+    try:
+        sys.path = [projectCiFileChangeLogicFileBaseDir] + sys.path
+        import ProjectCiFileChangeLogic
+
+        return ProjectCiFileChangeLogic.ProjectCiFileChangeLogic()
+    finally:
+        sys.path = old_sys_path
 
 
 def getPackageStructFromPath(projectDependencies, fullPath):
-  packageName = getPackageNameFromPath(projectDependencies, fullPath)
-  if packageName:
-    return projectDependencies.getPackageByName(packageName)
-  return None
+    packageName = getPackageNameFromPath(projectDependencies, fullPath)
+    if packageName:
+        return projectDependencies.getPackageByName(packageName)
+    return None
 
 
 def getPackageNameFromPath(projectDependencies, fullPath):
-  return projectDependencies.getPackageNameFromPath(fullPath)
+    return projectDependencies.getPackageNameFromPath(fullPath)
 
 
 def extractFilesListMatchingPattern(fileList_in, reMatachingPattern):
-  fileList_out = []
-  for line in fileList_in:
-    reFilePatternMatch = reMatachingPattern.match(line)
-    if reFilePatternMatch:
-      fileList_out.append(reFilePatternMatch.group(1).strip())
-  return fileList_out
+    fileList_out = []
+    for line in fileList_in:
+        reFilePatternMatch = reMatachingPattern.match(line)
+        if reFilePatternMatch:
+            fileList_out.append(reFilePatternMatch.group(1).strip())
+    return fileList_out
 
 
-def getPackagesListFromFilePathsList(projectDependencies, filePathsList,
-  allPackages=False, projectCiFileChangeLogic=DefaultProjectCiFileChangeLogic() \
-  ):
-  packagesList = []
-  enabledAllPackages = False
-  for filePath in filePathsList:
-    packageName = getPackageNameFromPath(projectDependencies, filePath)
-    if findInSequence(packagesList, packageName) == -1 and packageName: 
-      packagesList.append(packageName.strip())
-    if allPackages \
-      and projectCiFileChangeLogic.isGlobalBuildFileRequiringGlobalRebuild(filePath) \
-      and not enabledAllPackages \
-      :
-      packagesList.append("ALL_PACKAGES")
-      enabledAllPackages = True
-  return packagesList
+def getPackagesListFromFilePathsList(
+    projectDependencies,
+    filePathsList,
+    allPackages=False,
+    projectCiFileChangeLogic=DefaultProjectCiFileChangeLogic(),
+):
+    packagesList = []
+    enabledAllPackages = False
+    for filePath in filePathsList:
+        packageName = getPackageNameFromPath(projectDependencies, filePath)
+        if findInSequence(packagesList, packageName) == -1 and packageName:
+            packagesList.append(packageName.strip())
+        if (
+            allPackages
+            and projectCiFileChangeLogic.isGlobalBuildFileRequiringGlobalRebuild(
+                filePath,
+            )
+            and not enabledAllPackages
+        ):
+            packagesList.append("ALL_PACKAGES")
+            enabledAllPackages = True
+    return packagesList
 
 
 def getPackageCheckinEmailAddressesListFromFilePathsList(
-  projectDependencies, filePathsList \
-  ) \
-  :
-  packageCheckinEmailAddresses = []
-  for filePath in filePathsList:
-    packageStruct = getPackageStructFromPath(projectDependencies, filePath)
-    if packageStruct:
-      checkinEmail = packageStruct.emailAddresses.checkin
-    else:
-      checkinEmail = None
-    if findInSequence(packageCheckinEmailAddresses, checkinEmail) == -1:
-      packageCheckinEmailAddresses.append(checkinEmail)
-  return packageCheckinEmailAddresses
+    projectDependencies, filePathsList,
+):
+    packageCheckinEmailAddresses = []
+    for filePath in filePathsList:
+        packageStruct = getPackageStructFromPath(projectDependencies, filePath)
+        if packageStruct:
+            checkinEmail = packageStruct.emailAddresses.checkin
+        else:
+            checkinEmail = None
+        if findInSequence(packageCheckinEmailAddresses, checkinEmail) == -1:
+            packageCheckinEmailAddresses.append(checkinEmail)
+    return packageCheckinEmailAddresses

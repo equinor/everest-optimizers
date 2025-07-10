@@ -39,31 +39,55 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-  "--command", dest="command", type="string", default="",
-  help="The shell command that will get run in the loop" )
+    "--command",
+    dest="command",
+    type="string",
+    default="",
+    help="The shell command that will get run in the loop",
+)
 
 clp.add_option(
-  "--loop-interval", dest="loopInterval", type="string", default="",
-  help="Input to the standard unix/linux 'sleep' command" \
-  +" (e.g. '60s') to space out iterations of the script.")
+    "--loop-interval",
+    dest="loopInterval",
+    type="string",
+    default="",
+    help="Input to the standard unix/linux 'sleep' command"
+     " (e.g. '60s') to space out iterations of the script.",
+)
 
 dateFormat = "%Y-%m-%d"
 timeFormat = "%H:%M:%S"
-dateTimeFormat = dateFormat+" "+timeFormat
+dateTimeFormat = dateFormat + " " + timeFormat
 clp.add_option(
-  "--run-till", dest="runTill", type="string", default="",
-  help="The absolute time the script will run iterations till." \
-  +" This takes the format "+dateTimeFormat+" (e.g. 2011-06-09 18:00:00).")
+    "--run-till",
+    dest="runTill",
+    type="string",
+    default="",
+    help="The absolute time the script will run iterations till."
+     " This takes the format "
+    + dateTimeFormat
+    + " (e.g. 2011-06-09 18:00:00).",
+)
 
 clp.add_option(
-  "--today-run-till", dest="todayRunTill", type="string", default="",
-  help="The time today the script will run iterations till." \
-  +" This takes the format "+timeFormat+" (e.g. 18:00:00).")
+    "--today-run-till",
+    dest="todayRunTill",
+    type="string",
+    default="",
+    help="The time today the script will run iterations till."
+     " This takes the format "
+    + timeFormat
+    + " (e.g. 18:00:00).",
+)
 
 clp.add_option(
-  "--pause-file", dest="pauseFile", type="string", default="",
-  help="The name of a file, that if exists, will prevent command" \
-  +" from being run.")
+    "--pause-file",
+    dest="pauseFile",
+    type="string",
+    default="",
+    help="The name of a file, that if exists, will prevent command"
+     " from being run.",
+)
 
 
 (options, args) = clp.parse_args()
@@ -76,32 +100,32 @@ clp.add_option(
 import sys
 
 if not options.command:
-  print("\nError, you must set the --command argument!")
-  sys.exit(1)
+    print("\nError, you must set the --command argument!")
+    sys.exit(1)
 
 if not options.loopInterval:
-  print("\nError, you must set the --loop-interval argument!")
-  sys.exit(1)
+    print("\nError, you must set the --loop-interval argument!")
+    sys.exit(1)
 
 if not (options.runTill or options.todayRunTill):
-  print("\nError, you must set either the --run-till or --today-run-till argument!")
-  sys.exit(1)
+    print("\nError, you must set either the --run-till or --today-run-till argument!")
+    sys.exit(1)
 
 
 #
 # Echo the command-line
 #
 
-print("")
+print()
 print("**************************************************************************")
 print("Script: generic-looping-demon.py \\")
 print("  --command='" + options.command + "' \\")
 print("  --loop-interval='" + options.loopInterval + "' \\")
 
 if options.runTill:
-  print("  --run-till='" + options.runTill + "' \\")
+    print("  --run-till='" + options.runTill + "' \\")
 if options.todayRunTill:
-  print("  --run-till='" + options.todayRunTill + "' \\")
+    print("  --run-till='" + options.todayRunTill + "' \\")
 print("  --pause-file='" + options.pauseFile + "' \\")
 
 
@@ -109,62 +133,70 @@ print("  --pause-file='" + options.pauseFile + "' \\")
 # Helper functions
 #
 
+
 # Parses "%Y-%m-%d %H:%M:%S" into a datetime.datetime object
 def parseDateTimeString(dateTimeStr):
-  (dateStr, timeStr) = dateTimeStr.split(" ")
-  (year, month, day) = dateStr.split("-")
-  (hour, minute, second) = timeStr.split(":")
-  return datetime.datetime(int(year), int(month), int(day),
-    int(hour), int(minute), int(second))
+    (dateStr, timeStr) = dateTimeStr.split(" ")
+    (year, month, day) = dateStr.split("-")
+    (hour, minute, second) = timeStr.split(":")
+    return datetime.datetime(
+        int(year), int(month), int(day), int(hour), int(minute), int(second),
+    )
 
 
 def formatDateTime(dateTimeObj):
-  return datetime.datetime.strftime(dateTimeObj, dateTimeFormat)
+    return datetime.datetime.strftime(dateTimeObj, dateTimeFormat)
 
 
 def pauseFileExists(pauseFile):
-  if pauseFile and os.path.exists(pauseFile):
-     return True
-  return False
+    if pauseFile and os.path.exists(pauseFile):
+        return True
+    return False
+
 
 #
 # Executable statements
 #
 
-import os
 import datetime
+import os
 
-scriptsDir = os.path.abspath(os.path.dirname(sys.argv[0]))+"/cmake/python"
+scriptsDir = os.path.abspath(os.path.dirname(sys.argv[0])) + "/cmake/python"
 sys.path.insert(0, scriptsDir)
 
 from GeneralScriptSupport import *
 
 if options.runTill:
-  finalDateTime = parseDateTimeString(options.runTill)
+    finalDateTime = parseDateTimeString(options.runTill)
 elif options.todayRunTill:
-  todayDate = datetime.datetime.today()
-  todayDateStr = datetime.datetime.strftime(todayDate, dateFormat)
-  finalDateTime = parseDateTimeString(todayDateStr+" "+options.todayRunTill)
+    todayDate = datetime.datetime.today()
+    todayDateStr = datetime.datetime.strftime(todayDate, dateFormat)
+    finalDateTime = parseDateTimeString(todayDateStr + " " + options.todayRunTill)
 
 if pauseFileExists(options.pauseFile):
-  print("\nThe file " + options.pauseFile + " exists at start so deleting it!")
-  os.remove(options.pauseFile)
+    print("\nThe file " + options.pauseFile + " exists at start so deleting it!")
+    os.remove(options.pauseFile)
 
-print("\nThe script will run iterations till = " + formatDateTime(finalDateTime)
-      + "\n")
+print("\nThe script will run iterations till = " + formatDateTime(finalDateTime) + "\n")
 
 currentTime = datetime.datetime.now()
 iteration = 0
 
 while currentTime < finalDateTime:
-  print("*********************************************************************"
-        "********\n" + str(iteration) + ":" + " current time = " +
-        formatDateTime(currentTime) + ", final time = " +
-        formatDateTime(finalDateTime))
-  if pauseFileExists(options.pauseFile):
-    print("\nThe file " + options.pauseFile + " exists so skipping this iteration!")
-  else:
-    echoRunSysCmnd(options.command, throwExcept=False, timeCmnd=True)
-  echoRunSysCmnd("sleep "+options.loopInterval)
-  currentTime = datetime.datetime.now()
-  iteration += 1
+    print(
+        "*********************************************************************"
+        "********\n"
+        + str(iteration)
+        + ":"
+        + " current time = "
+        + formatDateTime(currentTime)
+        + ", final time = "
+        + formatDateTime(finalDateTime),
+    )
+    if pauseFileExists(options.pauseFile):
+        print("\nThe file " + options.pauseFile + " exists so skipping this iteration!")
+    else:
+        echoRunSysCmnd(options.command, throwExcept=False, timeCmnd=True)
+    echoRunSysCmnd("sleep " + options.loopInterval)
+    currentTime = datetime.datetime.now()
+    iteration += 1

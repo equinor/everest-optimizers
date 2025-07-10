@@ -1,13 +1,11 @@
 import unittest
 
-from pyrol import getParametersFromXmlFile, getCout
-
 from harness import harness
+from pyrol import getParametersFromXmlFile
 from zoo import HS32
 
 
 class TestTypeG(unittest.TestCase):
-    
     def setUp(self):
         self.testProblem = HS32()
         self.tol = 1e-8
@@ -18,13 +16,14 @@ class TestTypeG(unittest.TestCase):
 
 
 class TestAugmentedLagrangian(TestTypeG):
-
     def setUp(self):
         super().setUp()
         self.parameterList.sublist("Step").set("Type", "Augmented Lagrangian")
 
     def test_AugmentedLagrangian(self):
-        self.parameterList.sublist("Step").sublist("Augmented Lagrangian").set("Use Default Problem Scaling", False)
+        self.parameterList.sublist("Step").sublist("Augmented Lagrangian").set(
+            "Use Default Problem Scaling", False,
+        )
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 1 iteration
         # test01
@@ -38,14 +37,17 @@ class TestAugmentedLagrangian(TestTypeG):
 
 
 class TestInteriorPoint(TestTypeG):
-
     def setUp(self):
         super().setUp()
         self.parameterList.sublist("Step").set("Type", "Interior Point")
 
     def test_InteriorPoint(self):
-        self.parameterList.sublist("Step").sublist("Interior Point").set("Barrier Penalty Reduction Factor", 0.1)
-        self.parameterList.sublist("Step").sublist("Augmented Lagrangian").set("Use Default Problem Scaling", False)
+        self.parameterList.sublist("Step").sublist("Interior Point").set(
+            "Barrier Penalty Reduction Factor", 0.1,
+        )
+        self.parameterList.sublist("Step").sublist("Augmented Lagrangian").set(
+            "Use Default Problem Scaling", False,
+        )
         self.parameterList.sublist("Status Test").set("Gradient Tolerance", 1e-9)
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < 1e-2)
@@ -62,13 +64,14 @@ class TestInteriorPoint(TestTypeG):
 
 
 class TestMoreauYosida(TestTypeG):
-
     def setUp(self):
         super().setUp()
         self.parameterList.sublist("Step").set("Type", "Moreau-Yosida")
 
     def test_MoreauYosida(self):
-        self.parameterList.sublist("Step").sublist("Augmented Lagrangian").set("Use Default Problem Scaling", False)
+        self.parameterList.sublist("Step").sublist("Augmented Lagrangian").set(
+            "Use Default Problem Scaling", False,
+        )
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 5 iterations
         # test02
@@ -84,14 +87,17 @@ class TestMoreauYosida(TestTypeG):
 
 
 class TestStabilizedLCL(TestTypeG):
-
     def setUp(self):
         super().setUp()
         self.parameterList.sublist("Step").set("Type", "Stabilized LCL")
 
     def test_StabilizedLCL(self):
-        self.parameterList.sublist("Step").sublist("Stabilized LCL").set("Use Default Problem Scaling", False)
-        self.parameterList.sublist("Step").sublist("Stabilized LCL").set("Use Default Initial Penalty Parameter", False)
+        self.parameterList.sublist("Step").sublist("Stabilized LCL").set(
+            "Use Default Problem Scaling", False,
+        )
+        self.parameterList.sublist("Step").sublist("Stabilized LCL").set(
+            "Use Default Initial Penalty Parameter", False,
+        )
         self.parameterList.sublist("Status Test").set("Gradient Tolerance", 1e-8)
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 8 iterations

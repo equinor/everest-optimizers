@@ -46,13 +46,19 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-  "--input-xml-deps-file", dest="inputXmlDepsFile", type="string",
-  help="Input XML file giving the TriBITS Project Package dependencies.")
+    "--input-xml-deps-file",
+    dest="inputXmlDepsFile",
+    type="string",
+    help="Input XML file giving the TriBITS Project Package dependencies.",
+)
 
 clp.add_option(
-  "--output-cdash-deps-xml-file", dest="outputCDashDepsXmlFile", type="string",
-  help="Output XML file giving the TriBITS project dependencies in XML form" \
-  + " that CDash understands.")
+    "--output-cdash-deps-xml-file",
+    dest="outputCDashDepsXmlFile",
+    type="string",
+    help="Output XML file giving the TriBITS project dependencies in XML form"
+     " that CDash understands.",
+)
 
 (options, args) = clp.parse_args()
 
@@ -65,14 +71,12 @@ import os
 import sys
 
 ciSupportDir = os.path.join(
-  os.path.dirname(os.path.abspath(__file__)),
-  "..", "ci_support" )
+    os.path.dirname(os.path.abspath(__file__)), "..", "ci_support",
+)
 sys.path = [ciSupportDir] + sys.path
 
 from TribitsDependencies import getProjectDependenciesFromXmlFile
 
-tribitsDependencies = getProjectDependenciesFromXmlFile(
-  options.inputXmlDepsFile)
+tribitsDependencies = getProjectDependenciesFromXmlFile(options.inputXmlDepsFile)
 
-tribitsDependencies.writeCDashXmlDepsFile(
-  options.outputCDashDepsXmlFile)
+tribitsDependencies.writeCDashXmlDepsFile(options.outputCDashDepsXmlFile)

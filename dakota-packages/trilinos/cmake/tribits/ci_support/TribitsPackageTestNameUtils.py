@@ -14,20 +14,21 @@
 # NOTE: Included first to check the version of python!
 #
 
-from TribitsDependencies import getProjectDependenciesFromXmlFile
 from GeneralScriptSupport import *
 
 
 def getPackageNameFromTestName(trilinosDependencies, testName):
-  return trilinosDependencies.getPackageNameFromTestName(testName)
+    return trilinosDependencies.getPackageNameFromTestName(testName)
 
 
 def getTestNameFromLastTestsFailedLine(trilinosDependencies, line):
-  lineArray = line.split(':')
-  assert len(lineArray) == 2, "Error, the line '"+line+"' not formatted correctly!"
-  testName = lineArray[1]
-  assert testName != "", "Error, test name '"+testName+"' can't be empty!"
-  return testName
+    lineArray = line.split(":")
+    assert len(lineArray) == 2, (
+        "Error, the line '" + line + "' not formatted correctly!"
+    )
+    testName = lineArray[1]
+    assert testName != "", "Error, test name '" + testName + "' can't be empty!"
+    return testName
 
 
 #
@@ -37,20 +38,19 @@ def getTestNameFromLastTestsFailedLine(trilinosDependencies, line):
 # This will return the list of matching packages only once per package.
 #
 
-def getPackageNamesFromLastTestsFailedLines(trilinosDependencies, \
-  lastTestsFailedLines \
-  ):
-  #print ("\nlastTestsFailedLine:\n"+str(lastTestsFailedLines))
-  packageNames = []
-  for lastTestsFailedLine in lastTestsFailedLines:
-    #print ("\nlastTestsFailedLine = '"+lastTestsFailedLine+"'")
-    testName = \
-      getTestNameFromLastTestsFailedLine(trilinosDependencies, lastTestsFailedLine)
-    #print ("\ntestName = '"+testName+"'")
-    packageName = getPackageNameFromTestName(trilinosDependencies, testName)
-    #print("\npackageName = '"+packageName+"'")
-    if findInSequence(packageNames, packageName) == -1 and packageName:
-      #print ("\nAppend '"+packageName+"'")
-      packageNames.append(packageName)
-  return packageNames
 
+def getPackageNamesFromLastTestsFailedLines(trilinosDependencies, lastTestsFailedLines):
+    # print ("\nlastTestsFailedLine:\n"+str(lastTestsFailedLines))
+    packageNames = []
+    for lastTestsFailedLine in lastTestsFailedLines:
+        # print ("\nlastTestsFailedLine = '"+lastTestsFailedLine+"'")
+        testName = getTestNameFromLastTestsFailedLine(
+            trilinosDependencies, lastTestsFailedLine,
+        )
+        # print ("\ntestName = '"+testName+"'")
+        packageName = getPackageNameFromTestName(trilinosDependencies, testName)
+        # print("\npackageName = '"+packageName+"'")
+        if findInSequence(packageNames, packageName) == -1 and packageName:
+            # print ("\nAppend '"+packageName+"'")
+            packageNames.append(packageName)
+    return packageNames

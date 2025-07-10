@@ -5,11 +5,21 @@ import numpy as np
 import pytest
 from numpy.typing import ArrayLike, NDArray
 from pydantic import ValidationError
+
 from everest_optimizers_utils.dummy_implementation import (
-    EnOptConfig, EventType, ExitCode, BasicOptimizer, Event,
-    PluginManager, FunctionResults, GradientResults, Results,
-    OptModelTransforms, NonLinearConstraintTransform, ObjectiveTransform,
-    _SUPPORTED_METHODS
+    _SUPPORTED_METHODS,
+    BasicOptimizer,
+    EnOptConfig,
+    Event,
+    EventType,
+    ExitCode,
+    FunctionResults,
+    GradientResults,
+    NonLinearConstraintTransform,
+    ObjectiveTransform,
+    OptModelTransforms,
+    PluginManager,
+    Results,
 )
 
 initial_values = [0.0, 0.0, 0.1]
@@ -40,7 +50,7 @@ def test_dakota_invalid_options(enopt_config: Any) -> None:
         "merit_function el_bakry",
     ]
     PluginManager().get_plugin("optimizer", "optpp_q_newton").validate_options(
-        "optpp_q_newton", enopt_config["optimizer"]["options"]
+        "optpp_q_newton", enopt_config["optimizer"]["options"],
     )
 
     enopt_config["optimizer"]["options"] = [
@@ -49,10 +59,10 @@ def test_dakota_invalid_options(enopt_config: Any) -> None:
         "merit_function el_bakry",
     ]
     with pytest.raises(
-        ValidationError, match=r"Input should be 'value_based_line_search',"
+        ValidationError, match=r"Input should be 'value_based_line_search',",
     ):
         PluginManager().get_plugin("optimizer", "optpp_q_newton").validate_options(
-            "optpp_q_newton", enopt_config["optimizer"]["options"]
+            "optpp_q_newton", enopt_config["optimizer"]["options"],
         )
 
     enopt_config["optimizer"]["options"] = [
@@ -62,15 +72,15 @@ def test_dakota_invalid_options(enopt_config: Any) -> None:
         "merit_function el_bakry",
     ]
     with pytest.raises(
-        ValidationError, match=r"Unknown or unsupported option\(s\): `foo`, `bar`"
+        ValidationError, match=r"Unknown or unsupported option\(s\): `foo`, `bar`",
     ):
         PluginManager().get_plugin("optimizer", "optpp_q_newton").validate_options(
-            "optpp_q_newton", enopt_config["optimizer"]["options"]
+            "optpp_q_newton", enopt_config["optimizer"]["options"],
         )
 
 
 @pytest.mark.parametrize(
-    "external", ["", pytest.param("external/", marks=pytest.mark.external)]
+    "external", ["", pytest.param("external/", marks=pytest.mark.external)],
 )
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_unconstrained(enopt_config: Any, evaluator: Any, external: str) -> None:
@@ -89,7 +99,7 @@ def test_dakota_unconstrained(enopt_config: Any, evaluator: Any, external: str) 
 )
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_bound_constraint(
-    enopt_config: Any, method: str, evaluator: Any
+    enopt_config: Any, method: str, evaluator: Any,
 ) -> None:
     enopt_config["optimizer"]["method"] = f"dakota/{method}"
     enopt_config["variables"]["lower_bounds"] = -1.0
@@ -151,7 +161,7 @@ def test_dakota_le_ge_linear_constraints(enopt_config: Any, evaluator: Any) -> N
 
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_le_ge_linear_constraints_two_sided(
-    enopt_config: Any, evaluator: Any
+    enopt_config: Any, evaluator: Any,
 ) -> None:
     enopt_config["linear_constraints"] = {
         "coefficients": [[1, 0, 1], [1, 0, 1]],
@@ -176,7 +186,7 @@ def test_dakota_le_ge_linear_constraints_two_sided(
 
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_eq_nonlinear_constraint(
-    enopt_config: Any, evaluator: Any, test_functions: Any
+    enopt_config: Any, evaluator: Any, test_functions: Any,
 ) -> None:
     enopt_config["nonlinear_constraints"] = {
         "lower_bounds": 1.0,
@@ -196,7 +206,7 @@ def test_dakota_eq_nonlinear_constraint(
 
 
 @pytest.mark.parametrize(
-    ("lower_bounds", "upper_bounds"), [(-np.inf, 0.4), (-0.4, np.inf)]
+    ("lower_bounds", "upper_bounds"), [(-np.inf, 0.4), (-0.4, np.inf)],
 )
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_ineq_nonlinear_constraint(
@@ -359,7 +369,7 @@ def test_dakota_optimizer_variables_subset(enopt_config: Any, evaluator: Any) ->
 
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_optimizer_variables_subset_linear_constraints(
-    enopt_config: Any, evaluator: Any
+    enopt_config: Any, evaluator: Any,
 ) -> None:
     # Set the second variable a constant value, this will not affect the
     # optimization of the other variables in this particular test problem: The
@@ -411,7 +421,7 @@ class ObjectiveScaler(ObjectiveTransform):
 
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_objective_with_scaler(
-    enopt_config: Any, evaluator: Any, test_functions: Any
+    enopt_config: Any, evaluator: Any, test_functions: Any,
 ) -> None:
     results1 = BasicOptimizer(enopt_config, evaluator()).run(initial_values).results
     assert results1 is not None
@@ -429,7 +439,7 @@ def test_dakota_objective_with_scaler(
 
     init1 = test_functions[1](initial_values)
     transforms = OptModelTransforms(
-        objectives=ObjectiveScaler(np.array([init1, init1]))
+        objectives=ObjectiveScaler(np.array([init1, init1])),
     )
 
     checked = False
@@ -449,10 +459,10 @@ def test_dakota_objective_with_scaler(
                 assert np.allclose(transformed.functions.objectives[-1], init1)
 
     optimizer = BasicOptimizer(
-        enopt_config, evaluator([function1, function2]), transforms=transforms
+        enopt_config, evaluator([function1, function2]), transforms=transforms,
     )
     optimizer._observers.append(  # noqa: SLF001
-        (EventType.FINISHED_EVALUATION, check_value)
+        (EventType.FINISHED_EVALUATION, check_value),
     )
     results2 = optimizer.run(initial_values).results
     assert results2 is not None
@@ -463,7 +473,7 @@ def test_dakota_objective_with_scaler(
 
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_objective_with_lazy_scaler(
-    enopt_config: Any, evaluator: Any, test_functions: Any
+    enopt_config: Any, evaluator: Any, test_functions: Any,
 ) -> None:
     results1 = BasicOptimizer(enopt_config, evaluator()).run(initial_values).results
     assert results1 is not None
@@ -502,10 +512,10 @@ def test_dakota_objective_with_lazy_scaler(
                 assert np.allclose(transformed.functions.objectives[-1], init1)
 
     optimizer = BasicOptimizer(
-        enopt_config, evaluator([function1, function2]), transforms=transforms
+        enopt_config, evaluator([function1, function2]), transforms=transforms,
     )
     optimizer._observers.append(  # noqa: SLF001
-        (EventType.FINISHED_EVALUATION, check_value)
+        (EventType.FINISHED_EVALUATION, check_value),
     )
     results2 = optimizer.run(initial_values).results
     assert results2 is not None
@@ -525,7 +535,7 @@ class ConstraintScaler(NonLinearConstraintTransform):
             self._set = False
 
     def bounds_to_optimizer(
-        self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64]
+        self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         return lower_bounds / self._scales, upper_bounds / self._scales
 
@@ -536,17 +546,17 @@ class ConstraintScaler(NonLinearConstraintTransform):
         return constraints * self._scales
 
     def nonlinear_constraint_diffs_from_optimizer(
-        self, lower_diffs: NDArray[np.float64], upper_diffs: NDArray[np.float64]
+        self, lower_diffs: NDArray[np.float64], upper_diffs: NDArray[np.float64],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         return lower_diffs * self._scales, upper_diffs * self._scales
 
 
 @pytest.mark.parametrize(
-    "external", ["", pytest.param("external/", marks=pytest.mark.external)]
+    "external", ["", pytest.param("external/", marks=pytest.mark.external)],
 )
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_nonlinear_constraint_with_scaler(
-    enopt_config: Any, evaluator: Any, test_functions: Any, external: str
+    enopt_config: Any, evaluator: Any, test_functions: Any, external: str,
 ) -> None:
     enopt_config["optimizer"]["method"] = f"{external}optpp_q_newton"
     enopt_config["nonlinear_constraints"] = {
@@ -596,29 +606,29 @@ def test_dakota_nonlinear_constraint_with_scaler(
                 assert np.allclose(transformed.functions.constraints, scales)
 
     optimizer = BasicOptimizer(
-        enopt_config, evaluator(functions), transforms=transforms
+        enopt_config, evaluator(functions), transforms=transforms,
     )
     optimizer._observers.append(  # noqa: SLF001
-        (EventType.FINISHED_EVALUATION, check_constraints)
+        (EventType.FINISHED_EVALUATION, check_constraints),
     )
     results2 = optimizer.run(initial_values).results
     assert results2 is not None
     assert np.allclose(
-        results2.evaluations.variables, results1.evaluations.variables, atol=0.02
+        results2.evaluations.variables, results1.evaluations.variables, atol=0.02,
     )
     assert results1.functions is not None
     assert results2.functions is not None
     assert np.allclose(
-        results1.functions.objectives, results2.functions.objectives, atol=0.025
+        results1.functions.objectives, results2.functions.objectives, atol=0.025,
     )
 
 
 @pytest.mark.parametrize(
-    "external", ["", pytest.param("external/", marks=pytest.mark.external)]
+    "external", ["", pytest.param("external/", marks=pytest.mark.external)],
 )
 @pytest.mark.skip(reason="Not yet implemented")
 def test_dakota_nonlinear_constraint_with_lazy_scaler(
-    enopt_config: Any, evaluator: Any, test_functions: Any, external: str
+    enopt_config: Any, evaluator: Any, test_functions: Any, external: str,
 ) -> None:
     enopt_config["optimizer"]["method"] = f"{external}optpp_q_newton"
     enopt_config["nonlinear_constraints"] = {
@@ -683,18 +693,18 @@ def test_dakota_nonlinear_constraint_with_lazy_scaler(
                 assert np.allclose(transformed.functions.constraints, scales)
 
     optimizer = BasicOptimizer(
-        enopt_config, evaluator(functions), transforms=transforms
+        enopt_config, evaluator(functions), transforms=transforms,
     )
     optimizer._observers.append(  # noqa: SLF001
-        (EventType.FINISHED_EVALUATION, check_constraints)
+        (EventType.FINISHED_EVALUATION, check_constraints),
     )
     results2 = optimizer.run(initial_values).results
     assert results2 is not None
     assert np.allclose(
-        results2.evaluations.variables, results1.evaluations.variables, atol=0.02
+        results2.evaluations.variables, results1.evaluations.variables, atol=0.02,
     )
     assert results1.functions is not None
     assert results2.functions is not None
     assert np.allclose(
-        results1.functions.objectives, results2.functions.objectives, atol=0.025
+        results1.functions.objectives, results2.functions.objectives, atol=0.025,
     )

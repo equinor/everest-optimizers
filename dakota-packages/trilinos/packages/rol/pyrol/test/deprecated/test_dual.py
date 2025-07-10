@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import linalg as LA
-from PyROL.getTypeName import getTypeName
-from PyROL import Vector, Reduced_Objective_SimOpt, Objective_SimOpt, Constraint_SimOpt
+from PyROL import Constraint_SimOpt, Objective_SimOpt, Reduced_Objective_SimOpt, Vector
 from PyROL.vectors import npVector
 
 # Testing 5 implementations of ROL::Vector:
@@ -11,6 +10,7 @@ from PyROL.vectors import npVector
 # - vector_trackClones_dual      vector that tracks its clones and has non-default dual
 # - vector_no_trackClones_dual   vector that does not track its clones and has non-default dual
 
+
 class vector_base(Vector):
     def __init__(self, values=None):
         assert isinstance(values, np.ndarray)
@@ -19,7 +19,7 @@ class vector_base(Vector):
         super().__init__()
 
     @staticmethod
-    def full(dimension=1, default_value=0.):
+    def full(dimension=1, default_value=0.0):
         values = np.full((dimension,), fill_value=default_value)
         return npVector(values)
 
@@ -36,7 +36,7 @@ class vector_base(Vector):
         return LA.norm(self.values)
 
     def zero(self):
-        self.setScalar(0.)
+        self.setScalar(0.0)
 
     def axpy(self, scale_factor, x):
         ax = x.clone()
@@ -55,16 +55,15 @@ class vector_base(Vector):
         reductionType = op.reductionType()
         if reductionType == ROL.Elementwise.REDUCE_MIN:
             return self.values.min()
-        elif reductionType == ROL.Elementwise.REDUCE_MAX:
+        if reductionType == ROL.Elementwise.REDUCE_MAX:
             return self.values.max()
-        elif reductionType == ROL.Elementwise.REDUCE_SUM:
+        if reductionType == ROL.Elementwise.REDUCE_SUM:
             return self.values.sum()
-        elif reductionType == ROL.Elementwise.REDUCE_AND:
+        if reductionType == ROL.Elementwise.REDUCE_AND:
             return np.logical_and.reduce(self.values)
-        elif reductionType == ROL.Elementwise.REDUCE_BOR:
+        if reductionType == ROL.Elementwise.REDUCE_BOR:
             return np.bitwise_or.reduce(self.values)
-        else:
-            raise NotImplementedError(reductionType)
+        raise NotImplementedError(reductionType)
 
     def applyUnary(self, op):
         for i in range(self.dimension()):
@@ -83,8 +82,8 @@ class vector_base(Vector):
 
     def basis(self, i):
         b = self.clone()
-        b.values[:] = 0.
-        b.values[i] = 1.
+        b.values[:] = 0.0
+        b.values[i] = 1.0
         self._basis = b
         return b
 
@@ -155,7 +154,7 @@ u = npVector(np.ones(3))
 z = npVector(np.ones(2))
 p = u.dual().clone()
 Reduced_Objective_SimOpt(obj, constraint, u, z, p)
-print('npVector passed')
+print("npVector passed")
 
 
 # no segfault
@@ -163,7 +162,7 @@ u = vector_trackClones(np.ones(3))
 z = vector_trackClones(np.ones(2))
 p = u.dual().clone()
 Reduced_Objective_SimOpt(obj, constraint, u, z, p)
-print('vector_trackClones passed')
+print("vector_trackClones passed")
 
 
 # no segfault
@@ -171,7 +170,7 @@ u = vector_no_trackClones(np.ones(3))
 z = vector_no_trackClones(np.ones(2))
 p = u.dual().clone()
 Reduced_Objective_SimOpt(obj, constraint, u, z, p)
-print('vector_no_trackClones passed')
+print("vector_no_trackClones passed")
 
 
 # segfault
@@ -179,7 +178,7 @@ u = vector_trackClones_with_dual(np.ones(3))
 z = vector_trackClones_with_dual(np.ones(2))
 p = u.dual().clone()
 Reduced_Objective_SimOpt(obj, constraint, u, z, p)
-print('vector_trackClones_with_dual passed')
+print("vector_trackClones_with_dual passed")
 
 
 # segfault
@@ -187,7 +186,7 @@ u = vector_no_trackClones_with_dual(np.ones(3))
 z = vector_no_trackClones_with_dual(np.ones(2))
 p = u.dual().clone()
 Reduced_Objective_SimOpt(obj, constraint, u, z, p)
-print('vector_no_trackClones_with_dual passed')
+print("vector_no_trackClones_with_dual passed")
 
 
 # segfault
@@ -195,4 +194,4 @@ u = vector_no_trackClones_with_dual_alternative(np.ones(3))
 z = vector_no_trackClones_with_dual_alternative(np.ones(2))
 p = u.dual().clone()
 Reduced_Objective_SimOpt(obj, constraint, u, z, p)
-print('vector_no_trackClones_with_dual_alternative passed')
+print("vector_no_trackClones_with_dual_alternative passed")

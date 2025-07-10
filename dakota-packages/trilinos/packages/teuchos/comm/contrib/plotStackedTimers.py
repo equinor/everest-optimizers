@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-Visualizes stacked timer output in as a hierarchical pie chart.
+"""Visualizes stacked timer output in as a hierarchical pie chart.
 
 For it to work, this script needs Matplotlib and the python package
 from https://github.com/klieret/pyplot-hierarchical-pie
@@ -11,26 +10,41 @@ This script is not tested, so please report if it stops working.
 
 import re
 from argparse import ArgumentParser
+
 try:
-    from hpie import HPie, stringvalues_to_pv, Path
+    from hpie import HPie, Path, stringvalues_to_pv
 except ImportError:
-    print("This scripts needs the python package from https://github.com/klieret/pyplot-hierarchical-pie")
+    print(
+        "This scripts needs the python package from https://github.com/klieret/pyplot-hierarchical-pie",
+    )
     raise
 import matplotlib.pyplot as plt
 
-
-parser = ArgumentParser(description="Plot hierarchical pie chart for stacked timers. Left click for zooming in, right click for zooming out.")
-parser.add_argument('-r', '--plotRemainders', help="Plot remainder lines as well.",
-                    dest="plotRemainders", action="store_true",
-                    default=False)
-parser.add_argument('-n', '--non-interactive', help="Disable interactive features",
-                    dest='non_interactive', action="store_true", default=False)
-parser.add_argument('logFile', type=str, help="Log file with stacked timers")
+parser = ArgumentParser(
+    description="Plot hierarchical pie chart for stacked timers. Left click for zooming in, right click for zooming out.",
+)
+parser.add_argument(
+    "-r",
+    "--plotRemainders",
+    help="Plot remainder lines as well.",
+    dest="plotRemainders",
+    action="store_true",
+    default=False,
+)
+parser.add_argument(
+    "-n",
+    "--non-interactive",
+    help="Disable interactive features",
+    dest="non_interactive",
+    action="store_true",
+    default=False,
+)
+parser.add_argument("logFile", type=str, help="Log file with stacked timers")
 options = parser.parse_args()
 
 
 # parse log file with stacked timer output
-timerRegExp = re.compile(r'([\s|]*)(.*):\s([0-9]*(\.[0-9]*)?)\s-\s([0-9]*(\.[0-9]*)?)%')
+timerRegExp = re.compile(r"([\s|]*)(.*):\s([0-9]*(\.[0-9]*)?)\s-\s([0-9]*(\.[0-9]*)?)%")
 with open(options.logFile) as f:
     data = {}
     prevDepth = -1
@@ -41,20 +55,19 @@ with open(options.logFile) as f:
             match = match[0]
             separator = match[0]
             label = match[1]
-            if label == 'Remainder' and not options.plotRemainders:
+            if label == "Remainder" and not options.plotRemainders:
                 continue
             time = float(match[2])
-            depth = separator.count('|')
-            stack = stack[:depth-1]+[label]
+            depth = separator.count("|")
+            stack = stack[: depth - 1] + [label]
             prevDepth = depth
-            data['/'.join(stack)] = time
+            data["/".join(stack)] = time
             if len(stack) > 1:
-                data['/'.join(stack[:-1])] -= time
+                data["/".join(stack[:-1])] -= time
 
 # create plot
 dataAll = stringvalues_to_pv(data)
 if not options.non_interactive:
-
     global hp, base
 
     ax = plt.gca()
@@ -71,8 +84,12 @@ if not options.non_interactive:
             for path in hp.wedges:
                 cont, ind = hp.wedges[path].contains(event)
                 if cont:
-                    path = Path(base[:]+path[:])
-                    data = {p[len(path)-1:]: time for p, time in dataAll.items() if p.startswith(path)}
+                    path = Path(base[:] + path[:])
+                    data = {
+                        p[len(path) - 1 :]: time
+                        for p, time in dataAll.items()
+                        if p.startswith(path)
+                    }
                     ax.clear()
                     hp = HPie(data, ax)
                     hp.plot(setup_axes=True, interactive=True)
@@ -83,7 +100,11 @@ if not options.non_interactive:
             # right click
             if len(base) > 0:
                 path = base
-                data = {p[len(path)-1:]: time for p, time in dataAll.items() if p.startswith(path)}
+                data = {
+                    p[len(path) - 1 :]: time
+                    for p, time in dataAll.items()
+                    if p.startswith(path)
+                }
             else:
                 path = Path([])
                 data = dataAll
@@ -93,7 +114,7 @@ if not options.non_interactive:
             ax.figure.canvas.draw_idle()
             base = Path(path[:-1])
 
-    ax.figure.canvas.mpl_connect('button_press_event', onClick)
+    ax.figure.canvas.mpl_connect("button_press_event", onClick)
 else:
     ax = plt.gca()
     hp = HPie(dataAll, ax)
