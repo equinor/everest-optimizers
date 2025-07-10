@@ -1,1 +1,1 @@
-../commonTools/framework/ProjectCiFileChangeLogic.py
+../tribits/examples/TribitsExampleProject/cmake/ProjectCiFileChangeLogic.py
