@@ -12,7 +12,7 @@ def _get_pyopttpp_path() -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     pyopttpp_build_dir = os.path.abspath(os.path.join(
         current_dir, '..', '..', '..', 
-        'dakota-packages', 'OPTPP', 'build', 'python'
+        'src','dakota-packages', 'OPTPP', 'build', 'python'
     ))
     return pyopttpp_build_dir
 

@@ -25,10 +25,10 @@ pip install pybind11 numpy
 
 ### Step 2: Set up Trilinos Dependency
 
-The build system expects the `trilinos` source directory to be present inside the `OPTPP` directory. If your `trilinos` checkout is located elsewhere (e.g., in `dakota-packages/trilinos`), create a symbolic link from within the `OPTPP` directory:
+The build system expects the `trilinos` source directory to be present inside the `OPTPP` directory. If your `trilinos` checkout is located elsewhere (e.g., in `src/dakota-packages/trilinos`), create a symbolic link from within the `OPTPP` directory:
 
 ```bash
-# From within the dakota-packages/OPTPP directory
+# From within the src/dakota-packages/OPTPP directory
 ln -sfn ../trilinos trilinos
 ```
 
@@ -50,7 +50,7 @@ These commands will configure the project with CMake and then compile the C++ li
 
 ```bash
 # Navigate to the OPTPP root directory
-cd /path/to/dakota-packages/OPTPP
+cd src/dakota-packages/OPTPP
 
 # Create a build directory and configure the project
 PYBIND11_DIR=$(python -m pybind11 --cmakedir)
@@ -85,7 +85,7 @@ To verify that the module was built correctly, run the provided test script from
 
 ```bash
 # Navigate to the python directory
-cd /path/to/dakota-packages/OPTPP/python
+cd src/dakota-packages/OPTPP/python
 
 # Run the test script with the Python interpreter used for the build
 python test_opttpp.py

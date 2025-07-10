@@ -23,6 +23,7 @@ pyopttpp_build_dir = os.path.abspath(
         os.path.dirname(__file__),
         "..",
         "..",
+        "src",
         "dakota-packages",
         "OPTPP",
         "build",

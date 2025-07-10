@@ -75,7 +75,7 @@ def test_pyopttpp_import():
             )
             print(
                 "Make sure you've built the module according to the instructions in "
-                "dakota-packages/OPTPP/python/README.md"
+                "src/dakota-packages/OPTPP/python/README.md"
             )
 
         if py_version_mismatch:
