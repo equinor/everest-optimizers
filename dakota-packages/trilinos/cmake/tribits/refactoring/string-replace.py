@@ -9,57 +9,56 @@ if there were changes).
 
 
 def getCmndLineOptions():
-    from argparse import ArgumentParser, RawDescriptionHelpFormatter
+  from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-    clp = ArgumentParser(
-        description=usageHelp, formatter_class=RawDescriptionHelpFormatter,
-    )
+  clp = ArgumentParser(description=usageHelp,
+    formatter_class=RawDescriptionHelpFormatter)
 
-    clp.add_argument(
-        "-s", dest="stringToReplace", required=True, help="String to repalce",
-    )
+  clp.add_argument(
+    "-s", dest="stringToReplace", required=True,
+    help="String to repalce" )
 
-    clp.add_argument(
-        "-r", dest="replacementString", required=True, help="Replacement string",
-    )
+  clp.add_argument(
+    "-r", dest="replacementString", required=True,
+    help="Replacement string" )
 
-    clp.add_argument(
-        "-f",
-        dest="inputFile",
-        required=True,
-        help="Input file (and also output if -o <file> not specified)",
-    )
+  clp.add_argument(
+    "-f", dest="inputFile", required=True,
+    help="Input file (and also output if -o <file> not specified)" )
 
-    clp.add_argument("-o", dest="outputFile", default="", help="Output file (optional)")
+  clp.add_argument(
+    "-o", dest="outputFile", default="",
+    help="Output file (optional)" )
 
-    options = clp.parse_args(sys.argv[1:])
+  options = clp.parse_args(sys.argv[1:])
 
-    if options.outputFile == "":
-        options.outputFile = options.inputFile
+  if options.outputFile == "":
+    options.outputFile = options.inputFile
 
-    return options
+  return options
 
 
 #
 #  Main()
 #
 
-if __name__ == "__main__":
-    import sys
+if __name__ == '__main__':
 
-    inOptions = getCmndLineOptions()
+  import sys
 
-    with open(inOptions.inputFile) as file:
-        lines = file.readlines()
+  inOptions = getCmndLineOptions()
 
-    fileWasChanged = False
-    newLines = []
-    for line in lines:
-        newLine = line.replace(inOptions.stringToReplace, inOptions.replacementString)
-        if newLine != line:
-            fileWasChanged = True
-        newLines.append(newLine)
+  with open(inOptions.inputFile, 'r') as file:
+    lines = file.readlines()
 
-    if fileWasChanged or inOptions.outputFile != inOptions.inputFile:
-        with open(inOptions.outputFile, "w") as file:
-            file.writelines(newLines)
+  fileWasChanged = False
+  newLines = []
+  for line in lines:
+    newLine = line.replace(inOptions.stringToReplace, inOptions.replacementString)
+    if newLine != line:
+      fileWasChanged = True
+    newLines.append(newLine)
+
+  if (fileWasChanged or inOptions.outputFile != inOptions.inputFile):
+    with open(inOptions.outputFile, 'w') as file:
+      file.writelines(newLines)

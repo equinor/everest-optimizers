@@ -1,4 +1,5 @@
-"""Python2and3: Simple set of utilies to write Python code that is Python 2 and
+"""
+Python2and3: Simple set of utilies to write Python code that is Python 2 and
 Python 3 compatible.
 """
 
@@ -19,27 +20,17 @@ import sys
 #             u'<string const>' in Python 2
 #
 if sys.version_info < (3,):
-    # Python 2
-    def b(x):
-        return x
-
-    def s(x):
-        return x
-
-    def u(x):
-        return unicode(x)
+  # Python 2
+  def b(x): return x
+  def s(x): return x
+  def u(x): return unicode(x)
 else:
-    # Python 3
-    import codecs
-
-    def b(x):
-        return codecs.latin_1_encode(x)[0]
-
-    def s(x):
-        try:
-            return x.decode("utf-8")
-        except AttributeError:
-            return x
-
-    def u(x):
+  # Python 3
+  import codecs
+  def b(x): return codecs.latin_1_encode(x)[0]
+  def s(x):
+     try:
+        return x.decode("utf-8")
+     except AttributeError:
         return x
+  def u(x): return x

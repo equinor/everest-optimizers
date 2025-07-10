@@ -1,5 +1,6 @@
-import torch
 from pyrol import Objective
+
+import torch
 
 
 class TorchObjective(Objective):
@@ -36,18 +37,18 @@ class TorchObjective(Objective):
 
 
 class SquaredNorm(TorchObjective):
+
     def torch_value(self, x):
-        return 0.5 * x.squeeze() ** 2
+        return 0.5*x.squeeze()**2
 
 
 class LeastSquaresObjective(TorchObjective):
+
     def __init__(self, data, model):
         super().__init__()
         self.x, self.y = data
         self.model = model
-        self.loss = torch.nn.MSELoss(reduction="sum")
+        self.loss = torch.nn.MSELoss(reduction='sum')
 
     def torch_value(self, x):
-        return 0.5 * self.loss(
-            torch.func.functional_call(self.model, x, self.x), self.y,
-        )
+        return 0.5*self.loss(torch.func.functional_call(self.model, x, self.x), self.y)

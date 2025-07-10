@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 
 class VectorField(ABC):
+
     @abstractmethod
     def value(self, u, z, t):
         pass
@@ -18,6 +19,7 @@ class VectorField(ABC):
 
 
 class DecayingExponential(VectorField):
+
     def value(self, u, z, t):
         return z[:] - u[:]
 
@@ -34,23 +36,24 @@ from pyrol.unsupported import DynamicConstraint
 
 
 class ForwardEuler(DynamicConstraint):
+
     def __init__(self, f):
         super().__init__()
         self.f = f
 
     def value(self, c, uo, un, z, ts):
         dt = ts.t[1] - ts.t[0]
-        c[:] = un[:] - uo[:] - dt * self.f.value(uo, z, ts.t[0])
+        c[:] = un[:] - uo[:] - dt*self.f.value(uo, z, ts.t[0])
 
     def solve(self, c, uo, un, z, ts):
         dt = ts.t[1] - ts.t[0]
-        un[:] = uo[:] + dt * self.f.value(uo, z, ts.t[0])
+        un[:] = uo[:] + dt*self.f.value(uo, z, ts.t[0])
         self.value(c, uo, un, z, ts)
 
     def applyJacobian_uo(self, jv, vo, uo, un, z, ts):
         self.f.applyJacobian_u(jv, vo, uo, z, ts.t[0])
         dt = ts.t[1] - ts.t[0]
-        jv[:] = -vo[:] - dt * jv[:]
+        jv[:] = - vo[:] - dt*jv[:]
 
     def applyJacobian_un(self, jv, vn, uo, un, z, ts):
         jv[:] = vn[:]
@@ -58,7 +61,7 @@ class ForwardEuler(DynamicConstraint):
     def applyJacobian_z(self, jv, vz, uo, un, z, ts):
         self.f.applyJacobian_z(jv, vz, uo, z, ts.t[0])
         dt = ts.t[1] - ts.t[0]
-        jv[:] = -dt * jv[:]
+        jv[:] = - dt*jv[:]
 
     def applyAdjointJacobian_uo(self, ajv, vo, uo, un, z, ts):
         self.applyJacobian_uo(ajv, vo, uo, un, z, ts)
@@ -84,6 +87,7 @@ from pyrol.unsupported import DynamicObjective
 
 
 class SquaredLoss(DynamicObjective):
+
     def __init__(self, T, y):
         super().__init__()
         self.T = T
@@ -92,7 +96,7 @@ class SquaredLoss(DynamicObjective):
     def value(self, uo, un, z, ts):
         v = 0
         if ts.t[1] == self.T:
-            v = 0.5 * np.sum((un[:] - self.y) ** 2)
+            v = 0.5*np.sum((un[:] - self.y)**2)
         return v
 
     def gradient_uo(self, g, uo, un, z, ts):
@@ -109,18 +113,19 @@ class SquaredLoss(DynamicObjective):
 
 # TO-DO: put in separate file #################################################
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pyrol
-from pyrol import Problem, Solver, getCout
-from pyrol.pyrol.Teuchos import ParameterList
-from pyrol.unsupported import (
-    PartitionedVector,
-    ReducedDynamicObjective,
-    SerialConstraint,
-    TimeStamp,
-)
+import matplotlib.pyplot as plt
+
 from pyrol.vectors import NumPyVector
+from pyrol import getCout, Problem, Solver
+
+from pyrol.unsupported import TimeStamp
+from pyrol.unsupported import ReducedDynamicObjective
+from pyrol.unsupported import PartitionedVector
+from pyrol.unsupported import SerialConstraint
+
+from pyrol.pyrol.Teuchos import ParameterList
+import pyrol
 
 
 def as_numpy(v):
@@ -147,26 +152,27 @@ def get_trajectory(constraint, u0, z, timestamps):
 
 def plot_trajectory(constraint, u0, z, timestamps):
     t, u = get_trajectory(constraint, u0, z, timestamps)
-    plt.plot(t, np.exp(-t), label="continuous")
-    plt.plot(t, u, ".-", label="numerical solution")
+    plt.plot(t, np.exp(-t), label='continuous')
+    plt.plot(t, u, '.-', label='numerical solution')
     plt.grid()
-    plt.title(f"# of timesteps = {z.dimension()}")
-    plt.ylabel("state")
-    plt.xlabel("t")
+    plt.title(f'# of timesteps = {z.dimension()}')
+    plt.ylabel('state')
+    plt.xlabel('t')
     plt.legend()
     plt.show()
 
 
 def optimize(n):
-    T = 1  # end time
+
+    T  = 1   # end time
 
     # configure timestamps
-    dt = T / n
+    dt = T/n
     timestamps = pyrol.pyrol.std.vector_ROL_TimeStamp_double_t()
     for k in range(n):
         ts = TimeStamp()
-        ts.t.push_back(k * dt)
-        ts.t.push_back((k + 1) * dt)
+        ts.t.push_back(k*dt)
+        ts.t.push_back((k + 1)*dt)
         timestamps.push_back(ts)
 
     # configure DynamicConstraint
@@ -184,20 +190,18 @@ def optimize(n):
     u0 = NumPyVector(np.ones(1))
     zk = NumPyVector(np.zeros(1))
     ck = NumPyVector(np.zeros(1))
-    reduced_objective = ReducedDynamicObjective(
-        objective, constraint, u0, zk, ck, timestamps, parameters, cout,
-    )
+    reduced_objective = ReducedDynamicObjective(objective, constraint, u0, zk, ck, timestamps, parameters, cout)
 
     # Problem
     z = PartitionedVector.create(zk, n)
     problem = Problem(reduced_objective, z)
     # problem.check(True, cout)
 
-    parameters["General"] = ParameterList()
-    parameters["General"]["Output Level"] = 1
-    parameters["Step"] = ParameterList()
-    parameters["Step"]["Trust Region"] = ParameterList()
-    parameters["Step"]["Trust Region"]["Subproblem Solver"] = "Dogleg"
+    parameters['General'] =  ParameterList()
+    parameters['General']['Output Level'] = 1
+    parameters['Step'] = ParameterList()
+    parameters['Step']['Trust Region'] = ParameterList()
+    parameters['Step']['Trust Region']['Subproblem Solver'] = 'Dogleg'
 
     # Solver
     solver = Solver(problem, parameters)
@@ -209,9 +213,9 @@ def optimize(n):
 def main():
     n = 100  # number of time steps
     constraint, u0, z, timestamps = optimize(n)
-    print(f"\n||z||_inf = {np.linalg.norm(as_numpy(z), np.inf)}\n")
+    print(f'\n||z||_inf = {np.linalg.norm(as_numpy(z), np.inf)}\n')
     plot_trajectory(constraint, u0, z, timestamps)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -39,18 +39,12 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-    "--input-xml-deps-file",
-    dest="inputXmlDepsFile",
-    type="string",
-    help="Input XML file giving the TriBITS Project dependencies.",
-)
+  "--input-xml-deps-file", dest="inputXmlDepsFile", type="string",
+  help="Input XML file giving the TriBITS Project dependencies.")
 
 clp.add_option(
-    "--output-html-deps-file",
-    dest="outputHtmlDepsFile",
-    type="string",
-    help="Output HTML file showing the TriBITS Project dependencies",
-)
+  "--output-html-deps-file", dest="outputHtmlDepsFile", type="string",
+  help="Output HTML file showing the TriBITS Project dependencies")
 
 (options, args) = clp.parse_args()
 
@@ -62,6 +56,8 @@ clp.add_option(
 
 from TribitsDependencies import getProjectDependenciesFromXmlFile
 
-trilinosDependencies = getProjectDependenciesFromXmlFile(options.inputXmlDepsFile)
+trilinosDependencies = getProjectDependenciesFromXmlFile(
+  options.inputXmlDepsFile)
 
-trilinosDependencies.writeFullHtmlPage(options.outputHtmlDepsFile)
+trilinosDependencies.writeFullHtmlPage(
+  options.outputHtmlDepsFile)

@@ -1,11 +1,13 @@
-import copy
+from pyrol.pyrol import ROL
+from pyrol.getTypeName import *
 
 import torch
-from pyrol.getTypeName import *
-from pyrol.pyrol import ROL
+
+import copy
 
 
-class PythonVector(getTypeName("Vector")):
+class PythonVector(getTypeName('Vector')):
+
     def __iadd__(self, other):
         self.plus(other)
 
@@ -13,6 +15,7 @@ class PythonVector(getTypeName("Vector")):
 
 
 class TensorVector(PythonVector):
+
     @torch.no_grad()
     def __init__(self, tensor):
         super().__init__()
@@ -97,7 +100,7 @@ class TensorVector(PythonVector):
 
     @torch.no_grad()
     def norm(self):
-        return self.dot(self) ** 0.5
+        return self.dot(self)**0.5
 
     @torch.no_grad()
     def basis(self, i):
@@ -120,6 +123,7 @@ class TensorVector(PythonVector):
 
 
 class TensorDictVector(PythonVector):
+
     @torch.no_grad()
     def __init__(self, tensor_dict):
         super().__init__()
@@ -200,11 +204,11 @@ class TensorDictVector(PythonVector):
         reduction_type = op.reductionType()
         match reduction_type:
             case ROL.Elementwise.REDUCE_MIN:
-                ans = float("+inf")
+                ans = float('+inf')
                 for _, v in self.torch_dict.items():
                     ans = min(ans, v.min().item())
             case ROL.Elementwise.REDUCE_MAX:
-                ans = float("-inf")
+                ans = float('-inf')
                 for _, v in self.torch_dict.items():
                     ans = max(ans, v.max().item())
             case ROL.Elementwise.REDUCE_SUM:
@@ -232,7 +236,7 @@ class TensorDictVector(PythonVector):
 
     @torch.no_grad()
     def norm(self):
-        return self.dot(self) ** 0.5
+        return self.dot(self)**0.5
 
     @torch.no_grad()
     def basis(self, i):

@@ -1,11 +1,13 @@
 import unittest
 
-from harness import harness
 from pyrol import getParametersFromXmlFile
+
+from harness import harness
 from zoo import HS02, HS41
 
 
 class TestTypeB(unittest.TestCase):
+
     def setUp(self):
         self.tol = 1e-7
         # Set up a parameter list.
@@ -25,15 +27,14 @@ class TestTypeB(unittest.TestCase):
 
 
 class TestInteriorPoint(TestTypeB):
+
     def setUp(self):
         super().setUp()
-        self.parameterList.sublist("Step").set("Type", "Interior Point")
-
+        self.parameterList.sublist("Step").set("Type", "Interior Point") 
+    
     def test_InteriorPoint(self):
         self._scenario41()
-        self.parameterList.sublist("Step").sublist("Interior Point").set(
-            "Barrier Penalty Reduction Factor", 0.1,
-        )
+        self.parameterList.sublist("Step").sublist("Interior Point").set("Barrier Penalty Reduction Factor", 0.1)
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < 1e-3)  # 6 iterations
         # test07
@@ -47,23 +48,18 @@ class TestInteriorPoint(TestTypeB):
 
 
 class TestLineSearch(TestTypeB):
+
     def setUp(self):
         super().setUp()
         self.parameterList.sublist("Step").set("Type", "Line Search")
 
     def test_LSecantB(self):
         d = "Quasi-Newton Method"
-        self.parameterList.sublist("Step").sublist("Line Search").sublist(
-            "Descent Method",
-        ).set("Type", d)
+        self.parameterList.sublist("Step").sublist("Line Search").sublist("Descent Method").set("Type", d)
         m = "L-Secant-B"
-        self.parameterList.sublist("Step").sublist("Line Search").sublist(
-            "Quasi-Newton",
-        ).set("Method", m)
+        self.parameterList.sublist("Step").sublist("Line Search").sublist("Quasi-Newton").set("Method", m)
         self._scenario41()
-        self.parameterList.sublist("General").sublist("Polyhedral Projection").set(
-            "Type", "Dai-Fletcher",
-        )
+        self.parameterList.sublist("General").sublist("Polyhedral Projection").set("Type", "Dai-Fletcher")
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)
         # test15
@@ -77,12 +73,8 @@ class TestLineSearch(TestTypeB):
 
     def test_NewtonKrylov(self):
         d = "Newton-Krylov"
-        self.parameterList.sublist("Step").sublist("Line Search").sublist(
-            "Descent Method",
-        ).set("Type", d)
-        self.parameterList.sublist("General").sublist("Secant").set(
-            "Use as Preconditioner", True,
-        )
+        self.parameterList.sublist("Step").sublist("Line Search").sublist("Descent Method").set("Type", d)
+        self.parameterList.sublist("General").sublist("Secant").set("Use as Preconditioner", True)
         self._scenario02()
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(True)  # 6 iterations but O(1) error
@@ -94,17 +86,11 @@ class TestLineSearch(TestTypeB):
 
     def test_QuasiNewton(self):
         d = "Quasi-Newton Method"
-        self.parameterList.sublist("Step").sublist("Line Search").sublist(
-            "Descent Method",
-        ).set("Type", d)
+        self.parameterList.sublist("Step").sublist("Line Search").sublist("Descent Method").set("Type", d)
         m = "Quasi-Newton"
-        self.parameterList.sublist("Step").sublist("Line Search").sublist(
-            "Quasi-Newton",
-        ).set("Method", m)
+        self.parameterList.sublist("Step").sublist("Line Search").sublist("Quasi-Newton").set("Method", m)
         self._scenario41()
-        self.parameterList.sublist("General").sublist("Polyhedral Projection").set(
-            "Type", "Dai-Fletcher",
-        )
+        self.parameterList.sublist("General").sublist("Polyhedral Projection").set("Type", "Dai-Fletcher")
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 7 iterations
         # test12
@@ -118,9 +104,7 @@ class TestLineSearch(TestTypeB):
 
     def test_SteepestDescent(self):
         d = "Steepest Descent"
-        self.parameterList.sublist("Step").sublist("Line Search").sublist(
-            "Descent Method",
-        ).set("Type", d)
+        self.parameterList.sublist("Step").sublist("Line Search").sublist("Descent Method").set("Type", d)
         self._scenario41()
         self.parameterList.sublist("Status Test").set("Gradient Tolerance", 1e-7)
         e = harness(self.testProblem, self.parameterList)
@@ -133,10 +117,11 @@ class TestLineSearch(TestTypeB):
 
 
 class TestMoreauYosida(TestTypeB):
+
     def setUp(self):
         super().setUp()
-        self.parameterList.sublist("Step").set("Type", "Moreau-Yosida")
-
+        self.parameterList.sublist("Step").set("Type", "Moreau-Yosida") 
+    
     def test_MoreauYosida(self):
         self._scenario41()
         e = harness(self.testProblem, self.parameterList)
@@ -149,15 +134,14 @@ class TestMoreauYosida(TestTypeB):
 
 
 class TestPrimalDualActiveSet(TestTypeB):
+
     def setUp(self):
         super().setUp()
         self.parameterList.sublist("Step").set("Type", "Primal Dual Active Set")
 
     def test_PrimalDualActiveSet(self):
         self._scenario41()
-        self.parameterList.sublist("General").sublist("Secant").set(
-            "Use as Hessian", True,
-        )
+        self.parameterList.sublist("General").sublist("Secant").set("Use as Hessian", True)
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 7 iterations
         # test09
@@ -170,15 +154,14 @@ class TestPrimalDualActiveSet(TestTypeB):
 
 
 class TestTrustRegion(TestTypeB):
+
     def setUp(self):
         super().setUp()
-        self.parameterList.sublist("Step").set("Type", "Trust Region")
+        self.parameterList.sublist("Step").set("Type", "Trust Region") 
 
     def test_ColemanLi(self):
         s = "Coleman-Li"
-        self.parameterList.sublist("Step").sublist("Trust Region").set(
-            "Subproblem Model", s,
-        )
+        self.parameterList.sublist("Step").sublist("Trust Region").set("Subproblem Model", s)
         self._scenario02()
         self.parameterList.sublist("Status Test").set("Gradient Tolerance", 1e-6)
         e = harness(self.testProblem, self.parameterList)
@@ -192,16 +175,10 @@ class TestTrustRegion(TestTypeB):
 
     def test_KelleySachs(self):
         s = "Kelley-Sachs"
-        self.parameterList.sublist("Step").sublist("Trust Region").set(
-            "Subproblem Model", s,
-        )
+        self.parameterList.sublist("Step").sublist("Trust Region").set("Subproblem Model", s)
         self._scenario02()
-        self.parameterList.sublist("General").sublist("Secant").set(
-            "Use as Preconditioner", True,
-        )
-        self.parameterList.sublist("Step").sublist("Trust Region").set(
-            "Initial Radius", 1e0,
-        )
+        self.parameterList.sublist("General").sublist("Secant").set("Use as Preconditioner", True)
+        self.parameterList.sublist("Step").sublist("Trust Region").set("Initial Radius", 1e0)
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 31 iterations
         # test10
@@ -213,13 +190,9 @@ class TestTrustRegion(TestTypeB):
 
     def test_LinMore(self):
         s = "Lin-More"
-        self.parameterList.sublist("Step").sublist("Trust Region").set(
-            "Subproblem Model", s,
-        )
+        self.parameterList.sublist("Step").sublist("Trust Region").set("Subproblem Model", s)
         self._scenario41()
-        self.parameterList.sublist("General").sublist("Polyhedral Projection").set(
-            "Type", "Dai-Fletcher",
-        )
+        self.parameterList.sublist("General").sublist("Polyhedral Projection").set("Type", "Dai-Fletcher")
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 3 iterations
         # test02
@@ -231,16 +204,10 @@ class TestTrustRegion(TestTypeB):
 
     def test_TrustRegionSPG(self):
         s = "SPG"
-        self.parameterList.sublist("Step").sublist("Trust Region").set(
-            "Subproblem Model", s,
-        )
+        self.parameterList.sublist("Step").sublist("Trust Region").set("Subproblem Model", s)
         self._scenario41()
-        self.parameterList.sublist("General").sublist("Polyhedral Projection").set(
-            "Type", "Dai-Fletcher",
-        )
-        self.parameterList.sublist("Step").sublist("Trust Region").sublist(
-            "SPG",
-        ).sublist("Solver").set("Maximum Spectral Step Size", 1e2)
+        self.parameterList.sublist("General").sublist("Polyhedral Projection").set("Type", "Dai-Fletcher")
+        self.parameterList.sublist("Step").sublist("Trust Region").sublist("SPG").sublist("Solver").set("Maximum Spectral Step Size", 1e2)
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < self.tol)  # 3 iterations
         # test13
@@ -255,15 +222,14 @@ class TestTrustRegion(TestTypeB):
 
 
 class TestSpectralGradient(TestTypeB):
+
     def setUp(self):
         super().setUp()
-        self.parameterList.sublist("Step").set("Type", "Spectral Gradient")
+        self.parameterList.sublist("Step").set("Type", "Spectral Gradient") 
 
     def test_SpectralGradient(self):
         self._scenario41()
-        self.parameterList.sublist("General").sublist("Polyhedral Projection").set(
-            "Type", "Dai-Fletcher",
-        )
+        self.parameterList.sublist("General").sublist("Polyhedral Projection").set("Type", "Dai-Fletcher")
         e = harness(self.testProblem, self.parameterList)
         self.assertTrue(abs(e) < 1e-7)  # 5 iterations
         # test11

@@ -1,4 +1,5 @@
-"""Python2and3: Simple set of utilities to write Python code that is Python 2 and
+"""
+Python2and3: Simple set of utilities to write Python code that is Python 2 and
 Python 3 compatible.
 """
 
@@ -23,45 +24,33 @@ import sys
 #             a dict to a string.
 #
 if sys.version_info < (3,):
-    # Python 2
-    def b(x):
-        return x
-
-    def s(x):
-        return x
-
-    def u(x):
-        return unicode(x)
-
-    def stru():
-        return "u"
+  # Python 2
+  def b(x): return x
+  def s(x): return x
+  def u(x): return unicode(x)
+  def stru(): return 'u'
 else:
-    # Python 3
-    import codecs
-
-    def b(x):
-        return codecs.latin_1_encode(x)[0]
-
-    def s(x):
-        try:
-            return x.decode("utf-8")
-        except AttributeError:
-            return x
-
-    def u(x):
+  # Python 3
+  import codecs
+  def b(x): return codecs.latin_1_encode(x)[0]
+  def s(x):
+     try:
+        return x.decode("utf-8")
+     except AttributeError:
         return x
-
-    def stru():
-        return ""
+  def u(x): return x
+  def stru(): return ''
 
 
 def csvReaderNext(csvReader):
-    if sys.version_info < (3,):
-        return csvReader.next()
+  if sys.version_info < (3,):
+    return csvReader.next()
+  else:
     return next(csvReader)
 
 
 def dictItems(dictIn):
-    if sys.version_info < (3,):
-        return dictIn.iteritems()
+  if sys.version_info < (3,):
+    return dictIn.iteritems()
+  else:
     return dictIn.items()

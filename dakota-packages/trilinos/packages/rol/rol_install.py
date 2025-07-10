@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
-import errno
-import os
-import sys
+import sys, os, errno
+
 from shutil import copy
 
-if __name__ == "__main__":
-    notice = """
+
+if __name__ == '__main__':
+
+    notice = \
+    """
     ***************************************************
     *** Installing Rapid Optimization Library (ROL) ***
     ***        Header-only installation             ***
@@ -36,79 +38,76 @@ if __name__ == "__main__":
     """
 
     print(notice)
-
+ 
     # Number of command line arguments
     narg = len(sys.argv)
+ 
+    install_specified = ( narg >= 2 )
 
-    install_specified = narg >= 2
-
-    src_path = os.path.join(os.getcwd(), "src")
-    install_path = "/usr/local/include"
+    src_path = os.path.join(os.getcwd(),"src")
+    install_path = '/usr/local/include'
     options = sys.argv[2:]
 
     if narg > 1:
         install_path = sys.argv[1]
 
     # Check if install path exists
-    if not os.path.exists(install_path):
-        print(
-            f"\nInstall path {install_path} does not exist. Attempting to create it.",
-        )
-
+    if not os.path.exists( install_path ): 
+        print("\nInstall path {0} does not exist. Attempting to create it.".format(install_path))
+   
         try:
             os.makedirs(install_path)
         except OSError as e:
             if e.errno == errno.EACCES:
-                print(
-                    f"\nYou do not have necessary permission to create path {install_path}!",
-                )
+                print("\nYou do not have necessary permission to create path {0}!".format(install_path))
                 print("\nROL installation failed! Exiting.\n")
                 os._exit(1)
             elif e.errno != errno.EEXIST:
-                print(
-                    f"\nUnable to create path {install_path}. Try another path.",
-                )
+                print("\nUnable to create path {0}. Try another path.".format(install_path))
                 print("\nROL installation failed! Exiting.\n")
                 os._exit(1)
-        print(f"\nPath {install_path} created.")
-
-    install_fail_msg = f"""
+            pass
+        print("\nPath {0} created.".format(install_path))    
+    
+    install_fail_msg = \
+    """
     Install of ROL failed! 
     You do not have write permissions to the designated install path: 
     
-    {install_path}\n"""
+    {0}\n""".format(install_path)
 
     if not os.access(install_path, os.W_OK):
-        print(install_fail_msg)
+        print( install_fail_msg ) 
         os._exit(1)
 
     opt_text = ""
 
-    if len(options) > 0:
+    if len(options)>0:
         opt_text += "\t Enabled options: \n"
 
-    if "no_teuchos" in options:
-        options = ["shared_ptr", "property_tree", "no_stacktrace", "simple", "Eigen"]
+    if 'no_teuchos' in options:
+        options = ['shared_ptr','property_tree','no_stacktrace','simple','Eigen']
 
     # ROL::Ptr Implementation
-    shared_ptr = "shared_ptr" in options
+    shared_ptr    = 'shared_ptr'    in options
 
-    if shared_ptr:
+    if shared_ptr: 
         opt_text += "\t Use std::shared_ptr as ROL::Ptr\n"
     else:
         opt_text += "\t Use Teuchos::RCP as ROL::Ptr\n"
 
-    # ROL::ParameterList Implementation
-    property_tree = "property_tree" in options
 
-    if property_tree:
+    # ROL::ParameterList Implementation
+    property_tree = 'property_tree' in options
+
+    if property_tree: 
         opt_text += "\t Use boost::property_tree as ROL::ParameterList\n"
     else:
         opt_text += "\t Use Teuchos::ParameterList as ROL::ParameterList\n"
 
     # ROL::stacktrace Implementation
-    backward_cpp = "backward_cpp" in options
-    no_stacktrace = "no_stacktrace" in options
+    backward_cpp  = 'backward_cpp'  in options
+    no_stacktrace = 'no_stacktrace' in options
 
     if backward_cpp:
         opt_text += "\t Use backward-cpp for ROL::stacktrace\n"
@@ -118,100 +117,99 @@ if __name__ == "__main__":
         opt_text += "\t Use Teuchos::stacktrace for ROL::stacktrace\n"
 
     # ROL::LAPACK Implementation
-    simple = "simple" in options
-
+    simple = 'simple' in options
+ 
     if simple:
         opt_text += "\t Use ROL's LAPACK wrappers for ROL::LAPACK\n"
-    else:
-        opt_text += "\t Use Teucho::LAPACK\n"
-
+    else: 
+        opt_text += "\t Use Teucho::LAPACK\n"   
+    
     # ROL::LinearAlgebra Implementation
-    Eigen = "Eigen" in options
+    Eigen = 'Eigen' in options
 
     if Eigen:
         opt_text += "\t Use Eigen for ROL::LinearAlgebra"
     else:
         opt_text += "\t Use Teuchos::SerialDense for ROL::LinearAlgebra"
 
-    status = f"""
+    status = \
+    """
     Main source directory (where all ROL directories live):
-    ----> {src_path}
+    ----> {0}
     
     Source /src directory (where we'll get headers from):
-    ----> {src_path}/src
+    ----> {0}/src
     
     Install directory (the main installation directory):
-    ----> {install_path}
+    ----> {1}
     
     Include directory (where we'll install headers):
-    ----> {install_path}/include
+    ----> {1}/include
     
-    """
+    """.format(src_path,install_path)
 
-    print(status)
+    print(status) 
+
 
     numfiles = 0
 
     for root, dirs, files in os.walk(src_path):
         path = root.split(os.sep)
-        headers = [
-            os.path.join(root, file)
-            for file in files
-            if ".hpp" in file and file[0] != "."
-        ]
+        headers = [ os.path.join(root,file) for file in files if '.hpp' in file and file[0] != '.' ]
+
 
         # Exclude testproblems
-        headers = [h for h in headers if "testproblems" not in h]
-        headers = [h for h in headers if "HelperFunctions" not in h]
-        headers = [h for h in headers if "StdLinearOperatorFactory" not in h]
+        headers = [ h for h in headers if "testproblems" not in h ]
+        headers = [ h for h in headers if "HelperFunctions" not in h ]
+        headers = [ h for h in headers if "StdLinearOperatorFactory" not in h ]
+
 
         if shared_ptr:
-            headers = [h for h in headers if "rcp" not in h]
+            headers = [ h for h in headers if 'rcp' not in h ]
         else:
-            headers = [h for h in headers if "shared_ptr" not in h]
-
+            headers = [ h for h in headers if 'shared_ptr' not in h ]
+    
         if property_tree:
-            headers = [h for h in headers if "parameterlist" not in h]
+            headers = [ h for h in headers if 'parameterlist' not in h ]
         else:
-            headers = [h for h in headers if "property_tree" not in h]
+            headers = [ h for h in headers if 'property_tree' not in h ]
 
         if simple:
-            headers = [h for h in headers if "teuchos/lapack" not in h]
+            headers = [ h for h in headers if 'teuchos/lapack' not in h ] 
         else:
-            headers = [h for h in headers if "simple/lapack" not in h]
+            headers = [ h for h in headers if 'simple/lapack' not in h ] 
 
         if backward_cpp:
-            headers = [
-                h for h in headers if "noop" not in h and "teuchos/stacktrace" not in h
-            ]
+            headers = [ h for h in headers if 'noop' not in h 
+                                          and 'teuchos/stacktrace' not in h ]
         elif no_stacktrace:
-            headers = [
-                h
-                for h in headers
-                if "backward_cpp" not in h and "teuchos/stacktrace" not in h
-            ]
-        else:
-            headers = [
-                h for h in headers if "backward_cpp" not in h and "noop" not in h
-            ]
+            headers = [ h for h in headers if 'backward_cpp' not in h 
+                                          and 'teuchos/stacktrace' not in h ]
+        else: 
+            headers = [ h for h in headers if 'backward_cpp' not in h 
+                                          and 'noop' not in h ]
         for h in headers:
-            print(f"Copying {os.path.split(h)[-1]}")
+            print("Copying {0}".format(os.path.split(h)[-1]))
             copy(h, install_path)
             numfiles += 1
-    result = f"""
-    
-    Copied {numfiles} ROL header files from: {src_path}
-                                  to: {install_path}
-
-    {opt_text}
-    
+    result = \
     """
+    
+    Copied {0} ROL header files from: {1}
+                                  to: {2}
+
+    {3}
+    
+    """.format(numfiles,src_path,install_path,opt_text)
     print(result)
     print("\nInstallation successful.\n")
 
-    ROL_config = os.path.join(install_path, "ROL_config.h")
-    open(ROL_config, "a").close()
+    ROL_config=os.path.join(install_path,'ROL_config.h')
+    open(ROL_config,'a').close()
+        
 
-    rol_txt = open("ROL.txt")
+    rol_txt = open("ROL.txt",'r')
     rol_logo = rol_txt.read()
     print(rol_logo)
+    
+    

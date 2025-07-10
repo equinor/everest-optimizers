@@ -34,8 +34,11 @@ that creates a the files TribitsBuildReference.[rst,html,pdf]
 
 """
 
-import os
 import sys
+import os
+import stat
+import subprocess
+
 from optparse import OptionParser
 
 #
@@ -43,65 +46,57 @@ from optparse import OptionParser
 #
 
 thisFilePath = __file__
-thisFileRealAbsBasePath = os.path.dirname(
-    os.path.abspath(os.path.realpath(thisFilePath)),
-)
-# print "thisFileRealAbsBasePath = '"+thisFileRealAbsBasePath+"'"
+thisFileRealAbsBasePath = \
+  os.path.dirname(os.path.abspath(os.path.realpath(thisFilePath)))
+#print "thisFileRealAbsBasePath = '"+thisFileRealAbsBasePath+"'"
 
-tribitsBaseDir = os.path.abspath(os.path.join(thisFileRealAbsBasePath, "../.."))
-pythonUtilsDir = os.path.join(tribitsBaseDir, "python_utils")
-ciSupportDir = os.path.join(tribitsBaseDir, "ci_support")
+tribitsBaseDir = os.path.abspath(os.path.join(thisFileRealAbsBasePath, '../..'))
+pythonUtilsDir = os.path.join(tribitsBaseDir, 'python_utils')
+ciSupportDir = os.path.join(tribitsBaseDir, 'ci_support')
 
 sys.path = [ciSupportDir, pythonUtilsDir] + sys.path
-# print "sys.path =", sys.path
+#print "sys.path =", sys.path
 
-import GenerateDocUtilsOutput
-from CheckinTest import *
 from GeneralScriptSupport import *
+from CheckinTest import *
+import GenerateDocUtilsOutput
+
 
 #
 # B) Read in the commandline options
 #
-
+  
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-    "--project-base-dir",
-    dest="projectBaseDir",
-    type="string",
-    default="",
-    help="Base directory of the TriBITS project <projectBaseDir>.  If not set, is set"
-     " by default <tribitsBaseDir>/../.. which assumes that Tribits is under"
-    " cmake/tribits in the current project.  This option is not used if --project-name,"
-     " --project-template-file, and --file-base are all overridden.",
-)
+  "--project-base-dir", dest="projectBaseDir", type="string",
+  default="",
+  help="Base directory of the TriBITS project <projectBaseDir>.  If not set, is set"+\
+    " by default <tribitsBaseDir>/../.. which assumes that Tribits is under" \
+    " cmake/tribits in the current project.  This option is not used if --project-name,"+\
+    " --project-template-file, and --file-base are all overridden."
+  )
 
 clp.add_option(
-    "--project-name",
-    dest="projectName",
-    type="string",
-    default="",
-    help="If specified, then this will be ued for the project name (<projectName>."
-     "  Otherwise, the project name is read from <projectBaseDir>/ProjectName.cmake instead.",
-)
+  "--project-name", dest="projectName", type="string",
+  default="",
+  help="If specified, then this will be ued for the project name (<projectName>."+\
+    "  Otherwise, the project name is read from <projectBaseDir>/ProjectName.cmake instead."
+  )
 
 clp.add_option(
-    "--project-template-file",
-    dest="projectTemplateFile",
-    type="string",
-    default="",
-    help="The project-specific template file used to generate the overall *.rst file."
-     "   If not specified, then <projectBaseDir>/cmake/<projectName>BuildReferenceTemplate.rst"
-     " will be used instead.",
-)
-
+  "--project-template-file", dest="projectTemplateFile", type="string",
+  default="",
+  help="The project-specific template file used to generate the overall *.rst file."+\
+    "   If not specified, then <projectBaseDir>/cmake/<projectName>BuildReferenceTemplate.rst"+\
+    " will be used instead."
+  )
+   
 clp.add_option(
-    "--min-cmake-version",
-    dest="minCMakeVersion",
-    type="string",
-    help="Minimum version of CMake needed for given project [Default '3.23.0']",
-    default="3.23.0",
-)
+  "--min-cmake-version", dest="minCMakeVersion", type="string",
+  help="Minimum version of CMake needed for given project" \
+    " [Default '3.23.0']",
+  default="3.23.0" )
 
 GenerateDocUtilsOutput.addCmndLineOptions(clp)
 
@@ -112,59 +107,57 @@ GenerateDocUtilsOutput.addCmndLineOptions(clp)
 #
 
 if not options.projectBaseDir:
-    options.projectBaseDir = os.path.abspath(os.path.join(tribitsBaseDir, "../.."))
-# print "projectBaseDir =", projectBaseDir
+  options.projectBaseDir = \
+    os.path.abspath(os.path.join(tribitsBaseDir, "../.."))
+#print "projectBaseDir =", projectBaseDir
 
 if not options.projectName:
-    options.projectName = getProjectName(options.projectBaseDir)
-# print "projectName =", projectName
+  options.projectName = getProjectName(options.projectBaseDir)
+#print "projectName =", projectName
 
 if not options.projectTemplateFile:
-    options.projectTemplateFile = os.path.join(
-        options.projectBaseDir,
-        "cmake",
-        options.projectName + "BuildReferenceTemplate.rst",
-    )
-# print "projectBuildReferenceTemplateFile =", projectBuildReferenceTemplateFile
+  options.projectTemplateFile = \
+    os.path.join(options.projectBaseDir, "cmake", \
+      options.projectName+"BuildReferenceTemplate.rst")
+#print "projectBuildReferenceTemplateFile =", projectBuildReferenceTemplateFile
 
 if not options.fileBase:
-    options.fileBase = os.path.join(
-        options.projectBaseDir, options.projectName + "BuildReference",
-    )
-# print "options.fileBase =", options.fileBase
+  options.fileBase = os.path.join(options.projectBaseDir,
+    options.projectName+"BuildReference")
+#print "options.fileBase =", options.fileBase
 
 #
 # D) Read in standard body and make substitution
 #
 
-tribitsBuildReferenceBodyFile = os.path.join(
-    thisFileRealAbsBasePath, "TribitsBuildReferenceBody.rst",
-)
-# print "tribitsBuildReferenceBodyFile =", tribitsBuildReferenceBodyFile
+tribitsBuildReferenceBodyFile = \
+  os.path.join(thisFileRealAbsBasePath, "TribitsBuildReferenceBody.rst")
+#print "tribitsBuildReferenceBodyFile =", tribitsBuildReferenceBodyFile
 
-tribitsBuildReferenceBodyStr = readStrFromFile(tribitsBuildReferenceBodyFile)
+tribitsBuildReferenceBodyStr = \
+  readStrFromFile(tribitsBuildReferenceBodyFile)
 
 substitutedTribitsBuildReferenceBodyStr = tribitsBuildReferenceBodyStr
-substitutedTribitsBuildReferenceBodyStr = (
-    substitutedTribitsBuildReferenceBodyStr.replace("<Project>", options.projectName)
-)
-substitutedTribitsBuildReferenceBodyStr = (
-    substitutedTribitsBuildReferenceBodyStr.replace(
-        "<MinCMakeVer>", options.minCMakeVersion,
-    )
-)
+substitutedTribitsBuildReferenceBodyStr = \
+    substitutedTribitsBuildReferenceBodyStr.replace("<Project>",
+      options.projectName)
+substitutedTribitsBuildReferenceBodyStr = \
+    substitutedTribitsBuildReferenceBodyStr.replace("<MinCMakeVer>",
+      options.minCMakeVersion)
 
 #
 # E) Generate the output files
 #
 
-projectBuildReferenceTemplateStr = readStrFromFile(options.projectTemplateFile)
+projectBuildReferenceTemplateStr = \
+  readStrFromFile(options.projectTemplateFile)
 
-projectBuildReferenceStr = (
-    projectBuildReferenceTemplateStr + "\n\n" + substitutedTribitsBuildReferenceBodyStr
-)
+projectBuildReferenceStr = \
+  projectBuildReferenceTemplateStr \
+  + "\n\n" \
+  + substitutedTribitsBuildReferenceBodyStr
 
-outputRstFile = options.fileBase + ".rst"
+outputRstFile = options.fileBase+".rst"
 print("Writing rst file ...")
 GenerateDocUtilsOutput.openWriteFilePermissions(outputRstFile)
 writeStrToFile(outputRstFile, projectBuildReferenceStr)

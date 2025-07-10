@@ -2,33 +2,15 @@
 # src/everest_optimizers_utils/__init__.py
 
 from everest_optimizers_utils.dummy_implementation import (
-    _SUPPORTED_METHODS,
-    BasicOptimizer,
-    EnOptConfig,
-    Event,
-    EventType,
-    ExitCode,
-    FunctionResults,
-    GradientResults,
-    NonLinearConstraintTransform,
-    ObjectiveTransform,
-    OptModelTransforms,
-    PluginManager,
-    Results,
+    EnOptConfig, EventType, ExitCode, BasicOptimizer, Event,
+    PluginManager, FunctionResults, GradientResults, Results,
+    OptModelTransforms, NonLinearConstraintTransform, ObjectiveTransform,
+    _SUPPORTED_METHODS
 )
 
 __all__ = [
-    "_SUPPORTED_METHODS",
-    "BasicOptimizer",
-    "EnOptConfig",
-    "Event",
-    "EventType",
-    "ExitCode",
-    "FunctionResults",
-    "GradientResults",
-    "NonLinearConstraintTransform",
-    "ObjectiveTransform",
-    "OptModelTransforms",
-    "PluginManager",
-    "Results",
+    'EnOptConfig', 'EventType', 'ExitCode', 'BasicOptimizer', 'Event',
+    'PluginManager', 'FunctionResults', 'GradientResults', 'Results',
+    'OptModelTransforms', 'NonLinearConstraintTransform', 'ObjectiveTransform',
+    '_SUPPORTED_METHODS'
 ]
