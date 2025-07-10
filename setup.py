@@ -11,8 +11,8 @@ import sys
 class CustomBuildExt(build_ext):
     def run(self):
         # Step 1: Link trilinos if needed
-        optpp_dir = os.path.abspath("dakota-packages/OPTPP")
-        trilinos_src = os.path.abspath("dakota-packages/trilinos")
+        optpp_dir = os.path.abspath("src/dakota-packages/OPTPP")
+        trilinos_src = os.path.abspath("src/dakota-packages/trilinos")
         trilinos_link = os.path.join(optpp_dir, "trilinos")
 
         if not os.path.exists(trilinos_link):
