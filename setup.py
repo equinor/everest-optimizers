@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # setup.py
 
-from setuptools import setup
-from pybind11.setup_helpers import Pybind11Extension, build_ext
-import subprocess
 import os
+import subprocess
 import sys
+
+from pybind11.setup_helpers import Pybind11Extension, build_ext
+from setuptools import setup
 
 
 class CustomBuildExt(build_ext):
@@ -24,7 +25,9 @@ class CustomBuildExt(build_ext):
         print("Querying pybind11 CMake directory...")
         cmake_dir = subprocess.run(
             [sys.executable, "-m", "pybind11", "--cmakedir"],
-            check=True, capture_output=True, text=True
+            check=True,
+            capture_output=True,
+            text=True,
         ).stdout.strip()
         print(f"pybind11 CMake directory: {cmake_dir}")
 
@@ -33,12 +36,21 @@ class CustomBuildExt(build_ext):
         os.makedirs(build_dir, exist_ok=True)
 
         cmake_cmd = [
-            "cmake", "-B", build_dir, "-S", optpp_dir,
-            "-D", "CMAKE_BUILD_TYPE=Release",
-            "-D", "DAKOTA_NO_FIND_TRILINOS=TRUE",
-            "-D", "BUILD_SHARED_LIBS=ON",
-            "-D", f"Python3_EXECUTABLE={sys.executable}",
-            "-D", f"pybind11_DIR={cmake_dir}"
+            "cmake",
+            "-B",
+            build_dir,
+            "-S",
+            optpp_dir,
+            "-D",
+            "CMAKE_BUILD_TYPE=Release",
+            "-D",
+            "DAKOTA_NO_FIND_TRILINOS=TRUE",
+            "-D",
+            "BUILD_SHARED_LIBS=ON",
+            "-D",
+            f"Python3_EXECUTABLE={sys.executable}",
+            "-D",
+            f"pybind11_DIR={cmake_dir}",
         ]
 
         print("Running CMake configuration...")
@@ -48,7 +60,9 @@ class CustomBuildExt(build_ext):
         print("Building project with CMake...")
         subprocess.run(
             ["cmake", "--build", build_dir, "--", "-j"],
-            check=True, stdout=sys.stdout, stderr=sys.stderr
+            check=True,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
         )
 
         # Finally call regular build_ext

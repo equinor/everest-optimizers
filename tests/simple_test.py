@@ -3,6 +3,7 @@
 import everest_optimizers
 import pyopttpp
 
+
 def test_test_optpp() -> None:
     """Test import everest_optimizers."""
     assert (
@@ -10,8 +11,10 @@ def test_test_optpp() -> None:
         == "Everest Optimizers OptQNewton binding compilation successful!"
     )
 
+
 def test_pyopttpp_import() -> None:
     assert hasattr(pyopttpp, "SerialDenseVector")
+
 
 def test_pyopttpp_serial_dense_vector() -> None:
     # Create a SerialDenseVector of size 5
