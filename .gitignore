@@ -30,12 +30,10 @@ optpp_pic/
 dakota_tabular.dat
 dakota.in
 dakota.rst
-
-# Workflow
-docs/llm/
-
-# Dakota
 *.pyc
 *~
 *.swp
 muq2/MUQ/config.h
+
+# Workflow
+docs/llm/
