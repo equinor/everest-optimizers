@@ -371,7 +371,7 @@ py::dict optimize_with_optqnewton(py::function func, std::vector<double> x0) {
   return optimizer.optimize(x0);
 }
 
-PYBIND11_MODULE(everest_optimizers, m) {
+PYBIND11_MODULE(everest_optimizers_helpers, m) {
   m.doc() = "Everest Optimizers using OptQNewton algorithm";
 
   m.def("test_optpp", []() {

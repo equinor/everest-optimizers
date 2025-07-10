@@ -43,6 +43,7 @@ test = [
     "pytest>=6.0",
     "pytest-cov",
     "pydantic",
+    "scipy",
 ]
 dev = [
     "cmake",

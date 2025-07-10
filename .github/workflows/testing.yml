@@ -40,7 +40,8 @@ jobs:
           cache-dependency-glob: pyproject.toml
           python-version: "${{ matrix.python-version }}"
 
-      - name: Install Ubuntu dependencies
+      # Install build tools for Ubuntu
+      - name: Install build tools (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
