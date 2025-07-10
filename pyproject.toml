@@ -16,11 +16,10 @@ readme = "README.md"
 authors = [
     {name = "Everest Optimizers Team"},
 ]
-license = {text = "GPL-3.0"}
+license = "GPL-3.0-only"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
