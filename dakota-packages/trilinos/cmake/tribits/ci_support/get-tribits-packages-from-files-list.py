@@ -12,11 +12,13 @@
 from FindGeneralScriptSupport import *
 from TribitsPackageFilePathUtils import *
 
+
 #
 # Read in the commandline arguments
 #
 
-usageHelp = r"""get-tribits-packages-from-files-list.py --deps-xml-file=<DEPS_XML_FILE> \
+usageHelp = \
+r"""get-tribits-packages-from-files-list.py --deps-xml-file=<DEPS_XML_FILE> \
     --files-list-file=<FILES_LIST_FILE> [--project-dir=<projectDir>]
 
 This script returns a comma-seprated list of all of the project's TriBITS
@@ -46,38 +48,27 @@ from optparse import OptionParser
 clp = OptionParser(usage=usageHelp)
 
 clp.add_option(
-    "--deps-xml-file",
-    dest="depsXmlFile",
-    type="string",
-    help="File containing TriBITS-generated XML data-structure the listing of packages, dir names, dependencies, etc.",
-)
+  "--deps-xml-file", dest="depsXmlFile", type="string",
+  help="File containing TriBITS-generated XML data-structure the listing of packages, dir names, dependencies, etc.")
 
 clp.add_option(
-    "--files-list-file",
-    dest="filesListFile",
-    type="string",
-    default=None,
-    help="File containing the list of modified files relative to project base directory, one file per line.",
-)
+  "--files-list-file", dest="filesListFile", type="string", default=None,
+  help="File containing the list of modified files relative to project base directory, one file per line." )
 
 clp.add_option(
-    "--project-dir",
-    dest="projectDir",
-    type="string",
-    default="",
-    help="Base project directory.  Used to access more specialized logic beyond"
-     " what is known in the <DEPSXMLFILE>.  If empty '', then it will be set"
-     " automatically if TriBITS is is the standard location w.r.t. the project"
-     " in relation to this script run from the TriBITS dir.",
-)
+  "--project-dir", dest="projectDir", type="string", default="",
+  help="Base project directory.  Used to access more specialized logic beyond" \
+    +" what is known in the <DEPSXMLFILE>.  If empty '', then it will be set" \
+    +" automatically if TriBITS is is the standard location w.r.t. the project" \
+    +" in relation to this script run from the TriBITS dir.")
 
 (options, args) = clp.parse_args()
 
 if not options.filesListFile:
-    raise Exception("Error, the option --files-list-file=FILENAME must be set!")
+  raise Exception("Error, the option --files-list-file=FILENAME must be set!")
 
-if not options.projectDir and os.path.isfile(defaultProjectDir + "/ProjectName.cmake"):
-    options.projectDir = defaultProjectDir
+if not options.projectDir and os.path.isfile(defaultProjectDir+"/ProjectName.cmake"):
+  options.projectDir = defaultProjectDir
 
 filesList = readStrFromFile(options.filesListFile).splitlines()
 
@@ -85,8 +76,7 @@ trilinosDependencies = getProjectDependenciesFromXmlFile(options.depsXmlFile)
 
 projectCiFileChangeLogic = getProjectCiFileChangeLogic(options.projectDir)
 
-packagesList = getPackagesListFromFilePathsList(
-    trilinosDependencies, filesList, True, projectCiFileChangeLogic,
-)
+packagesList = getPackagesListFromFilePathsList(trilinosDependencies, filesList, True,
+  projectCiFileChangeLogic)
 
-print(",".join(packagesList))
+print(','.join(packagesList))

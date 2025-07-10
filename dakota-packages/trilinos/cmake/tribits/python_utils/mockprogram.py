@@ -46,88 +46,76 @@
 #   file_name_2.txt
 #   file_name_3.txt
 
+#
 
-import os
 import sys
+import os
 
-inputArgs = " ".join(sys.argv[1:])
-# print("inputArgs = '" + inputArgs + "'"
+inputArgs = ' '.join(sys.argv[1:])
+#print("inputArgs = '" + inputArgs + "'"
 
 if os.environ.get("MOCKPROGRAM_INOUT_FILE_OVERRIDE"):
-    mockProgramInOutFilePath = os.environ.get("MOCKPROGRAM_INOUT_FILE_OVERRIDE")
+  mockProgramInOutFilePath=os.environ.get("MOCKPROGRAM_INOUT_FILE_OVERRIDE")
 else:
-    mockProgramInOutFilePath = ".mockprogram_inout.txt"
+  mockProgramInOutFilePath='.mockprogram_inout.txt'
 
 if not os.path.exists(mockProgramInOutFilePath):
-    print("Error: " + mockProgramInOutFilePath + " is missing!")
-    sys.exit(1)
+  print("Error: "+mockProgramInOutFilePath+" is missing!")
+  sys.exit(1)
 
-mockprogramInout = open(mockProgramInOutFilePath).read()
+mockprogramInout = open(mockProgramInOutFilePath, 'r').read()
 mockprogramInoutArray = mockprogramInout.splitlines()
 if len(mockprogramInoutArray) and mockprogramInoutArray[-1] == "":
-    mockprogramInoutArray = mockprogramInoutArray[:-1]
+  mockprogramInoutArray = mockprogramInoutArray[:-1]
 
 if len(mockprogramInoutArray) < 3:
-    print(
-        "Error: " + mockProgramInOutFilePath + " has less than three lines:\n"
-        "-------------\n" + mockprogramInout + "-------------",
-    )
-    sys.exit(2)
+  print("Error: "+mockProgramInOutFilePath+" has less than three lines:\n"
+        "-------------\n" + mockprogramInout + "-------------")
+  sys.exit(2)
 
 # Assert input
 expectedInputLine = mockprogramInoutArray[0]
 if expectedInputLine.find("MOCK_PROGRAM_INPUT:") != 0:
-    print(
-        "Error, first line = '" + expectedInputLine + "', does not match "
-        "^MOCK_PROGRAM_INPUT:",
-    )
-    sys.exit(3)
+  print("Error, first line = '" + expectedInputLine + "', does not match "
+        "^MOCK_PROGRAM_INPUT:") 
+  sys.exit(3)
 expectedInput = expectedInputLine.replace("MOCK_PROGRAM_INPUT:", "").strip()
 if inputArgs != expectedInput:
-    print(
-        "Error, input args='"
-        + inputArgs
-        + "' does not match expected='"
-        + expectedInput
-        + "'",
-    )
-    sys.exit(4)
+  print("Error, input args='" + inputArgs + "' does not match expected='" +
+        expectedInput + "'")
+  sys.exit(4)
 
 # Get return code
 returnCodeLine = mockprogramInoutArray[1]
 if returnCodeLine.find("MOCK_PROGRAM_RETURN:") != 0:
-    print(
-        "Error, second line = '" + returnCodeLine + "', does not match "
-        "^MOCK_PROGRAM_RETURN:",
-    )
-    sys.exit(5)
+  print("Error, second line = '" + returnCodeLine + "', does not match "
+        "^MOCK_PROGRAM_RETURN:") 
+  sys.exit(5)
 returnCode = returnCodeLine.replace("MOCK_PROGRAM_RETURN:", "").strip()
 
 # Get output (can be multi-line)
 outputLine = mockprogramInoutArray[2]
 if outputLine.find("MOCK_PROGRAM_OUTPUT:") != 0:
-    print(
-        "Error, third line = '" + outputLine + "', does not match ^MOCK_PROGRAM_OUTPUT:",
-    )
-    sys.exit(6)
+  print("Error, third line = '" + outputLine + "', does not match "
+        "^MOCK_PROGRAM_OUTPUT:") 
+  sys.exit(6)
 outputStr = outputLine.replace("MOCK_PROGRAM_OUTPUT: ", "")
 numLinesOuput = 1
 if len(mockprogramInoutArray) > 3:
-    for line in mockprogramInoutArray[3:]:
-        if line.find("MOCK_PROGRAM_INPUT:") == 0:
-            break
-        outputStr = outputStr + "\n" + line
-        numLinesOuput = numLinesOuput + 1
+  for line in mockprogramInoutArray[3:]:
+    if line.find("MOCK_PROGRAM_INPUT:") == 0:
+      break
+    outputStr = outputStr+"\n"+line
+    numLinesOuput = numLinesOuput + 1
 print(outputStr)
 
 # Write the remaining lines back into the file
 lineLineIndex = 2 + numLinesOuput
 if len(mockprogramInoutArray) > lineLineIndex:
-    open(mockProgramInOutFilePath, "w").write(
-        ("\n".join(mockprogramInoutArray[lineLineIndex:])) + "\n",
-    )
+  open(mockProgramInOutFilePath, 'w').write(
+    ('\n'.join(mockprogramInoutArray[lineLineIndex:]))+"\n" )
 else:
-    open(mockProgramInOutFilePath, "w").write("")
+  open(mockProgramInOutFilePath, 'w').write("")
 
 # Return exit code
 sys.exit(int(returnCode))

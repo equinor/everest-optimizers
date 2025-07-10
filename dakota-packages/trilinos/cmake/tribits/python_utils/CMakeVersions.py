@@ -30,10 +30,10 @@
 #   Latest available build for vdir "vCVS" -- detected automatically
 #
 
-cmake_version_min = "3.10.0"  # manual_update
+cmake_version_min = "3.10.0" # manual_update
 
-cmake_version_release = "3.10.0"  # manual_update
+cmake_version_release = "3.10.0" # manual_update
 
-cmake_version_rc = "3.12.0"  # auto_update v2.8
+cmake_version_rc = "3.12.0" # auto_update v2.8
 
-cmake_version_dev = "3.12.0"  # auto_update vCVS
+cmake_version_dev = "3.12.0" # auto_update vCVS
