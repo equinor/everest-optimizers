@@ -56,7 +56,7 @@ class TestEverestOptimizersInterface:
 
         # Check default values
         assert sig.parameters["args"].default == ()
-        assert sig.parameters["method"].default == "OptQNewton"
+        assert sig.parameters["method"].default == "optpp_q_newton"
         assert sig.parameters["jac"].default is None
         assert sig.parameters["options"].default is None
 
@@ -94,26 +94,26 @@ class TestEverestOptimizersInterface:
 
         # Test bounds
         with pytest.raises(
-            NotImplementedError, match="OptQNewton does not support bounds"
+            NotImplementedError, match="optpp_q_newton does not support bounds"
         ):
-            minimize(dummy_func, [1.0], method="OptQNewton", bounds=[(0, 1)])
+            minimize(dummy_func, [1.0], method="optpp_q_newton", bounds=[(0, 1)])
 
         # Test constraints
         with pytest.raises(
-            NotImplementedError, match="OptQNewton does not support constraints"
+            NotImplementedError, match="optpp_q_newton does not support constraints"
         ):
             minimize(
                 dummy_func,
                 [1.0],
-                method="OptQNewton",
+                method="optpp_q_newton",
                 constraints={"type": "eq", "fun": lambda x: x[0]},
             )
 
         # Test callback
         with pytest.raises(
-            NotImplementedError, match="Callback function not implemented"
+            NotImplementedError, match="Callback function not implemented for optpp_q_newton"
         ):
-            minimize(dummy_func, [1.0], method="OptQNewton", callback=lambda x: None)
+            minimize(dummy_func, [1.0], method="optpp_q_newton", callback=lambda x: None)
 
     def test_input_validation(self):
         """Test input validation."""
@@ -124,7 +124,7 @@ class TestEverestOptimizersInterface:
 
         # Test 2D x0
         with pytest.raises(ValueError, match="x0 must be 1-dimensional"):
-            minimize(dummy_func, [[1.0, 2.0]], method="OptQNewton")
+            minimize(dummy_func, [[1.0, 2.0]], method="optpp_q_newton")
 
     def test_return_type(self):
         """Test that minimize returns OptimizeResult."""
@@ -134,7 +134,7 @@ class TestEverestOptimizersInterface:
         def quadratic(x):
             return (x[0] - 1) ** 2 + (x[1] - 2) ** 2
 
-        result = minimize(quadratic, [0.0, 0.0], method="OptQNewton")
+        result = minimize(quadratic, [0.0, 0.0], method="optpp_q_newton")
 
         assert isinstance(result, OptimizeResult)
         assert hasattr(result, "x")
@@ -152,9 +152,9 @@ class TestEverestOptimizersInterface:
             return x[0] ** 2 + x[1] ** 2
 
         # Should work with different cases
-        result1 = minimize(quadratic, [1.0, 1.0], method="OptQNewton")
-        result2 = minimize(quadratic, [1.0, 1.0], method="optqnewton")
-        result3 = minimize(quadratic, [1.0, 1.0], method="OPTQNEWTON")
+        result1 = minimize(quadratic, [1.0, 1.0], method="Optpp_q_newton")
+        result2 = minimize(quadratic, [1.0, 1.0], method="optpp_q_newton")
+        result3 = minimize(quadratic, [1.0, 1.0], method="OptPP_Q_Newton")
 
         assert result1.success
         assert result2.success
@@ -167,7 +167,7 @@ class TestEverestOptimizersInterface:
         def func_with_args(x, a, b):
             return a * (x[0] - 1) ** 2 + b * (x[1] - 2) ** 2
 
-        result = minimize(func_with_args, [0.0, 0.0], args=(2, 3), method="OptQNewton")
+        result = minimize(func_with_args, [0.0, 0.0], args=(2, 3), method="optpp_q_newton")
 
         assert result.success
         assert np.allclose(result.x, [1.0, 2.0], rtol=1e-3)
@@ -180,7 +180,7 @@ class TestEverestOptimizersInterface:
             return (x[0] - 1) ** 2 + (x[1] - 2) ** 2
 
         # Test with list input
-        result = minimize(quadratic, [0.0, 0.0], method="OptQNewton")
+        result = minimize(quadratic, [0.0, 0.0], method="optpp_q_newton")
 
         assert result.success
         assert isinstance(result.x, np.ndarray)
