@@ -123,7 +123,7 @@ def _minimize_optqnewton(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
-    method: str = 'OptQNewton',
+    method: str = 'optpp_q_newton',
     jac: Optional[Callable] = None,
     hess: Optional[Callable] = None,
     hessp: Optional[Callable] = None,
@@ -134,7 +134,7 @@ def _minimize_optqnewton(
     options: Optional[Dict[str, Any]] = None
 ) -> OptimizeResult:
     """
-    Minimize a scalar function using OptQNewton optimizer.
+    Minimize a scalar function using optpp_q_newton optimizer.
     
     Parameters
     ----------
@@ -145,17 +145,17 @@ def _minimize_optqnewton(
     args : tuple, optional
         Extra arguments passed to the objective function and its derivatives.
     method : str, optional
-        Method name (should be 'OptQNewton').
+        Method name (should be 'optpp_q_newton').
     jac : callable, optional
         Method for computing the gradient vector.
     hess : callable, optional
-        Method for computing the Hessian matrix (not used by OptQNewton).
+        Method for computing the Hessian matrix (not used by optpp_q_newton).
     hessp : callable, optional
-        Hessian times vector product (not used by OptQNewton).
+        Hessian times vector product (not used by optpp_q_newton).
     bounds : sequence, optional
-        Bounds on variables (not supported by OptQNewton).
+        Bounds on variables (not supported by optpp_q_newton).
     constraints : dict or list, optional
-        Constraints definition (not supported by OptQNewton).
+        Constraints definition (not supported by optpp_q_newton).
     tol : float, optional
         Tolerance for termination.
     callback : callable, optional
@@ -181,13 +181,13 @@ def _minimize_optqnewton(
         raise ValueError("x0 must be 1-dimensional")
     
     if bounds is not None:
-        raise NotImplementedError("OptQNewton does not support bounds")
+        raise NotImplementedError("optpp_q_newton does not support bounds")
     
     if constraints is not None:
-        raise NotImplementedError("OptQNewton does not support constraints")
+        raise NotImplementedError("optpp_q_newton does not support constraints")
     
     if callback is not None:
-        raise NotImplementedError("Callback function not implemented for OptQNewton")
+        raise NotImplementedError("Callback function not implemented for optpp_q_newton")
     
     # Set up options
     if options is None:
@@ -240,7 +240,7 @@ def _minimize_optqnewton(
             fun=f_final,
             nfev=problem.nfev,
             njev=problem.njev,
-            nit=0,  # OptQNewton doesn't provide iteration count
+            nit=0,  # optpp_q_newton doesn't provide iteration count
             success=True,
             status=0,
             message='Optimization terminated successfully',

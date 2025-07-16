@@ -11,7 +11,7 @@ def minimize(
     fun: Callable,
     x0: Union[np.ndarray, list],
     args: tuple = (),
-    method: str = 'OptQNewton',
+    method: str = 'optpp_q_newton',
     jac: Optional[Union[Callable, str, bool]] = None,
     hess: Optional[Union[Callable, str]] = None,
     hessp: Optional[Callable] = None,
@@ -24,9 +24,8 @@ def minimize(
     """
     Minimization of scalar function of one or more variables.
     
-    This function provides a unified interface to various optimization algorithms,
-    similar to scipy.optimize.minimize but with additional optimizers from 
-    everest-optimizers.
+    This function is intended to be a drop-in replacement for scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton optimization
+    algorithm from the OPTPP library.
     
     Parameters
     ----------
@@ -48,7 +47,7 @@ def minimize(
     
     method : str, optional
         Type of solver. Currently supported:
-        - 'OptQNewton': OptQNewton optimizer from OPTPP
+        - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
         
         More optimizers may be added in the future.
     
@@ -61,25 +60,25 @@ def minimize(
         If None, gradients will be estimated using finite differences.
     
     hess : {callable, str}, optional
-        Method for computing the Hessian matrix. Not used by OptQNewton.
+        Method for computing the Hessian matrix. Not used by optpp_q_newton.
     
     hessp : callable, optional
-        Hessian times vector product. Not used by OptQNewton.
+        Hessian times vector product. Not used by optpp_q_newton.
     
     bounds : sequence, optional
-        Bounds on variables. Not supported by OptQNewton.
+        Bounds on variables. Not supported by optpp_q_newton.
     
     constraints : dict or list, optional
-        Constraints definition. Not supported by OptQNewton.
+        Constraints definition. Not supported by optpp_q_newton.
     
     tol : float, optional
         Tolerance for termination.
     
     callback : callable, optional
-        Callback function. Not implemented for OptQNewton.
+        Callback function. Not implemented for optpp_q_newton.
     
     options : dict, optional
-        A dictionary of solver options. For OptQNewton, supported options are:
+        A dictionary of solver options. For optpp_q_newton, supported options are:
         
         - 'search_strategy' : str
             Search strategy: 'TrustRegion' (default), 'LineSearch', or 'TrustPDS'
@@ -111,7 +110,7 @@ def minimize(
     Notes
     -----
     This function is designed to be a drop-in replacement for scipy.optimize.minimize
-    for the supported methods. The OptQNewton method is a quasi-Newton optimization
+    for the supported methods. The optpp_q_newton method is a quasi-Newton optimization
     algorithm from the OPTPP library.
     
     Examples
@@ -131,7 +130,7 @@ def minimize(
     ...     return grad
     >>> 
     >>> x0 = np.array([-1.2, 1.0])
-    >>> result = minimize(rosenbrock, x0, method='OptQNewton', jac=rosenbrock_grad)
+    >>> result = minimize(rosenbrock, x0, method='optpp_q_newton', jac=rosenbrock_grad)
     >>> print(result.x)  # Should be close to [1.0, 1.0]
     """
     # Convert x0 to numpy array
@@ -145,7 +144,7 @@ def minimize(
         args = (args,)
     
     # Route to the appropriate optimizer
-    if method.lower() == 'optqnewton':
+    if method.lower() == 'optpp_q_newton':
         return _minimize_optqnewton(
             fun=fun,
             x0=x0,
@@ -161,4 +160,4 @@ def minimize(
             options=options
         )
     else:
-        raise ValueError(f"Unknown method: {method}. Supported methods: 'OptQNewton'")
+        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton'")
