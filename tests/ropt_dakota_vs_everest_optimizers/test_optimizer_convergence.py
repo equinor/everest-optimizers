@@ -153,3 +153,43 @@ def test_unconstrained_convergence(
     np.testing.assert_allclose(
         ropt_solution, everest_solution, rtol=1e-2, atol=1e-2
     )
+
+@pytest.mark.skip(reason="Skipping bound constraint tests for now")
+@pytest.mark.parametrize(
+    ("lower_bounds", "upper_bounds"),
+    [
+        ([-1.0, -1.0, -1.0], [1.0, 1.0, 0.2]),
+        ([0.1, 0.1, 0.1], [1.0, 1.0, 1.0]),
+        ([-0.2, -0.2, 0.6], [0.2, 0.2, 1.0]),
+    ],
+)
+def test_constrained_convergence(
+    enopt_config: Any,
+    evaluator: Any,
+    everest_objective: Any,
+    lower_bounds: list[float],
+    upper_bounds: list[float],
+) -> None:
+    """Tests that ropt and everest-optimizers converge to a similar solution for constrained problems."""
+    from everest_optimizers import minimize
+    from scipy.optimize import Bounds
+
+    # Run ropt optimizer
+    ropt_config = enopt_config.copy()
+    ropt_config["variables"]["lower_bounds"] = lower_bounds
+    ropt_config["variables"]["upper_bounds"] = upper_bounds
+    ropt_optimizer = BasicOptimizer(ropt_config, evaluator())
+    ropt_result = ropt_optimizer.run(initial_values_1)
+    ropt_solution = ropt_result.variables
+    assert ropt_solution is not None
+
+    # Run everest-optimizer
+    bounds = Bounds(lower_bounds, upper_bounds)
+    everest_result = minimize(
+        everest_objective, initial_values_1, method="OptQNewton", bounds=bounds
+    )
+    everest_solution = everest_result.x
+    assert everest_solution is not None
+
+    # Compare solutions
+    np.testing.assert_allclose(ropt_solution, everest_solution, rtol=1e-2, atol=1e-2)
