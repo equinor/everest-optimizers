@@ -145,7 +145,7 @@ def test_unconstrained_convergence(
 
     # Run everest-optimizer
     from everest_optimizers import minimize
-    everest_result = minimize(everest_objective, initial_values, method="OptQNewton")
+    everest_result = minimize(everest_objective, initial_values, method="optpp_q_newton")
     everest_solution = everest_result.x
     assert everest_solution is not None
 
@@ -186,7 +186,7 @@ def test_constrained_convergence(
     # Run everest-optimizer
     bounds = Bounds(lower_bounds, upper_bounds)
     everest_result = minimize(
-        everest_objective, initial_values_1, method="OptQNewton", bounds=bounds
+        everest_objective, initial_values_1, method="optpp_q_newton", bounds=bounds
     )
     everest_solution = everest_result.x
     assert everest_solution is not None

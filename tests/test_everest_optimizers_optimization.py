@@ -35,7 +35,7 @@ class TestEverestOptimizersOptimization:
             return grad
 
         x0 = np.array([-1.2, 1.0])
-        result = minimize(rosenbrock, x0, method="OptQNewton", jac=rosenbrock_grad)
+        result = minimize(rosenbrock, x0, method="optpp_q_newton", jac=rosenbrock_grad)
 
         assert result.success
         assert np.allclose(result.x, [1.0, 1.0], rtol=1e-3)
@@ -52,7 +52,7 @@ class TestEverestOptimizersOptimization:
             return (x[0] - 2) ** 2 + (x[1] - 3) ** 2
 
         x0 = np.array([0.0, 0.0])
-        result = minimize(quadratic, x0, method="OptQNewton")
+        result = minimize(quadratic, x0, method="optpp_q_newton")
 
         assert result.success
         assert np.allclose(result.x, [2.0, 3.0], rtol=1e-3)
@@ -69,7 +69,7 @@ class TestEverestOptimizersOptimization:
             return 2 * x
 
         x0 = np.array([1.0, 2.0, 3.0])
-        result = minimize(sphere, x0, method="OptQNewton", jac=sphere_grad)
+        result = minimize(sphere, x0, method="optpp_q_newton", jac=sphere_grad)
 
         assert result.success
         assert np.allclose(result.x, [0.0, 0.0, 0.0], atol=1e-7)
@@ -89,7 +89,7 @@ class TestEverestOptimizersOptimization:
             return grad
 
         x0 = np.array([0.0, 0.0])
-        result = minimize(booth, x0, method="OptQNewton", jac=booth_grad)
+        result = minimize(booth, x0, method="optpp_q_newton", jac=booth_grad)
 
         assert result.success
         assert np.allclose(result.x, [1.0, 3.0], rtol=1e-3)
@@ -104,7 +104,7 @@ class TestEverestOptimizersOptimization:
 
         x0 = np.array([0.0, 0.0])
         # No jac parameter - should use finite differences
-        result = minimize(quadratic, x0, method="OptQNewton")
+        result = minimize(quadratic, x0, method="optpp_q_newton")
 
         assert result.success
         assert np.allclose(result.x, [1.0, 2.0], rtol=1e-3)
@@ -127,7 +127,7 @@ class TestEverestOptimizersOptimization:
             result = minimize(
                 quadratic,
                 x0,
-                method="OptQNewton",
+                method="optpp_q_newton",
                 options={"search_strategy": strategy},
             )
 
@@ -148,7 +148,7 @@ class TestEverestOptimizersOptimization:
         # Test with different trust region sizes
         for tr_size in [10.0, 50.0, 200.0]:
             result = minimize(
-                quadratic, x0, method="OptQNewton", options={"tr_size": tr_size}
+                quadratic, x0, method="optpp_q_newton", options={"tr_size": tr_size}
             )
 
             assert result.success, f"Failed for tr_size: {tr_size}"
@@ -168,7 +168,7 @@ class TestEverestOptimizersOptimization:
 
         x0 = np.zeros(5)
         result = minimize(
-            high_dim_quadratic, x0, method="OptQNewton", jac=high_dim_grad
+            high_dim_quadratic, x0, method="optpp_q_newton", jac=high_dim_grad
         )
 
         assert result.success
@@ -186,7 +186,7 @@ class TestEverestOptimizersOptimization:
             return (x[0] - 1) ** 2 + (x[1] - 2) ** 2 + noise
 
         x0 = np.array([0.0, 0.0])
-        result = minimize(noisy_quadratic, x0, method="OptQNewton")
+        result = minimize(noisy_quadratic, x0, method="optpp_q_newton")
 
         assert result.success
         # Should still find approximately the right solution
@@ -206,11 +206,11 @@ class TestEverestOptimizersOptimization:
 
         # With analytical gradient
         result_with_grad = minimize(
-            quadratic, x0, method="OptQNewton", jac=quadratic_grad
+            quadratic, x0, method="optpp_q_newton", jac=quadratic_grad
         )
 
         # Without gradient (finite differences)
-        result_without_grad = minimize(quadratic, x0, method="OptQNewton")
+        result_without_grad = minimize(quadratic, x0, method="optpp_q_newton")
 
         assert result_with_grad.success
         assert result_without_grad.success
@@ -230,7 +230,7 @@ class TestEverestOptimizersOptimization:
 
         # Start exactly at optimum
         x0 = np.array([1.0, 2.0])
-        result = minimize(quadratic, x0, method="OptQNewton")
+        result = minimize(quadratic, x0, method="optpp_q_newton")
 
         assert result.success
         assert np.allclose(result.x, [1.0, 2.0], rtol=1e-6)
@@ -238,7 +238,7 @@ class TestEverestOptimizersOptimization:
 
         # Start very close to optimum
         x0 = np.array([1.001, 2.001])
-        result = minimize(quadratic, x0, method="OptQNewton")
+        result = minimize(quadratic, x0, method="optpp_q_newton")
 
         assert result.success
         assert np.allclose(result.x, [1.0, 2.0], rtol=1e-6)
