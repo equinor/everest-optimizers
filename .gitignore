@@ -37,3 +37,9 @@ muq2/MUQ/config.h
 
 # Workflow
 docs/llm/
+
+# Test related
+myscheme
+tests/everest_results.csv
+tests/ropt_results.csv
+
