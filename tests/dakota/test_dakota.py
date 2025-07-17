@@ -28,6 +28,8 @@ from dakota import DakotaBase, DakotaInput
 
 
 class TestDriver(DakotaBase):
+    __test__ = False
+    
     def __init__(self, force_exception=False):
         # Create a dakota input template - this is not complete since it does not contain yet
         # the optimization problem specific information such as variables, constraints, etc.
