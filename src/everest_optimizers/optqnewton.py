@@ -4,7 +4,7 @@
 import sys
 import os
 import numpy as np
-from typing import Callable, Optional, Union, Dict, Any
+from typing import Callable, Optional, Dict, Any
 from scipy.optimize import OptimizeResult
 
 def _get_pyopttpp_path() -> str:
