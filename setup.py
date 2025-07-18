@@ -6,10 +6,19 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 import subprocess
 import os
 import sys
+import shutil
 
 
 class CustomBuildExt(build_ext):
     def run(self):
+      
+        # Add more paths if needed
+        # Step 0: Delete OPTPP build folder to avoid problems when building multiple times
+        for path in ["dakota-packages/OPTPP/build"]:
+            if os.path.exists(path):
+                print(f"Removing directory: {path}")
+                shutil.rmtree(path)
+                
         # Step 1: Link trilinos if needed
         optpp_dir = os.path.abspath("dakota-packages/OPTPP")
         trilinos_src = os.path.abspath("dakota-packages/trilinos")
