@@ -54,7 +54,7 @@ class TestDriver(DakotaBase):
         self.force_exception = force_exception
 
         self.input.method = [
-            "optpp_newton",
+            "optpp_newton", #"conmin_mfd"
             "  max_iterations = 50",
             "  convergence_tolerance = 1e-4",
         ]
