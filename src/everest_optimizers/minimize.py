@@ -159,5 +159,20 @@ def minimize(
             callback=callback,
             options=options
         )
+    elif method.lower() == 'optpp_constr_q_newton': # TODO: Actually implement method
+        return _minimize_optconstrqnewton(
+            fun=fun,
+            x0=x0,
+            args=args,
+            method=method,
+            jac=jac,
+            hess=hess,
+            hessp=hessp,
+            bounds=bounds,
+            constraints=constraints,
+            tol=tol,
+            callback=callback,
+            options=options
+        )
     else:
-        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton'")
+        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton'")

@@ -154,7 +154,7 @@ def test_unconstrained_convergence(
         ropt_solution, everest_solution, rtol=1e-2, atol=1e-2
     )
 
-@pytest.mark.skip(reason="Skipping bound constraint tests for now")
+@pytest.mark.skip(reason="Skipping bound constraint tests for now") # TODO: Implement optpp_constr_q_newton method and test this function.
 @pytest.mark.parametrize(
     ("lower_bounds", "upper_bounds"),
     [
@@ -186,7 +186,7 @@ def test_constrained_convergence(
     # Run everest-optimizer
     bounds = Bounds(lower_bounds, upper_bounds)
     everest_result = minimize(
-        everest_objective, initial_values_1, method="optpp_q_newton", bounds=bounds
+        everest_objective, initial_values_1, method="optpp_constr_q_newton", bounds=bounds
     )
     everest_solution = everest_result.x
     assert everest_solution is not None
