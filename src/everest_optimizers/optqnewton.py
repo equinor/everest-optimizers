@@ -263,3 +263,175 @@ def _minimize_optqnewton(
             message=f'Optimization failed: {str(e)}',
             jac=None
         )
+
+
+def _create_nlf2_problem(fun: Callable, x0: np.ndarray, args: tuple,
+                          jac: Optional[Callable], hess: Optional[Callable],
+                          hessp: Optional[Callable],
+                          bounds: Any, constraints: Any,
+                          pyopttpp_module) -> Any:
+    """Create the NLF2 problem for OPTPP (second derivatives)."""
+    raise NotImplementedError("NLF2 problem creation is not implemented yet.")
+
+
+def _minimize_optconstrqnewton(
+    fun: Callable,
+    x0: np.ndarray,
+    args: tuple = (),
+    method: str = 'optpp_constr_q_newton',
+    jac: Optional[Callable] = None,
+    hess: Optional[Callable] = None,
+    hessp: Optional[Callable] = None,
+    bounds: Any = None,
+    constraints: Any = None,
+    tol: Optional[float] = None,
+    callback: Optional[Callable] = None,
+    options: Optional[Dict[str, Any]] = None
+) -> OptimizeResult:
+    """
+    Minimize a scalar function with bound constraints using OptConstrQNewton.
+    """
+    # Import pyopttpp
+    pyopttpp = _import_pyopttpp()
+
+    # Convert inputs
+    x0 = np.asarray(x0, dtype=float)
+    if x0.ndim != 1:
+        raise ValueError("x0 must be 1-dimensional")
+
+    if constraints is not None:
+        raise NotImplementedError("optpp_constr_q_newton does not support arbitrary constraints yet")
+
+    if bounds is None:
+        raise ValueError("Bounds must be provided for constrained optimization")
+
+    # Set up options
+    if options is None:
+        options = {}
+
+    search_strategy = options.get('search_strategy', 'TrustRegion')
+    tr_size = options.get('tr_size', 100.0)
+    debug = options.get('debug', False)
+    output_file = options.get('output_file', None)
+
+    # Create constrained problem by clamping within bounds
+    class _OptConstrNLF1(_OptQNewtonProblem):
+        def __init__(self, fun, x0, args, jac, pyopttpp, bounds):
+            # Store bounds before superclass init to ensure availability in _create_nlf1_problem
+            self.lb = np.asarray(bounds.lb, dtype=float)
+            self.ub = np.asarray(bounds.ub, dtype=float)
+            super().__init__(fun, x0, args, jac, pyopttpp)
+
+        def _create_nlf1_problem(self):
+            parent = self
+            lb = parent.lb
+            ub = parent.ub
+
+            class ConstrNLF1(parent.pyopttpp.NLF1):
+                def __init__(self, parent_problem):
+                    super().__init__(len(parent_problem.x0))
+                    self.parent = parent_problem
+                    init_vector = parent_problem.pyopttpp.SerialDenseVector(parent_problem.x0)
+                    self.setX(init_vector)
+                    self.setIsExpensive(True)
+
+                def evalF(self, x):
+                    x_np = np.array(x.to_numpy(), copy=True)
+                    x_clamped = np.minimum(np.maximum(x_np, lb), ub)
+                    self.parent.current_x = x_clamped
+                    try:
+                        f_val = self.parent.fun(x_clamped, *self.parent.args)
+                        self.parent.current_f = float(f_val)
+                        self.parent.nfev += 1
+                        return self.parent.current_f
+                    except Exception as e:
+                        raise RuntimeError(f"Error evaluating objective function: {e}")
+
+                def evalG(self, x):
+                    x_np = np.array(x.to_numpy(), copy=True)
+                    x_clamped = np.minimum(np.maximum(x_np, lb), ub)
+                    if self.parent.jac is not None:
+                        try:
+                            grad = self.parent.jac(x_clamped, *self.parent.args)
+                            grad_np = np.asarray(grad, dtype=float)
+                            self.parent.current_g = grad_np
+                            self.parent.njev += 1
+                            return grad_np
+                        except Exception as e:
+                            raise RuntimeError(f"Error evaluating gradient: {e}")
+                    # Finite-difference approximation when jacobian not provided
+                    eps = 1e-8
+                    grad = np.zeros_like(x_clamped)
+                    for i in range(len(x_clamped)):
+                        x_plus = x_clamped.copy()
+                        x_plus[i] += eps
+                        x_minus = x_clamped.copy()
+                        x_minus[i] -= eps
+                        f_plus = self.parent.fun(x_plus, *self.parent.args)
+                        f_minus = self.parent.fun(x_minus, *self.parent.args)
+                        grad[i] = (f_plus - f_minus) / (2 * eps)
+                        self.parent.nfev += 2
+                    self.parent.current_g = grad
+                    return grad
+
+            return ConstrNLF1(self)
+
+    # Initialize constrained problem
+    problem = _OptConstrNLF1(fun, x0, args, jac, pyopttpp, bounds)
+
+    # Create constrained optimizer using OptConstrQNewton and the existing NLF1 problem
+    optimizer = pyopttpp.OptConstrQNewton(problem.nlf1_problem)
+
+    # Set search strategy
+    if search_strategy == 'TrustRegion':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustRegion)
+    elif search_strategy == 'LineSearch':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.LineSearch)
+    elif search_strategy == 'TrustPDS':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
+    else:
+        raise ValueError(f"Unknown search strategy: {search_strategy}")
+
+    # Set trust region size
+    optimizer.setTRSize(tr_size)
+
+    # Set debug mode
+    if debug:
+        optimizer.setDebug()
+
+    # Set output file
+    if output_file:
+        optimizer.setOutputFile(output_file, 0)
+
+    # Run optimization
+    try:
+        optimizer.optimize()
+        solution_vector = problem.nlf1_problem.getXc()
+        x_final = solution_vector.to_numpy()
+        f_final = problem.nlf1_problem.getF()
+        result = OptimizeResult(
+            x=x_final,
+            fun=f_final,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=True,
+            status=0,
+            message='Optimization terminated successfully',
+            jac=problem.current_g if problem.current_g is not None else None
+        )
+        optimizer.cleanup()
+        return result
+    except Exception as e:
+        optimizer.cleanup()
+        return OptimizeResult(
+            x=x0,
+            fun=None,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=False,
+            status=1,
+            message=f'Optimization failed: {str(e)}',
+            jac=None
+        )

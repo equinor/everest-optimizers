@@ -5,7 +5,7 @@ import numpy as np
 from typing import Callable, Optional, Union, Dict, Any
 from scipy.optimize import OptimizeResult
 
-from .optqnewton import _minimize_optqnewton
+from .optqnewton import _minimize_optqnewton, _minimize_optconstrqnewton
 
 def minimize(
     fun: Callable,
