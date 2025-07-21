@@ -6,6 +6,8 @@ from typing import Callable, Optional, Union, Dict, Any
 from scipy.optimize import OptimizeResult
 
 from .optqnewton import _minimize_optqnewton
+from .conminmfd import _minimize_conmin_mfd
+
 
 def minimize(
     fun: Callable,
@@ -159,5 +161,17 @@ def minimize(
             callback=callback,
             options=options
         )
+    elif method.lower() == 'conmin_mfd':
+        return _minimize_conmin_mfd(
+            fun=fun,
+            x0=x0,
+            args=args,
+            jac=jac,
+            bounds=bounds,
+            constraints=constraints,
+            tol=tol,
+            callback=callback,
+            options=options
+    )
     else:
-        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton'")
+        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'conmin_mfd'")
