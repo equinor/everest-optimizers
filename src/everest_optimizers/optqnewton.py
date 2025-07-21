@@ -379,7 +379,11 @@ def _minimize_optconstrqnewton(
     # Initialize constrained problem
     problem = _OptConstrNLF1(fun, x0, args, jac, pyopttpp, bounds)
 
-    # Create constrained optimizer using OptConstrQNewton and the existing NLF1 problem
+    # Create C++ bound constraint object and constrained optimizer
+    cc_ptr = pyopttpp.create_compound_constraint(np.asarray(bounds.lb, dtype=float),
+                                                 np.asarray(bounds.ub, dtype=float))
+    # attach constraints to the NLF1 problem
+    problem.nlf1_problem.setConstraints(cc_ptr)
     optimizer = pyopttpp.OptConstrQNewton(problem.nlf1_problem)
 
     # Set search strategy
@@ -408,6 +412,8 @@ def _minimize_optconstrqnewton(
         optimizer.optimize()
         solution_vector = problem.nlf1_problem.getXc()
         x_final = solution_vector.to_numpy()
+        # Ensure caller sees feasible result
+        x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
         f_final = problem.nlf1_problem.getF()
         result = OptimizeResult(
             x=x_final,

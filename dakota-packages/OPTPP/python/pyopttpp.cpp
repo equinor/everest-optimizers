@@ -9,6 +9,9 @@
 #include "OptConstrQNewton.h"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Teuchos_SerialSymDenseMatrix.hpp"
+#include "BoundConstraint.h"
+#include "Constraint.h"
+#include "CompoundConstraint.h"
 
 #include <functional>
 
@@ -159,6 +162,9 @@ PYBIND11_MODULE(pyopttpp, m) {
   py::class_<Teuchos::SerialSymDenseMatrix<int, double>>(m, "SerialSymDenseMatrix")
       .def(py::init<int>());
 
+  // Bind CompoundConstraint
+  py::class_<CompoundConstraint>(m, "CompoundConstraint");
+
   // Bind NLF1 using the trampoline class
   py::class_<NLF1, PyNLF1>(m, "NLF1")
       .def(py::init<int>(), py::arg("ndim"))
@@ -180,7 +186,8 @@ PYBIND11_MODULE(pyopttpp, m) {
       .def("getXc", &NLF1::getXc)
       .def("getF", &NLF1::getF)
       .def("setX", static_cast<void (NLF1::*)(const T_SerialDenseVector&)>(&NLF1::setX))
-      .def("setIsExpensive", &NLF1::setIsExpensive, py::arg("is_expensive"));
+      .def("setIsExpensive", &NLF1::setIsExpensive, py::arg("is_expensive"))
+       .def("setConstraints", [](NLF1& self, CompoundConstraint* cc){ self.setConstraints(cc); }, py::arg("compound_constraint"));
 
   // Bind SearchStrategy enum
   py::enum_<SearchStrategy>(m, "SearchStrategy")
@@ -209,6 +216,30 @@ PYBIND11_MODULE(pyopttpp, m) {
           py::arg("filename"), py::arg("mode") = 0
       )
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
+
+  // Bind BoundConstraint
+  py::class_<BoundConstraint>(m, "BoundConstraint")
+      .def(py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
+           py::arg("nvar"), py::arg("lower"), py::arg("upper"));
+
+  // Helper: create CompoundConstraint from numpy arrays
+
+  // Helper to create CompoundConstraint from lower/upper arrays
+  m.def("create_compound_constraint", [](py::array_t<double, py::array::c_style | py::array::forcecast> lower,
+                                          py::array_t<double, py::array::c_style | py::array::forcecast> upper) {
+     if (lower.ndim() != 1 || upper.ndim() != 1)
+       throw std::runtime_error("Lower and upper arrays must be 1-D");
+     if (lower.size() != upper.size())
+       throw std::runtime_error("Lower and upper arrays must have same length");
+     int n = lower.size();
+     T_SerialDenseVector lb(n);
+     std::memcpy(lb.values(), lower.data(), n * sizeof(double));
+     T_SerialDenseVector ub(n);
+     std::memcpy(ub.values(), upper.data(), n * sizeof(double));
+     auto bc = new BoundConstraint(n, lb, ub);
+     auto cc = new CompoundConstraint(Constraint(bc));
+     return cc;
+   }, py::return_value_policy::reference, py::arg("lower"), py::arg("upper"));
 
   // Bind OptConstrQNewton (constrained Quasi-Newton)
   py::class_<OptConstrQNewton>(m, "OptConstrQNewton")
