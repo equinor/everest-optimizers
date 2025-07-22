@@ -96,8 +96,8 @@ def _minimize_conmin_mfd(
         1.0,                        #theta
         obj,
         ndv, ncon, 0,               #ndv, ncon, nside
-        2, 5, 0,                    #iprint, nfdg, nscal
-        0, max_iter, 3, 3, 0,       #linobj, itmax, itrm, icndir, igoto
+        2, 5, 1,                    #iprint, nfdg, nscal
+        0, max_iter, 3, 3, 1,       #linobj, itmax, itrm, icndir, igoto   # docs says IGOTO should be 0 ?
         0,                          #nac
         info, infog, iter_,
         n1, n2, n3, n4, n5,
