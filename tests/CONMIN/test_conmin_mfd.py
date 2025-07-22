@@ -9,7 +9,9 @@ def grad_quad(x):
 
 def test_conmin_quadratic_minimization():
     x0 = np.array([5.0, -3.0])
-    res = minimize(quad, x0, method='conmin_mfd', jac=grad_quad)
+    bounds = [(-10, 10), (-10, 10)]  # bounds for x0 and x1
+    
+    res = minimize(quad, x0, method='conmin_mfd', jac=grad_quad, bounds=bounds)
 
     # Expected minimum is at x = [0.0, 0.0]
     expected_x = np.zeros_like(x0)
