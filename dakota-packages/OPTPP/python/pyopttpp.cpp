@@ -193,11 +193,26 @@ PYBIND11_MODULE(pyopttpp, m) {
       });
 
   // Bind Constraint so it can be used in lists
-  py::class_<Constraint>(m, "Constraint");
+  py::class_<Constraint>(m, "Constraint")
+      .def("getNumOfCons", &Constraint::getNumOfCons)
+      .def("getNumOfVars", &Constraint::getNumOfVars)
+      .def("getLower", &Constraint::getLower)
+      .def("getUpper", &Constraint::getUpper)
+      .def("evalResidual", &Constraint::evalResidual, py::arg("x"))
+      .def("evalGradient", &Constraint::evalGradient, py::arg("x"))
+      .def("amIFeasible", [](Constraint& self, const T_SerialDenseVector& x, double epsilon = 1e-6) {
+          return self.amIFeasible(x, epsilon);
+      }, py::arg("x"), py::arg("epsilon") = 1e-6);
 
   // Bind CompoundConstraint
   py::class_<CompoundConstraint>(m, "CompoundConstraint")
-      .def(py::init<const OptppArray<Constraint>&>());
+      .def(py::init<const OptppArray<Constraint>&>())
+      .def("getNumOfCons", &CompoundConstraint::getNumOfCons)
+      .def("getNumOfVars", &CompoundConstraint::getNumOfVars)
+      .def("evalResidual", &CompoundConstraint::evalResidual, py::arg("x"))
+      .def("amIFeasible", [](CompoundConstraint& self, const T_SerialDenseVector& x, double epsilon = 1e-6) {
+          return self.amIFeasible(x, epsilon);
+      }, py::arg("x"), py::arg("epsilon") = 1e-6);
 
   // Bind NLF1 using the trampoline class
   py::class_<NLF1, PyNLF1>(m, "NLF1")
@@ -260,7 +275,9 @@ PYBIND11_MODULE(pyopttpp, m) {
   // Bind LinearEquation
   py::class_<LinearEquation, LinearConstraint>(m, "LinearEquation")
       .def(py::init<const Teuchos::SerialDenseMatrix<int,double>&, const T_SerialDenseVector&>(),
-           py::arg("A"), py::arg("rhs"));
+           py::arg("A"), py::arg("rhs"))
+      .def("getB", &LinearEquation::getB)
+      .def("evalAx", &LinearEquation::evalAx, py::arg("x"));
 
   // Bind LinearInequality
   py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
@@ -272,7 +289,22 @@ PYBIND11_MODULE(pyopttpp, m) {
       .def(py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
            py::arg("nvar"), py::arg("lower"), py::arg("upper"));
 
-  // Helper: create CompoundConstraint from numpy arrays
+  // Helper to create CompoundConstraint from bound constraints only
+  m.def("create_compound_constraint", [](py::array_t<double, py::array::c_style | py::array::forcecast> lower,
+                                          py::array_t<double, py::array::c_style | py::array::forcecast> upper) {
+     if (lower.ndim() != 1 || upper.ndim() != 1)
+       throw std::runtime_error("Lower and upper arrays must be 1-D");
+     if (lower.size() != upper.size())
+       throw std::runtime_error("Lower and upper arrays must have same length");
+     int n = lower.size();
+     T_SerialDenseVector lb(n);
+     std::memcpy(lb.values(), lower.data(), n * sizeof(double));
+     T_SerialDenseVector ub(n);
+     std::memcpy(ub.values(), upper.data(), n * sizeof(double));
+     auto bc = new BoundConstraint(n, lb, ub);
+     auto cc = new CompoundConstraint(Constraint(bc));
+     return cc;
+   }, py::return_value_policy::reference, py::arg("lower"), py::arg("upper"));
 
   // Helper to create a Constraint object from a variety of constraint types
   m.def("create_constraint", [](py::object constraint_obj) {

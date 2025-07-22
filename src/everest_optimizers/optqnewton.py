@@ -327,13 +327,54 @@ def _minimize_optconstrqnewton(
         constraint_list.append(bound_constraint)
 
     if constraints is not None:
-        # For now, warn that linear constraints are not fully supported
-        # and only process bounds constraints
-        raise NotImplementedError(
-            "General linear constraints are not yet fully implemented in the current build. "
-            "Only bounds constraints are supported via the 'bounds' parameter. "
-            "Linear constraint support is planned for future versions."
-        )
+        # Handle various constraint types
+        if hasattr(constraints, '__iter__') and not isinstance(constraints, dict):
+            # List of constraints
+            for constraint in constraints:
+                if hasattr(constraint, 'A') and hasattr(constraint, 'lb') and hasattr(constraint, 'ub'):
+                    # LinearConstraint from scipy
+                    A_matrix = pyopttpp.SerialDenseMatrix(constraint.A)
+                    if np.allclose(constraint.lb, constraint.ub):
+                        # Equality constraint: lb == ub
+                        linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                        constraint_list.append(linear_eq)
+                    else:
+                        # Inequality constraint: lb <= Ax <= ub
+                        # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                        if np.isfinite(constraint.lb).all() and np.isinf(constraint.ub).all():
+                            # Convert Ax >= lb to Ax - lb >= 0
+                            linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                            constraint_list.append(linear_ineq)
+                        else:
+                            raise NotImplementedError(
+                                "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                                "(Ax >= lb with infinite upper bounds) are currently supported."
+                            )
+                else:
+                    raise ValueError(f"Unknown constraint type: {type(constraint)}")
+        else:
+            # Single constraint
+            if hasattr(constraints, 'A') and hasattr(constraints, 'lb') and hasattr(constraints, 'ub'):
+                # LinearConstraint from scipy
+                A_matrix = pyopttpp.SerialDenseMatrix(constraints.A)
+                if np.allclose(constraints.lb, constraints.ub):
+                    # Equality constraint: lb == ub
+                    linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                    constraint_list.append(linear_eq)
+                else:
+                    # Inequality constraint: lb <= Ax <= ub  
+                    # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                    if np.isfinite(constraints.lb).all() and np.isinf(constraints.ub).all():
+                        # Convert Ax >= lb to Ax - lb >= 0
+                        linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                        constraint_list.append(linear_ineq)
+                    else:
+                        raise NotImplementedError(
+                            "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                            "(Ax >= lb with infinite upper bounds) are currently supported."
+                        )
+            else:
+                raise ValueError(f"Unknown constraint type: {type(constraints)}")
 
     if not constraint_list:
         raise ValueError("No valid constraints were processed.")
@@ -351,7 +392,7 @@ def _minimize_optconstrqnewton(
     else:
         # For general constraints, use the constraint list approach
         try:
-            # Try to use the new constraint list function
+            # Wrap each constraint in a Constraint handle
             wrapped_constraints = []
             for constr in constraint_list:
                 wrapped_constraint = pyopttpp.create_constraint(constr)
@@ -401,8 +442,9 @@ def _minimize_optconstrqnewton(
         optimizer.optimize()
         solution_vector = problem.nlf1_problem.getXc()
         x_final = solution_vector.to_numpy()
-        # Ensure caller sees feasible result
-        x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
+        # Ensure caller sees feasible result if bounds are provided
+        if bounds is not None:
+            x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
         f_final = problem.nlf1_problem.getF()
         result = OptimizeResult(
             x=x_final,

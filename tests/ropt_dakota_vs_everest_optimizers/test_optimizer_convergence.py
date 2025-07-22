@@ -154,7 +154,6 @@ def test_unconstrained_convergence(
         ropt_solution, everest_solution, rtol=1e-2, atol=1e-2
     )
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     ("lower_bounds", "upper_bounds"),
     [
@@ -195,7 +194,6 @@ def test_constrained_convergence(
     np.testing.assert_allclose(ropt_solution, everest_solution, rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.skip(reason="Linear constraints not yet implemented in current build")
 def test_optconstrqnewton_with_linear_constraints() -> None:
     """Tests that opt_constr_q_newton converges to the correct solution for a
     simple quadratic problem with bounds and a linear inequality constraint.

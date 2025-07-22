@@ -102,7 +102,6 @@ def test_everest_unconstrained_expected(initial_values: list[float]) -> None:
         ([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]),
     ],
 )
-@pytest.mark.skip
 def test_everest_constrained_expected(
     initial_values: list[float],
     lower_bounds: list[float],
@@ -146,7 +145,6 @@ def test_everest_constrained_expected_feasible_start(
     np.testing.assert_allclose(res.x, expected, rtol=1e-1, atol=1e-1)
 
 
-@pytest.mark.skip(reason="Linear constraints not yet implemented in current build")
 def test_constrained_convergence():
     """Test constrained optimization with general linear constraints."""
     
