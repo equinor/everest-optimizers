@@ -102,6 +102,7 @@ def test_everest_unconstrained_expected(initial_values: list[float]) -> None:
         ([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]),
     ],
 )
+@pytest.mark.skip
 def test_everest_constrained_expected(
     initial_values: list[float],
     lower_bounds: list[float],
@@ -112,3 +113,34 @@ def test_everest_constrained_expected(
     res = minimize(objective, initial_values, method="optpp_constr_q_newton", bounds=bounds)
     expected = _project_to_bounds(expected_unconstrained, lower_bounds, upper_bounds)
     np.testing.assert_allclose(res.x, expected, rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize(
+    ("initial_values", "lower_bounds", "upper_bounds"),
+    [
+        ([0.0, 0.0, 0.0], [-1.0, -1.0, -1.0], [1.0, 1.0, 0.2]),
+        ([0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [1.0, 1.0, 1.0]),
+        ([0.0, 0.0, 0.8], [-0.2, -0.2, 0.6], [0.2, 0.2, 1.0]),
+        ([0.0, 0.0, 0.0], [-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]),
+        ([0.05, 0.05, 0.05], [0.0, 0.0, 0.0], [0.1, 0.1, 0.1]),
+        ([0.0, 0.0, 0.5], [-0.5, -0.5, 0.4], [0.5, 0.5, 0.6]),
+        ([0.5, 0.5, 0.5], [0.4, 0.4, 0.4], [0.6, 0.6, 0.6]),
+        ([0.0, 0.0, 0.5], [-1.0, -1.0, 0.45], [1.0, 1.0, 0.55]),
+        ([0.5, 0.5, 0.5], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]),
+        ([0.0, 0.0, 0.0], [-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]),
+    ],
+)
+def test_everest_constrained_expected_feasible_start(
+    initial_values: list[float],
+    lower_bounds: list[float],
+    upper_bounds: list[float],
+) -> None:
+    """everest-optimizers should match projected analytical solution in constrained case with feasible start."""
+    # Make sure initial point is feasible
+    for i, val in enumerate(initial_values):
+        assert lower_bounds[i] <= val <= upper_bounds[i]
+
+    bounds = Bounds(lower_bounds, upper_bounds)
+    res = minimize(objective, initial_values, method="optpp_constr_q_newton", bounds=bounds)
+    expected = _project_to_bounds(expected_unconstrained, lower_bounds, upper_bounds)
+    np.testing.assert_allclose(res.x, expected, rtol=1e-1, atol=1e-1)

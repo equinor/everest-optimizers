@@ -194,3 +194,53 @@ def test_scipy_constrained_expected(
 
     expected = _project_to_bounds(expected_unconstrained, lower_bounds, upper_bounds)
     np.testing.assert_allclose(scipy_solution, expected, rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize(
+    ("initial_values", "lower_bounds", "upper_bounds"),
+    [
+        ([0.0, 0.0, 0.0], [-1.0, -1.0, -1.0], [1.0, 1.0, 0.2]),
+        ([0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [1.0, 1.0, 1.0]),
+        ([0.0, 0.0, 0.8], [-0.2, -0.2, 0.6], [0.2, 0.2, 1.0]),
+        ([0.0, 0.0, 0.0], [-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]),
+        ([0.05, 0.05, 0.05], [0.0, 0.0, 0.0], [0.1, 0.1, 0.1]),
+        ([0.0, 0.0, 0.5], [-0.5, -0.5, 0.4], [0.5, 0.5, 0.6]),
+        ([0.5, 0.5, 0.5], [0.4, 0.4, 0.4], [0.6, 0.6, 0.6]),
+        ([0.0, 0.0, 0.5], [-1.0, -1.0, 0.45], [1.0, 1.0, 0.55]),
+        ([0.5, 0.5, 0.5], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]),
+        ([0.0, 0.0, 0.0], [-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]),
+    ],
+)
+def test_scipy_constrained_expected_feasible_start(
+    optimizer_config: dict[str, Any],
+    test_functions: list[_Function],
+    initial_values: list[float],
+    lower_bounds: list[float],
+    upper_bounds: list[float],
+) -> None:
+    """SciPy optimizer should converge to projected analytical solution for constrained case with feasible start."""
+    # Make sure initial point is feasible
+    for i, val in enumerate(initial_values):
+        assert lower_bounds[i] <= val <= upper_bounds[i]
+
+    objective_func = partial(
+        _objective_function,
+        functions=test_functions,
+        weights=optimizer_config["objectives"]["weights"],
+    )
+
+    scipy_bounds = Bounds(lower_bounds, upper_bounds)
+
+    result = minimize(
+        objective_func,
+        x0=np.array(initial_values),
+        method="L-BFGS-B",
+        bounds=scipy_bounds,
+        options={"ftol": optimizer_config["optimizer"]["tolerance"]},
+    )
+    scipy_solution = result.x
+    assert scipy_solution is not None
+
+    expected = _project_to_bounds(expected_unconstrained, lower_bounds, upper_bounds)
+    np.testing.assert_allclose(scipy_solution, expected, rtol=1e-2, atol=1e-2)
+
