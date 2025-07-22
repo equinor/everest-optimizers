@@ -25,7 +25,7 @@ def _minimize_conmin_mfd(
     n4 = max(n3, ndv)
     n5 = 2 * n4
 
-    max_iter = options.get('maxiter', 100) if options else 100
+    max_iter = options.get('maxiter', 40) if options else 40
     tol = tol or 1e-6
 
     # Allocate required arrays
@@ -78,43 +78,47 @@ def _minimize_conmin_mfd(
     else:
         compute_grad = lambda xk: jac(xk[:ndv], *args)
 
-    nfev = 0
-    njev = 0
-    for _ in range(max_iter):
-        obj[0] = wrapped_fun(x_arr)
-        nfev += 1
+    # Compute initial gradient (optional, but CONMIN may expect it)
+    grad[:ndv] = compute_grad(x_arr[:ndv])
 
-        grad[:ndv] = compute_grad(x_arr[:ndv])
-        njev += 1
+    # Compute initial objective
+    obj[0] = wrapped_fun(x_arr)
 
-        conmin_module.conmin(
-            x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
-            0.0, 0.0,                 #delfun, dabfun
-            0.0, 0.0,                 #fdch, fdchm
-            0.0, 0.0, 0.0, 0.0,       #ct, ctmin, ctl, ctlmin
-            0.0, 0.0,                 #alphax, abobj1
-            0.0,                      #theta
-            obj,         
-            0.0, 0.0, 0.0,            #ndv, ncon, nside
-            0.0, 0.0, 0.0,            #iprint, nfdg, nscal
-            0.0, 0.0, 0.0, 0.0, 0.0,  #linobj, itmax, itrm, icndir, igoto
-            0.0, #nac
-            info, infog, iter_,
-            n1, n2, n3, n4, n5,
-        )
+    print("Before conmin call:")
+    print("iter_ =", iter_[0])
+    # Single call to CONMIN — let it handle all iterations internally
+    conmin_module.conmin(
+        x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
+        0.001, 0.001,               #delfun, dabfun
+        0.01, 0.01,                 #fdch, fdchm
+        -0.1, 0.004, -0.01, 0.001,  #ct, ctmin, ctl, ctlmin
+        0.1, 0.1,                   #alphax, abobj1
+        1.0,                        #theta
+        obj,
+        ndv, ncon, 0,               #ndv, ncon, nside
+        2, 5, 0,                    #iprint, nfdg, nscal
+        0, max_iter, 3, 3, 0,       #linobj, itmax, itrm, icndir, igoto
+        0,                          #nac
+        info, infog, iter_,
+        n1, n2, n3, n4, n5,
+    )
+    
+    print("After conmin call:")
+    print("iter_ =", iter_[0])
+    print("info =", info[0])
+    print("infog =", infog[0])
+    print("x =", x_arr[:ndv])
+    print("obj =", obj[0])
 
-        if callback:
-            callback(x_arr[:ndv])
-
-        if np.linalg.norm(grad[:ndv]) < tol:
-            break
+    if callback:
+        callback(x_arr[:ndv])
 
     return OptimizeResult(
         x=x_arr[:ndv],
         fun=obj[0],
         success=(info[0] == 0),
         message="Converged" if info[0] == 0 else f"Not converged (info={info[0]})",
-        nfev=nfev,
-        njev=njev,
-        jac=grad[:ndv]
+        nfev=None,
+        njev=None,
+        jac=None
     )
