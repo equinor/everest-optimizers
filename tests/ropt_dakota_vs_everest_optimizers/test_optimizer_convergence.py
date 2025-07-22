@@ -193,3 +193,41 @@ def test_constrained_convergence(
 
     # Compare solutions
     np.testing.assert_allclose(ropt_solution, everest_solution, rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.skip(reason="Linear constraints not yet implemented in current build")
+def test_optconstrqnewton_with_linear_constraints() -> None:
+    """Tests that opt_constr_q_newton converges to the correct solution for a
+    simple quadratic problem with bounds and a linear inequality constraint.
+    """
+    from everest_optimizers import minimize
+    from scipy.optimize import Bounds, LinearConstraint
+
+    # Objective function: f(x) = x_0^2 + x_1^2
+    fun = lambda x: x[0]**2 + x[1]**2
+
+    # Initial guess
+    x0 = np.array([0.1, 0.1])
+
+    # Bounds: 0 <= x_0 <= 1, 0 <= x_1 <= 1
+    bounds = Bounds([0.0, 0.0], [1.0, 1.0])
+
+    # Linear constraint: x_0 + x_1 >= 1
+    linear_constraint = LinearConstraint([[1, 1]], [1], [np.inf])
+
+    # Expected solution is [0.5, 0.5]
+    expected_solution = np.array([0.5, 0.5])
+
+    # Run everest-optimizer
+    result = minimize(
+        fun,
+        x0,
+        method="optpp_constr_q_newton",
+        bounds=bounds,
+        constraints=[linear_constraint],
+    )
+
+    # Check the solution
+    assert result.success
+    np.testing.assert_allclose(result.x, expected_solution, atol=1e-5)
+

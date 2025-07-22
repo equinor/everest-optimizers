@@ -12,6 +12,11 @@
 #include "BoundConstraint.h"
 #include "Constraint.h"
 #include "CompoundConstraint.h"
+#include "LinearEquation.h"
+#include "LinearInequality.h"
+#include "NonLinearConstraint.h"
+#include "NonLinearInequality.h"
+#include "NonLinearEquation.h"
 
 #include <functional>
 
@@ -23,6 +28,12 @@ using T_SerialSymDenseMatrix = Teuchos::SerialSymDenseMatrix<int, double>;
 
 // Dummy C++ function for the default case
 void default_update_model(int, int, T_SerialDenseVector) {}
+
+// Trampoline class for NonLinearInequality - enables Python-defined constraint functions
+class PyNonLinearInequality : public NonLinearInequality {
+public:
+  using NonLinearInequality::NonLinearInequality;
+};
 
 // Trampoline class for NLF1
 class PyNLF1 : public NLF1 {
@@ -162,8 +173,31 @@ PYBIND11_MODULE(pyopttpp, m) {
   py::class_<Teuchos::SerialSymDenseMatrix<int, double>>(m, "SerialSymDenseMatrix")
       .def(py::init<int>());
 
+  // Bind Teuchos::SerialDenseMatrix
+  py::class_<Teuchos::SerialDenseMatrix<int, double>>(m, "SerialDenseMatrix", py::buffer_protocol())
+      .def(py::init<int, int>())
+      .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
+        if (arr.ndim() != 2) {
+            throw std::runtime_error("Numpy array must be 2-D");
+        }
+        auto mat = new Teuchos::SerialDenseMatrix<int, double>(arr.shape(0), arr.shape(1));
+        std::memcpy(mat->values(), arr.data(), arr.size() * sizeof(double));
+        return mat;
+      }))
+      .def_buffer([](Teuchos::SerialDenseMatrix<int, double>& m) -> py::buffer_info {
+            return py::buffer_info(
+                m.values(), sizeof(double), py::format_descriptor<double>::format(), 2,
+                {(size_t)m.numRows(), (size_t)m.numCols()},
+                {sizeof(double) * m.numCols(), sizeof(double)}
+            );
+      });
+
+  // Bind Constraint so it can be used in lists
+  py::class_<Constraint>(m, "Constraint");
+
   // Bind CompoundConstraint
-  py::class_<CompoundConstraint>(m, "CompoundConstraint");
+  py::class_<CompoundConstraint>(m, "CompoundConstraint")
+      .def(py::init<const OptppArray<Constraint>&>());
 
   // Bind NLF1 using the trampoline class
   py::class_<NLF1, PyNLF1>(m, "NLF1")
@@ -217,29 +251,91 @@ PYBIND11_MODULE(pyopttpp, m) {
       )
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
 
+  // Bind ConstraintBase so we can establish the inheritance hierarchy
+  py::class_<ConstraintBase>(m, "ConstraintBase");
+
+  // Bind LinearConstraint as it's a base for Equation and Inequality
+  py::class_<LinearConstraint, ConstraintBase>(m, "LinearConstraint");
+
+  // Bind LinearEquation
+  py::class_<LinearEquation, LinearConstraint>(m, "LinearEquation")
+      .def(py::init<const Teuchos::SerialDenseMatrix<int,double>&, const T_SerialDenseVector&>(),
+           py::arg("A"), py::arg("rhs"));
+
+  // Bind LinearInequality
+  py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
+      .def(py::init<const Teuchos::SerialDenseMatrix<int,double>&, const T_SerialDenseVector&>(),
+           py::arg("A"), py::arg("rhs"));
+
   // Bind BoundConstraint
-  py::class_<BoundConstraint>(m, "BoundConstraint")
+  py::class_<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
       .def(py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
            py::arg("nvar"), py::arg("lower"), py::arg("upper"));
 
   // Helper: create CompoundConstraint from numpy arrays
 
-  // Helper to create CompoundConstraint from lower/upper arrays
-  m.def("create_compound_constraint", [](py::array_t<double, py::array::c_style | py::array::forcecast> lower,
-                                          py::array_t<double, py::array::c_style | py::array::forcecast> upper) {
-     if (lower.ndim() != 1 || upper.ndim() != 1)
-       throw std::runtime_error("Lower and upper arrays must be 1-D");
-     if (lower.size() != upper.size())
-       throw std::runtime_error("Lower and upper arrays must have same length");
-     int n = lower.size();
-     T_SerialDenseVector lb(n);
-     std::memcpy(lb.values(), lower.data(), n * sizeof(double));
-     T_SerialDenseVector ub(n);
-     std::memcpy(ub.values(), upper.data(), n * sizeof(double));
-     auto bc = new BoundConstraint(n, lb, ub);
-     auto cc = new CompoundConstraint(Constraint(bc));
-     return cc;
-   }, py::return_value_policy::reference, py::arg("lower"), py::arg("upper"));
+  // Helper to create a Constraint object from a variety of constraint types
+  m.def("create_constraint", [](py::object constraint_obj) {
+      if (py::isinstance<LinearEquation>(constraint_obj)) {
+          auto* le = constraint_obj.cast<LinearEquation*>();
+          return new Constraint(le);
+      } else if (py::isinstance<LinearInequality>(constraint_obj)) {
+          auto* li = constraint_obj.cast<LinearInequality*>();
+          return new Constraint(li);
+      } else if (py::isinstance<BoundConstraint>(constraint_obj)) {
+          auto* bc = constraint_obj.cast<BoundConstraint*>();
+          return new Constraint(bc);
+      } else if (py::isinstance<NonLinearInequality>(constraint_obj)) {
+          auto* nli = constraint_obj.cast<NonLinearInequality*>();
+          return new Constraint(nli);
+      } else if (py::isinstance<NonLinearEquation>(constraint_obj)) {
+          auto* nle = constraint_obj.cast<NonLinearEquation*>();
+          return new Constraint(nle);
+      }
+      throw std::runtime_error("Unknown constraint type");
+  }, py::return_value_policy::reference);
+
+  // Helper to create CompoundConstraint from a list of constraints
+  m.def("create_compound_constraint", [](py::list constraints) {
+      OptppArray<Constraint> constraint_array(constraints.size());
+      int i = 0;
+      for (auto& c : constraints) {
+          if (py::isinstance<LinearEquation>(c)) {
+              constraint_array[i] = Constraint(c.cast<LinearEquation*>());
+          } else if (py::isinstance<LinearInequality>(c)) {
+              constraint_array[i] = Constraint(c.cast<LinearInequality*>());
+          } else if (py::isinstance<BoundConstraint>(c)) {
+              constraint_array[i] = Constraint(c.cast<BoundConstraint*>());
+          } else if (py::isinstance<NonLinearInequality>(c)) {
+              constraint_array[i] = Constraint(c.cast<NonLinearInequality*>());
+          } else if (py::isinstance<NonLinearEquation>(c)) {
+              constraint_array[i] = Constraint(c.cast<NonLinearEquation*>());
+          } else {
+              throw std::runtime_error("Unknown constraint type in list");
+          }
+          i++;
+      }
+      return new CompoundConstraint(constraint_array);
+  }, py::return_value_policy::reference, py::arg("constraints"));
+
+  // Bind NonLinearConstraint as base class
+  py::class_<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint");
+
+  // Bind NonLinearInequality
+  py::class_<NonLinearInequality, NonLinearConstraint>(m, "NonLinearInequality")
+      .def(py::init<NLP*, int>(), py::arg("nlp"), py::arg("numconstraints") = 1)
+      .def(py::init<NLP*, const T_SerialDenseVector&, int>(), 
+           py::arg("nlp"), py::arg("rhs"), py::arg("numconstraints") = 1)
+      .def(py::init<NLP*, const bool, int>(), 
+           py::arg("nlp"), py::arg("flag"), py::arg("numconstraints") = 1)
+      .def(py::init<NLP*, const T_SerialDenseVector&, const T_SerialDenseVector&, int>(),
+           py::arg("nlp"), py::arg("lower"), py::arg("upper"), py::arg("numconstraints") = 1);
+
+  // Bind NonLinearEquation
+  py::class_<NonLinearEquation, NonLinearConstraint>(m, "NonLinearEquation")
+      .def(py::init<NLP*, int>(), py::arg("nlp"), py::arg("numconstraints") = 1)
+      .def(py::init<NLP*, const T_SerialDenseVector&, int>(), 
+           py::arg("nlp"), py::arg("rhs"), py::arg("numconstraints") = 1);
 
   // Bind OptConstrQNewton (constrained Quasi-Newton)
   py::class_<OptConstrQNewton>(m, "OptConstrQNewton")

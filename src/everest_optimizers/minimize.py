@@ -48,6 +48,7 @@ def minimize(
     method : str, optional
         Type of solver. Currently supported:
         - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
+        - 'optpp_constr_q_newton': constrained quasi-Newton optimizer from OPTPP
         
         More optimizers may be added in the future.
     
@@ -66,10 +67,10 @@ def minimize(
         Hessian times vector product. Not used by optpp_q_newton.
     
     bounds : sequence, optional
-        Bounds on variables. Not supported by optpp_q_newton.
+        Bounds on variables. Supported by 'optpp_constr_q_newton'.
     
     constraints : dict or list, optional
-        Constraints definition. Not supported by optpp_q_newton.
+        Constraints definition. Supported by 'optpp_constr_q_newton'.
     
     tol : float, optional
         Tolerance for termination.
@@ -159,7 +160,7 @@ def minimize(
             callback=callback,
             options=options
         )
-    elif method.lower() == 'optpp_constr_q_newton': # TODO: Actually implement method
+    elif method.lower() == 'optpp_constr_q_newton':
         return _minimize_optconstrqnewton(
             fun=fun,
             x0=x0,

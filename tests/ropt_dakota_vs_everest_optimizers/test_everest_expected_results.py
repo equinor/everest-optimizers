@@ -16,7 +16,7 @@ import sys
 import numpy as np
 import pytest
 from numpy.typing import NDArray
-from scipy.optimize import Bounds
+from scipy.optimize import Bounds, LinearConstraint
 
 # Add the source directory to the path to find everest_optimizers
 src_path = os.path.join(os.path.dirname(__file__), "..", "..", "src")
@@ -144,3 +144,52 @@ def test_everest_constrained_expected_feasible_start(
     res = minimize(objective, initial_values, method="optpp_constr_q_newton", bounds=bounds)
     expected = _project_to_bounds(expected_unconstrained, lower_bounds, upper_bounds)
     np.testing.assert_allclose(res.x, expected, rtol=1e-1, atol=1e-1)
+
+
+@pytest.mark.skip(reason="Linear constraints not yet implemented in current build")
+def test_constrained_convergence():
+    """Test constrained optimization with general linear constraints."""
+    
+    # Simple quadratic function: minimize (x-1)^2 + (y-2)^2 + (z-0)^2
+    def objective(x):
+        return (x[0] - 1)**2 + (x[1] - 2)**2 + x[2]**2
+    
+    def gradient(x):
+        return np.array([2*(x[0] - 1), 2*(x[1] - 2), 2*x[2]])
+    
+    # Test with linear equality constraint: x + y + z = 3
+    x0 = np.array([0.0, 0.0, 0.0])
+    
+    # Linear constraint: x + y + z = 3
+    A = np.array([[1.0, 1.0, 1.0]])
+    b = np.array([3.0])
+    constraint = LinearConstraint(A, b, b)  # equality: lb = ub
+    
+    result = minimize(
+        objective,
+        x0,
+        method='optpp_constr_q_newton',
+        jac=gradient,
+        constraints=constraint,
+        options={'debug': False}
+    )
+    
+    # Check that constraint is satisfied
+    constraint_value = result.x[0] + result.x[1] + result.x[2]
+    np.testing.assert_allclose(constraint_value, 3.0, rtol=1e-3, atol=1e-3)
+    
+    # For the constrained problem with x + y + z = 3, 
+    # the analytical solution can be found using Lagrange multipliers:
+    # L = (x-1)^2 + (y-2)^2 + z^2 + λ(x + y + z - 3)
+    # Setting derivatives to zero:
+    # ∂L/∂x = 2(x-1) + λ = 0  =>  x = 1 - λ/2
+    # ∂L/∂y = 2(y-2) + λ = 0  =>  y = 2 - λ/2  
+    # ∂L/∂z = 2z + λ = 0       =>  z = -λ/2
+    # ∂L/∂λ = x + y + z - 3 = 0
+    #
+    # Substituting: (1 - λ/2) + (2 - λ/2) + (-λ/2) - 3 = 0
+    # 3 - 3λ/2 - 3 = 0  =>  λ = 0
+    # Therefore: x = 1, y = 2, z = 0
+    
+    expected_solution = np.array([1.0, 2.0, 0.0])
+    np.testing.assert_allclose(result.x, expected_solution, rtol=1e-2, atol=1e-2)

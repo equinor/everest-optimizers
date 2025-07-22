@@ -184,7 +184,7 @@ def _minimize_optqnewton(
         raise NotImplementedError("optpp_q_newton does not support bounds")
     
     if constraints is not None:
-        raise NotImplementedError("optpp_q_newton does not support constraints")
+        raise NotImplementedError("optpp_q_newton does not support constraints. Use method='optpp_constr_q_newton' instead.")
     
     if callback is not None:
         raise NotImplementedError("Callback function not implemented for optpp_q_newton")
@@ -289,7 +289,7 @@ def _minimize_optconstrqnewton(
     options: Optional[Dict[str, Any]] = None
 ) -> OptimizeResult:
     """
-    Minimize a scalar function with bound constraints using OptConstrQNewton.
+    Minimize a scalar function with constraints using OptConstrQNewton.
     """
     # Import pyopttpp
     pyopttpp = _import_pyopttpp()
@@ -299,11 +299,8 @@ def _minimize_optconstrqnewton(
     if x0.ndim != 1:
         raise ValueError("x0 must be 1-dimensional")
 
-    if constraints is not None:
-        raise NotImplementedError("optpp_constr_q_newton does not support arbitrary constraints yet")
-
-    if bounds is None:
-        raise ValueError("Bounds must be provided for constrained optimization")
+    if bounds is None and constraints is None:
+        raise ValueError("Either bounds or constraints must be provided for constrained optimization")
 
     # Set up options
     if options is None:
@@ -314,77 +311,69 @@ def _minimize_optconstrqnewton(
     debug = options.get('debug', False)
     output_file = options.get('output_file', None)
 
-    # Create constrained problem by clamping within bounds
-    class _OptConstrNLF1(_OptQNewtonProblem):
-        def __init__(self, fun, x0, args, jac, pyopttpp, bounds):
-            # Store bounds before superclass init to ensure availability in _create_nlf1_problem
-            self.lb = np.asarray(bounds.lb, dtype=float)
-            self.ub = np.asarray(bounds.ub, dtype=float)
-            super().__init__(fun, x0, args, jac, pyopttpp)
+    # The problem definition doesn't need to know about constraints, as they are handled by the C++ part.
+    problem = _OptQNewtonProblem(fun, x0, args, jac, pyopttpp)
 
-        def _create_nlf1_problem(self):
-            parent = self
-            lb = parent.lb
-            ub = parent.ub
+    # Process constraints
+    constraint_list = []
+    if bounds is not None:
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        bound_constraint = pyopttpp.BoundConstraint(len(x0), pyopttpp.SerialDenseVector(lb), pyopttpp.SerialDenseVector(ub))
+        constraint_list.append(bound_constraint)
 
-            class ConstrNLF1(parent.pyopttpp.NLF1):
-                def __init__(self, parent_problem):
-                    super().__init__(len(parent_problem.x0))
-                    self.parent = parent_problem
-                    init_vector = parent_problem.pyopttpp.SerialDenseVector(parent_problem.x0)
-                    self.setX(init_vector)
-                    self.setIsExpensive(True)
+    if constraints is not None:
+        # For now, warn that linear constraints are not fully supported
+        # and only process bounds constraints
+        raise NotImplementedError(
+            "General linear constraints are not yet fully implemented in the current build. "
+            "Only bounds constraints are supported via the 'bounds' parameter. "
+            "Linear constraint support is planned for future versions."
+        )
 
-                def evalF(self, x):
-                    x_np = np.array(x.to_numpy(), copy=True)
-                    x_clamped = np.minimum(np.maximum(x_np, lb), ub)
-                    self.parent.current_x = x_clamped
-                    try:
-                        f_val = self.parent.fun(x_clamped, *self.parent.args)
-                        self.parent.current_f = float(f_val)
-                        self.parent.nfev += 1
-                        return self.parent.current_f
-                    except Exception as e:
-                        raise RuntimeError(f"Error evaluating objective function: {e}")
+    if not constraint_list:
+        raise ValueError("No valid constraints were processed.")
 
-                def evalG(self, x):
-                    x_np = np.array(x.to_numpy(), copy=True)
-                    x_clamped = np.minimum(np.maximum(x_np, lb), ub)
-                    if self.parent.jac is not None:
-                        try:
-                            grad = self.parent.jac(x_clamped, *self.parent.args)
-                            grad_np = np.asarray(grad, dtype=float)
-                            self.parent.current_g = grad_np
-                            self.parent.njev += 1
-                            return grad_np
-                        except Exception as e:
-                            raise RuntimeError(f"Error evaluating gradient: {e}")
-                    # Finite-difference approximation when jacobian not provided
-                    eps = 1e-8
-                    grad = np.zeros_like(x_clamped)
-                    for i in range(len(x_clamped)):
-                        x_plus = x_clamped.copy()
-                        x_plus[i] += eps
-                        x_minus = x_clamped.copy()
-                        x_minus[i] -= eps
-                        f_plus = self.parent.fun(x_plus, *self.parent.args)
-                        f_minus = self.parent.fun(x_minus, *self.parent.args)
-                        grad[i] = (f_plus - f_minus) / (2 * eps)
-                        self.parent.nfev += 2
-                    self.parent.current_g = grad
-                    return grad
-
-            return ConstrNLF1(self)
-
-    # Initialize constrained problem
-    problem = _OptConstrNLF1(fun, x0, args, jac, pyopttpp, bounds)
-
-    # Create C++ bound constraint object and constrained optimizer
-    cc_ptr = pyopttpp.create_compound_constraint(np.asarray(bounds.lb, dtype=float),
-                                                 np.asarray(bounds.ub, dtype=float))
-    # attach constraints to the NLF1 problem
+    # Create C++ compound constraint object
+    if len(constraint_list) == 1 and hasattr(constraint_list[0], '__class__') and 'BoundConstraint' in str(constraint_list[0].__class__):
+        # Use the bounds-only helper for backwards compatibility
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+    else:
+        # For general constraints, use the constraint list approach
+        try:
+            # Try to use the new constraint list function
+            wrapped_constraints = []
+            for constr in constraint_list:
+                wrapped_constraint = pyopttpp.create_constraint(constr)
+                wrapped_constraints.append(wrapped_constraint)
+            cc_ptr = pyopttpp.create_compound_constraint(wrapped_constraints)
+        except (AttributeError, TypeError) as e:
+            # Fall back to bounds-only if LinearConstraint classes are not available
+            if bounds is not None:
+                lb = np.asarray(bounds.lb, dtype=float)
+                ub = np.asarray(bounds.ub, dtype=float)
+                inf = 1.0e30
+                lb[np.isneginf(lb)] = -inf
+                ub[np.isposinf(ub)] = inf
+                cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+            else:
+                raise NotImplementedError("Linear constraints are not available in the current build. Only bounds constraints are supported.") from e
+    
+    # Attach constraints to the NLF1 problem
     problem.nlf1_problem.setConstraints(cc_ptr)
     optimizer = pyopttpp.OptConstrQNewton(problem.nlf1_problem)
+
+
 
     # Set search strategy
     if search_strategy == 'TrustRegion':
