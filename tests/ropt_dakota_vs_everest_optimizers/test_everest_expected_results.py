@@ -70,6 +70,8 @@ def _project_to_bounds(
 initial_values_1: list[float] = [0.0, 0.0, 0.1]
 initial_values_2: list[float] = [1.0, -1.0, 0.5]
 initial_values_3: list[float] = [-0.5, 0.5, -0.2]
+initial_values_4: list[float] = [2.0, 2.0, 2.0]
+initial_values_5: list[float] = [-2.0, -2.0, -2.0]
 
 
 # -----------------------------------------------------------------------------
@@ -77,27 +79,36 @@ initial_values_3: list[float] = [-0.5, 0.5, -0.2]
 # -----------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("initial_values", [initial_values_1, initial_values_2, initial_values_3])
+@pytest.mark.parametrize("initial_values", [initial_values_1, initial_values_2, initial_values_3, initial_values_4, initial_values_5])
 def test_everest_unconstrained_expected(initial_values: list[float]) -> None:
     """everest-optimizers should match analytical solution in unconstrained case."""
     res = minimize(objective, initial_values, method="optpp_q_newton")
     np.testing.assert_allclose(res.x, expected_unconstrained, rtol=1e-2, atol=1e-2)
 
 
+@pytest.mark.parametrize("initial_values", [initial_values_1, initial_values_2, initial_values_3, initial_values_4, initial_values_5])
 @pytest.mark.parametrize(
     ("lower_bounds", "upper_bounds"),
     [
         ([-1.0, -1.0, -1.0], [1.0, 1.0, 0.2]),
         ([0.1, 0.1, 0.1], [1.0, 1.0, 1.0]),
         ([-0.2, -0.2, 0.6], [0.2, 0.2, 1.0]),
+        ([-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]),
+        ([0.0, 0.0, 0.0], [0.1, 0.1, 0.1]),
+        ([-0.5, -0.5, 0.4], [0.5, 0.5, 0.6]),
+        ([0.4, 0.4, 0.4], [0.6, 0.6, 0.6]),
+        ([-1.0, -1.0, 0.45], [1.0, 1.0, 0.55]),
+        ([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]),
+        ([-0.1, -0.1, -0.1], [0.1, 0.1, 0.1]),
     ],
 )
 def test_everest_constrained_expected(
+    initial_values: list[float],
     lower_bounds: list[float],
     upper_bounds: list[float],
 ) -> None:
     """everest-optimizers should match projected analytical solution in constrained case."""
     bounds = Bounds(lower_bounds, upper_bounds)
-    res = minimize(objective, initial_values_1, method="optpp_constr_q_newton", bounds=bounds)
+    res = minimize(objective, initial_values, method="optpp_constr_q_newton", bounds=bounds)
     expected = _project_to_bounds(expected_unconstrained, lower_bounds, upper_bounds)
     np.testing.assert_allclose(res.x, expected, rtol=1e-2, atol=1e-2)

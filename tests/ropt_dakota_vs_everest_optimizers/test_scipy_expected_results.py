@@ -151,17 +151,23 @@ def test_scipy_unconstrained_expected(
 
 
 @pytest.mark.external
+@pytest.mark.parametrize("initial_values", [initial_values_1, initial_values_2, initial_values_3])
 @pytest.mark.parametrize(
     ("lower_bounds", "upper_bounds"),
     [
         ([-1.0, -1.0, -1.0], [1.0, 1.0, 0.2]),
         ([0.1, 0.1, 0.1], [1.0, 1.0, 1.0]),
         ([-0.2, -0.2, 0.6], [0.2, 0.2, 1.0]),
+        ([-2.0, -2.0, -2.0], [2.0, 2.0, 2.0]),
+        ([0.0, 0.0, 0.0], [0.1, 0.1, 0.1]),
+        ([-0.5, -0.5, 0.4], [0.5, 0.5, 0.6]),
+        ([0.4, 0.4, 0.4], [0.6, 0.6, 0.6]),
     ],
 )
 def test_scipy_constrained_expected(
     optimizer_config: dict[str, Any],
     test_functions: list[_Function],
+    initial_values: list[float],
     lower_bounds: list[float],
     upper_bounds: list[float],
 ) -> None:
@@ -171,14 +177,14 @@ def test_scipy_constrained_expected(
         functions=test_functions,
         weights=optimizer_config["objectives"]["weights"],
     )
-    
+
     scipy_bounds = Bounds(lower_bounds, upper_bounds)
 
     # Note: The 'BFGS' method in SciPy does not support bounds. The 'L-BFGS-B'
     # method is used instead as it is a closely related algorithm that does.
     result = minimize(
         objective_func,
-        x0=np.array(initial_values_1),
+        x0=np.array(initial_values),
         method="L-BFGS-B",
         bounds=scipy_bounds,
         options={"ftol": optimizer_config["optimizer"]["tolerance"]},
