@@ -25,7 +25,6 @@ def _minimize_conmin_mfd(
     n4 = max(n3, ndv)
     n5 = 2 * n4
 
-    max_iter = options.get('maxiter', 40) if options else 40
     tol = tol or 1e-6
 
     # Allocate required arrays
@@ -60,6 +59,27 @@ def _minimize_conmin_mfd(
     info = np.zeros(1, dtype=np.int32)
     infog = np.zeros(1, dtype=np.int32)
     iter_ = np.zeros(1, dtype=np.int32)
+    
+    #default values from dakota CONMINOptimizer
+    nfdg = 0
+    iprint = 1
+    itmax = 100
+    fdch = 1.0e-5
+    fdchm = 1.0e-5
+    ct = -0.1
+    ctmin = 0.001
+    ctl = -0.01
+    ctlmin = 0.001
+    delfun = 1.0e-7
+    dabfun = 1.0e-7
+    
+    nscal = 0
+    linobj = 0
+    itrm = 3
+    theta = 1.0
+    alphax = 0.1
+    abobj1 = 0.1
+    igoto = np.array([1], dtype=np.int32)
 
     def wrapped_fun(x_in):
         # Only pass the first ndv variables to fun
@@ -86,19 +106,18 @@ def _minimize_conmin_mfd(
 
     print("Before conmin call:")
     print("iter_ =", iter_[0])
-    # Single call to CONMIN — let it handle all iterations internally
     conmin_module.conmin(
         x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
-        0.001, 0.001,               #delfun, dabfun
-        0.01, 0.01,                 #fdch, fdchm
-        -0.1, 0.004, -0.01, 0.001,  #ct, ctmin, ctl, ctlmin
-        0.1, 0.1,                   #alphax, abobj1
-        1.0,                        #theta
+        delfun, dabfun,                 #delfun, dabfun
+        fdch, fdchm,                    #fdch, fdchm
+        ct, ctmin, ctl, ctlmin,         #ct, ctmin, ctl, ctlmin
+        alphax, abobj1,                 #alphax, abobj1
+        theta,                          #theta
         obj,
-        ndv, ncon, 0,               #ndv, ncon, nside
-        2, 5, 1,                    #iprint, nfdg, nscal
-        0, max_iter, 3, 3, 1,       #linobj, itmax, itrm, icndir, igoto   # docs says IGOTO should be 0 ?
-        0,                          #nac
+        ndv, ncon, 0,                   #ndv, ncon, nside
+        iprint, nfdg, nscal,            #iprint, nfdg, nscal
+        linobj, itmax, itrm, 3, igoto,  #linobj, itmax, itrm, icndir, igoto
+        0,                              #nac
         info, infog, iter_,
         n1, n2, n3, n4, n5,
     )
