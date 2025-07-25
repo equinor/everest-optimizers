@@ -59,27 +59,27 @@ def _minimize_conmin_mfd(
     info = np.zeros(1, dtype=np.int32)
     infog = np.zeros(1, dtype=np.int32)
     iter_ = np.zeros(1, dtype=np.int32)
+    nfdg = 1
+    iprint = 0
     
-    #default values from dakota CONMINOptimizer
-    nfdg = 0
-    iprint = 1
-    itmax = 100
-    fdch = 1.0e-5
-    fdchm = 1.0e-5
-    ct = -0.1
-    ctmin = 0.001
-    ctl = -0.01
-    ctlmin = 0.001
-    delfun = 1.0e-7
-    dabfun = 1.0e-7
+    # will be set to default values
+    itmax = 0
+    fdch = 0
+    fdchm = 0
+    ct = 0
+    ctmin = 0
+    ctl = 0
+    ctlmin = 0
+    delfun = 0
+    dabfun = 0
     
     nscal = 0
     linobj = 0
-    itrm = 3
-    theta = 1.0
-    alphax = 0.1
-    abobj1 = 0.1
-    igoto = np.array([1], dtype=np.int32)
+    itrm = 0
+    theta = 0
+    alphax = 0
+    abobj1 = 0
+    igoto = 0
 
     def wrapped_fun(x_in):
         # Only pass the first ndv variables to fun
