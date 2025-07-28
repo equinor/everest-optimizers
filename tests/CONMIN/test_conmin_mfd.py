@@ -16,9 +16,7 @@ def jac_constraint_eq(x):
 def test_conmin_quadratic_minimization():
     x0 = np.array([5.0, -3.0])
     bounds = [(-10, 10), (-10, 10)]  # bounds for x0 and x1
-    constraints = [
-    {'type': 'eq', 'fun': constraint_eq, 'jac': jac_constraint_eq}
-]
+    constraints = [{'type': 'eq', 'fun': constraint_eq, 'jac': jac_constraint_eq}]
     
     res = minimize(quad, x0, method='conmin_mfd', jac=grad_quad, bounds=bounds, constraints=constraints)
 
