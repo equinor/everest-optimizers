@@ -246,6 +246,13 @@ PYBIND11_MODULE(pyopttpp, m) {
       .value("TrustPDS", SearchStrategy::TrustPDS)
       .export_values();
 
+  // Bind MeritFcn enum for interior-point methods
+  py::enum_<MeritFcn>(m, "MeritFcn")
+      .value("NormFmu", MeritFcn::NormFmu)
+      .value("ArgaezTapia", MeritFcn::ArgaezTapia)
+      .value("VanShanno", MeritFcn::VanShanno)
+      .export_values();
+
   // Bind OptQNewton
   py::class_<OptQNewton>(m, "OptQNewton")
       .def(
@@ -414,8 +421,20 @@ PYBIND11_MODULE(pyopttpp, m) {
           py::arg("filename"), py::arg("mode") = 0
       )
       .def("setTRSize", &OptQNIPS::setTRSize, py::arg("size"))
+      .def("getTRSize", &OptQNIPS::getTRSize)
       .def("setMu", &OptQNIPS::setMu, py::arg("mu"))
       .def("getMu", &OptQNIPS::getMu)
       .def("setCenteringParameter", &OptQNIPS::setCenteringParameter, py::arg("sigma"))
-      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"));
+      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"))
+      .def("setMeritFcn", &OptQNIPS::setMeritFcn, py::arg("merit_function"))
+      .def("getMeritFcn", &OptQNIPS::getMeritFcn)
+      .def("setMaxIter", &OptQNIPS::setMaxIter, py::arg("max_iterations"))
+      .def("setMaxFeval", &OptQNIPS::setMaxFeval, py::arg("max_function_evaluations"))
+      .def("setFcnTol", &OptQNIPS::setFcnTol, py::arg("convergence_tolerance"))
+      .def("setGradTol", &OptQNIPS::setGradTol, py::arg("gradient_tolerance"))
+      .def("setConTol", &OptQNIPS::setConTol, py::arg("constraint_tolerance"))
+      .def("setGradMult", &OptQNIPS::setGradMult, py::arg("gradient_multiplier"))
+      .def("getGradMult", &OptQNIPS::getGradMult)
+      .def("setSearchSize", &OptQNIPS::setSearchSize, py::arg("search_pattern_size"))
+      .def("getSearchSize", &OptQNIPS::getSearchSize);
 }

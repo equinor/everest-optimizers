@@ -6,6 +6,7 @@ from typing import Callable, Optional, Union, Dict, Any
 from scipy.optimize import OptimizeResult
 
 from .optqnewton import _minimize_optqnewton, _minimize_optconstrqnewton, _minimize_optqnips
+from .optqnips_impl import _minimize_optqnips_enhanced
 
 def minimize(
     fun: Callable,
@@ -177,7 +178,7 @@ def minimize(
             options=options
         )
     elif method.lower() == 'optpp_q_nips':
-        return _minimize_optqnips(
+        return _minimize_optqnips_enhanced(
             fun=fun,
             x0=x0,
             args=args,
