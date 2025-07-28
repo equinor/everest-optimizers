@@ -3,7 +3,7 @@
 
 import numpy as np
 from typing import Callable, Optional, Dict, Any
-from scipy.optimize import OptimizeResult
+from scipy.optimize import OptimizeResult, LinearConstraint, NonlinearConstraint
 
 def _import_pyopttpp():
     """Import pyopttpp module with proper error handling."""
@@ -197,8 +197,10 @@ def _minimize_optqnips_enhanced(
     # Create problem
     problem = OptQNIPSProblem(fun, x0, args, jac, pyopttpp)
 
-    # Process constraints (simplified version for now)
-    constraint_list = []
+    # Process constraints - enhanced version supporting multiple constraint types
+    constraint_objects = []
+    
+    # Handle bounds constraints
     if bounds is not None:
         lb = np.asarray(bounds.lb, dtype=float)
         ub = np.asarray(bounds.ub, dtype=float)
@@ -206,9 +208,39 @@ def _minimize_optqnips_enhanced(
         inf = 1.0e30
         lb[np.isneginf(lb)] = -inf
         ub[np.isposinf(ub)] = inf
-        cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+        
+        # Create BoundConstraint
+        lb_vec = pyopttpp.SerialDenseVector(lb)
+        ub_vec = pyopttpp.SerialDenseVector(ub)
+        bound_constraint = pyopttpp.BoundConstraint(len(x0), lb_vec, ub_vec)
+        constraint_objects.append(bound_constraint)
+    
+    # Handle general constraints (linear and nonlinear)
+    if constraints is not None:
+        if not isinstance(constraints, (list, tuple)):
+            constraints = [constraints]
+            
+        for constraint in constraints:
+            if isinstance(constraint, LinearConstraint):
+                # Convert scipy LinearConstraint to OPTPP LinearEquation/LinearInequality
+                optpp_constraints = _convert_linear_constraint(constraint, pyopttpp)
+                constraint_objects.extend(optpp_constraints)
+            elif isinstance(constraint, NonlinearConstraint):
+                # TODO: Implement nonlinear constraint conversion
+                raise NotImplementedError("Nonlinear constraints not yet supported in OptQNIPS wrapper")
+            else:
+                raise ValueError(f"Unsupported constraint type: {type(constraint)}")
+    
+    # Create compound constraint from all constraint objects
+    if constraint_objects:
+        if len(constraint_objects) == 1:
+            # Single constraint - create CompoundConstraint with one element
+            cc_ptr = pyopttpp.create_compound_constraint([constraint_objects[0]])
+        else:
+            # Multiple constraints - create CompoundConstraint with all elements
+            cc_ptr = pyopttpp.create_compound_constraint(constraint_objects)
     else:
-        raise NotImplementedError("Only bounds constraints are supported in this simplified version")
+        raise ValueError("OptQNIPS requires at least bounds constraints")
     
     # Attach constraints to the NLF1 problem
     problem.nlf1_problem.setConstraints(cc_ptr)
@@ -319,3 +351,93 @@ def _minimize_optqnips_enhanced(
             message=f'OptQNIPS optimization failed: {str(e)}',
             jac=None
         )
+
+
+def _convert_linear_constraint(scipy_constraint, pyopttpp):
+    """
+    Convert a scipy.optimize.LinearConstraint to OPTPP LinearEquation/LinearInequality objects.
+    
+    Parameters:
+    -----------
+    scipy_constraint : scipy.optimize.LinearConstraint
+        The scipy constraint to convert
+    pyopttpp : module
+        The pyopttpp module for creating OPTPP objects
+        
+    Returns:
+    --------
+    list
+        List of OPTPP constraint objects (LinearEquation and/or LinearInequality)
+    """
+    optpp_constraints = []
+    
+    # Get constraint matrix and bounds
+    A = np.asarray(scipy_constraint.A, dtype=float)
+    lb = np.asarray(scipy_constraint.lb, dtype=float)
+    ub = np.asarray(scipy_constraint.ub, dtype=float)
+    
+    # Ensure A is 2D
+    if A.ndim == 1:
+        A = A.reshape(1, -1)
+    
+    # Ensure bounds are 1D arrays
+    lb = np.atleast_1d(lb)
+    ub = np.atleast_1d(ub)
+    
+    num_constraints = A.shape[0]
+    
+    # Process each constraint row
+    for i in range(num_constraints):
+        A_row = A[i:i+1, :]  # Keep as 2D for consistency
+        lb_i = lb[i]
+        ub_i = ub[i]
+        
+        # Create OPTPP matrix and vector objects
+        A_matrix = pyopttpp.SerialDenseMatrix(A_row)
+        
+        # Determine constraint type based on bounds
+        if np.isfinite(lb_i) and np.isfinite(ub_i):
+            if np.abs(lb_i - ub_i) < 1e-12:
+                # Equality constraint: lb == ub
+                rhs = pyopttpp.SerialDenseVector(np.array([lb_i]))
+                eq_constraint = pyopttpp.LinearEquation(A_matrix, rhs)
+                optpp_constraints.append(eq_constraint)
+            else:
+                # Double-sided inequality: lb <= Ax <= ub
+                # Convert to two single-sided inequalities:
+                # Ax >= lb  =>  Ax - lb >= 0
+                # Ax <= ub  =>  -Ax + ub >= 0
+                
+                # Lower bound: Ax >= lb  =>  Ax >= lb (OPTPP standard form)
+                if np.isfinite(lb_i):
+                    rhs_lower = pyopttpp.SerialDenseVector(np.array([lb_i]))
+                    ineq_lower = pyopttpp.LinearInequality(A_matrix, rhs_lower)
+                    optpp_constraints.append(ineq_lower)
+                
+                # Upper bound: Ax <= ub  =>  -Ax >= -ub (OPTPP standard form)
+                if np.isfinite(ub_i):
+                    A_neg = -A_row
+                    A_neg_matrix = pyopttpp.SerialDenseMatrix(A_neg)
+                    rhs_upper = pyopttpp.SerialDenseVector(np.array([-ub_i]))
+                    ineq_upper = pyopttpp.LinearInequality(A_neg_matrix, rhs_upper)
+                    optpp_constraints.append(ineq_upper)
+                    
+        elif np.isfinite(lb_i) and not np.isfinite(ub_i):
+            # One-sided inequality: Ax >= lb (OPTPP standard form)
+            rhs = pyopttpp.SerialDenseVector(np.array([lb_i]))
+            ineq_constraint = pyopttpp.LinearInequality(A_matrix, rhs)
+            optpp_constraints.append(ineq_constraint)
+            
+        elif not np.isfinite(lb_i) and np.isfinite(ub_i):
+            # One-sided inequality: Ax <= ub  =>  -Ax >= -ub (OPTPP standard form)
+            A_neg = -A_row
+            A_neg_matrix = pyopttpp.SerialDenseMatrix(A_neg)
+            rhs = pyopttpp.SerialDenseVector(np.array([-ub_i]))
+            ineq_constraint = pyopttpp.LinearInequality(A_neg_matrix, rhs)
+            optpp_constraints.append(ineq_constraint)
+            
+        else:
+            # Both bounds are infinite - this is not a real constraint
+            continue
+    
+    return optpp_constraints

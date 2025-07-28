@@ -174,7 +174,6 @@ class TestOptQNIPSConstraints:
 
     def test_linear_equality_constraint(self):
         """Test OptQNIPS with linear equality constraint (LinearEquation in OPTPP)."""
-        pytest.skip("Linear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """3D quadratic: (x-1)^2 + (y-2)^2 + (z-0)^2"""
@@ -227,7 +226,6 @@ class TestOptQNIPSConstraints:
 
     def test_linear_inequality_constraint(self):
         """Test OptQNIPS with linear inequality constraint (LinearInequality in OPTPP)."""
-        pytest.skip("Linear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """2D quadratic: (x-3)^2 + (y-2)^2"""
@@ -240,10 +238,11 @@ class TestOptQNIPSConstraints:
         x0 = np.array([0.0, 0.0])
         bounds = Bounds([0.0, 0.0], [5.0, 5.0])
         
-        # Linear inequality constraint: x + y <= 2 (standard form: -x - y >= -2)
-        A_ineq = np.array([[-1.0, -1.0]])
-        b_ineq = np.array([-2.0])
-        constraint = LinearConstraint(A_ineq, -np.inf, b_ineq)
+        # Linear inequality constraint: x + y <= 2
+        # In scipy LinearConstraint format: A @ x with lb <= A @ x <= ub
+        # For x + y <= 2, we have A = [[1, 1]] and ub = [2], lb = [-inf]
+        A_ineq = np.array([[1.0, 1.0]])
+        constraint = LinearConstraint(A_ineq, -np.inf, 2.0)
         
         options = {
             'debug': False,
