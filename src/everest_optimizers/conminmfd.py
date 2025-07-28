@@ -15,8 +15,9 @@ def _minimize_conmin_mfd(
 ) -> OptimizeResult:
     x = np.asarray(x0, dtype=float)
     ndv = len(x)
-    ncon = 1  # 0 = Unconstrained
-    nacmx1 = ndv + ncon + 4  # Can be set more generously if needed
+    ncon = 1
+    nacmx1 = ndv + ncon + 4
+    nside = 1
 
     # CONMIN-required dimensions
     n1 = ndv + 2
@@ -27,11 +28,8 @@ def _minimize_conmin_mfd(
 
     tol = tol or 1e-6
 
-    # Allocate required arrays
     x_arr = np.zeros(n1)
     x_arr[:ndv] = x
-    # Initialize last two elements, often to zero (depends on CONMIN)
-    x_arr[ndv:] = 0.0
 
     # Bounds: default infinite, fill from user bounds if provided
     vlb = np.full(n1, -1e20)
@@ -63,13 +61,13 @@ def _minimize_conmin_mfd(
     iprint = 3
     
     # will be set to default values
-    itmax = 100 # max iterations
+    itmax = 100
     fdch = 1e-6
     fdchm = 1e-6
-    ct = 0
-    ctmin = 0
-    ctl = 0
-    ctlmin = 0
+    ct = -0.1
+    ctmin = 0.001
+    ctl = -0.01
+    ctlmin = 0.001
     delfun = 0
     dabfun = 0
     
@@ -79,7 +77,7 @@ def _minimize_conmin_mfd(
     theta = 0
     alphax = 0
     abobj1 = 0
-    igoto = 1 #required to begin
+    igoto = np.array([1], dtype=np.int32)
 
     def wrapped_fun(x_in):
         # Only pass the first ndv variables to fun
@@ -106,38 +104,45 @@ def _minimize_conmin_mfd(
 
     print("Before conmin call:")
     print("iter_ =", iter_[0])
-    conmin_module.conmin(
-        x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
-        delfun, dabfun,                 #delfun, dabfun
-        fdch, fdchm,                    #fdch, fdchm
-        ct, ctmin, ctl, ctlmin,         #ct, ctmin, ctl, ctlmin
-        alphax, abobj1,                 #alphax, abobj1
-        theta,                          #theta
-        obj,
-        ndv, ncon, 0,                   #ndv, ncon, nside
-        iprint, nfdg, nscal,            #iprint, nfdg, nscal
-        linobj, itmax, itrm, 3, igoto,  #linobj, itmax, itrm, icndir, igoto
-        0,                              #nac
-        info, infog, iter_,
-        n1, n2, n3, n4, n5,
-    )
-    
-    print("After conmin call:")
-    print("iter_ =", iter_)
-    print("info =", info)
-    print("infog =", infog)
-    print("x =", x_arr[:ndv])
-    print("obj =", obj)
+    for iteration in range(itmax):
+        conmin_module.conmin(
+            x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
+            delfun, dabfun,
+            fdch, fdchm,
+            ct, ctmin, ctl, ctlmin,
+            alphax, abobj1,
+            theta,
+            obj,
+            ndv, ncon, nside,
+            iprint, nfdg, nscal,
+            linobj, itmax, itrm, 3, igoto,
+            0,
+            info, infog, iter_,
+            n1, n2, n3, n4, n5,
+        )
 
-    if callback:
-        callback(x_arr[:ndv])
+        if callback:
+            callback(x_arr[:ndv])
+            
+        if igoto[0] == 0:
+            break  # finished
+
+        # print status hvis du ønsker debugging
+        # print(f"Iteration {iteration+1}: obj={obj[0]}, info={info[0]}, iter_={iter_[0]}")
+
+        if info[0] == 0:
+            # konvergerte, avslutt løkke
+            break
+
+    success = (info[0] == 0)
+    message = "Converged" if success else f"Not converged (info={info[0]})"
 
     return OptimizeResult(
         x=x_arr[:ndv],
         fun=obj[0],
-        success=(info[0] == 0),
-        message="Converged" if info[0] == 0 else f"Not converged (info={info[0]})",
+        success=success,
+        message=message,
         nfev=None,
         njev=None,
-        jac=None
+        jac=None,
     )
