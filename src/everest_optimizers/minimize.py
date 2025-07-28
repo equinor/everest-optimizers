@@ -5,7 +5,7 @@ import numpy as np
 from typing import Callable, Optional, Union, Dict, Any
 from scipy.optimize import OptimizeResult
 
-from .optqnewton import _minimize_optqnewton, _minimize_optconstrqnewton
+from .optqnewton import _minimize_optqnewton, _minimize_optconstrqnewton, _minimize_optqnips
 
 def minimize(
     fun: Callable,
@@ -49,6 +49,7 @@ def minimize(
         Type of solver. Currently supported:
         - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
         - 'optpp_constr_q_newton': constrained quasi-Newton optimizer from OPTPP
+        - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
         
         More optimizers may be added in the future.
     
@@ -67,10 +68,10 @@ def minimize(
         Hessian times vector product. Not used by optpp_q_newton.
     
     bounds : sequence, optional
-        Bounds on variables. Supported by 'optpp_constr_q_newton'.
+        Bounds on variables. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
     
     constraints : dict or list, optional
-        Constraints definition. Supported by 'optpp_constr_q_newton'.
+        Constraints definition. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
     
     tol : float, optional
         Tolerance for termination.
@@ -175,5 +176,20 @@ def minimize(
             callback=callback,
             options=options
         )
+    elif method.lower() == 'optpp_q_nips':
+        return _minimize_optqnips(
+            fun=fun,
+            x0=x0,
+            args=args,
+            method=method,
+            jac=jac,
+            hess=hess,
+            hessp=hessp,
+            bounds=bounds,
+            constraints=constraints,
+            tol=tol,
+            callback=callback,
+            options=options
+        )
     else:
-        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton'")
+        raise ValueError(f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips'")

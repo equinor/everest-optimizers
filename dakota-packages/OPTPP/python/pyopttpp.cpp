@@ -7,6 +7,7 @@
 #include "Opt.h"
 #include "OptQNewton.h"
 #include "OptConstrQNewton.h"
+#include "OptQNIPS.h"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Teuchos_SerialSymDenseMatrix.hpp"
 #include "BoundConstraint.h"
@@ -332,7 +333,10 @@ PYBIND11_MODULE(pyopttpp, m) {
       OptppArray<Constraint> constraint_array(constraints.size());
       int i = 0;
       for (auto& c : constraints) {
-          if (py::isinstance<LinearEquation>(c)) {
+          if (py::isinstance<Constraint>(c)) {
+              // If it's already a Constraint object, use it directly
+              constraint_array[i] = *c.cast<Constraint*>();
+          } else if (py::isinstance<LinearEquation>(c)) {
               constraint_array[i] = Constraint(c.cast<LinearEquation*>());
           } else if (py::isinstance<LinearInequality>(c)) {
               constraint_array[i] = Constraint(c.cast<LinearInequality*>());
@@ -389,4 +393,29 @@ PYBIND11_MODULE(pyopttpp, m) {
           py::arg("filename"), py::arg("mode") = 0
       )
       .def("setTRSize", &OptConstrQNewton::setTRSize, py::arg("size"));
+
+  // Bind OptQNIPS (Quasi-Newton Interior-Point Solver)
+  py::class_<OptQNIPS>(m, "OptQNIPS")
+      .def(
+          py::init([](NLF1* p) {
+            NLP1* p_base = static_cast<NLP1*>(p);
+            return new OptQNIPS(p_base, &default_update_model);
+          }),
+          py::arg("p"), py::keep_alive<0, 1>()
+      )
+      .def("setDebug", &OPTPP::OptimizeClass::setDebug)
+      .def("optimize", &OptQNIPS::optimize)
+      .def("printStatus", &OptQNIPS::printStatus, py::arg("s"))
+      .def("cleanup", &OptQNIPS::cleanup)
+      .def("setSearchStrategy", &OptQNIPS::setSearchStrategy, py::arg("s"))
+      .def(
+          "setOutputFile",
+          static_cast<int (OptQNIPS::*)(const char*, int)>(&OptQNIPS::setOutputFile),
+          py::arg("filename"), py::arg("mode") = 0
+      )
+      .def("setTRSize", &OptQNIPS::setTRSize, py::arg("size"))
+      .def("setMu", &OptQNIPS::setMu, py::arg("mu"))
+      .def("getMu", &OptQNIPS::getMu)
+      .def("setCenteringParameter", &OptQNIPS::setCenteringParameter, py::arg("sigma"))
+      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"));
 }
