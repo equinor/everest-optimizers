@@ -15,7 +15,7 @@ def _minimize_conmin_mfd(
 ) -> OptimizeResult:
     x = np.asarray(x0, dtype=float)
     ndv = len(x)
-    ncon = 0  # Unconstrained for now
+    ncon = 1  # 0 = Unconstrained
     nacmx1 = ndv + ncon + 4  # Can be set more generously if needed
 
     # CONMIN-required dimensions
@@ -60,12 +60,12 @@ def _minimize_conmin_mfd(
     infog = np.zeros(1, dtype=np.int32)
     iter_ = np.zeros(1, dtype=np.int32)
     nfdg = 1
-    iprint = 0
+    iprint = 3
     
     # will be set to default values
-    itmax = 0
-    fdch = 0
-    fdchm = 0
+    itmax = 100 # max iterations
+    fdch = 1e-6
+    fdchm = 1e-6
     ct = 0
     ctmin = 0
     ctl = 0
@@ -75,11 +75,11 @@ def _minimize_conmin_mfd(
     
     nscal = 0
     linobj = 0
-    itrm = 0
+    itrm = tol
     theta = 0
     alphax = 0
     abobj1 = 0
-    igoto = 0
+    igoto = 1 #required to begin
 
     def wrapped_fun(x_in):
         # Only pass the first ndv variables to fun
@@ -123,11 +123,11 @@ def _minimize_conmin_mfd(
     )
     
     print("After conmin call:")
-    print("iter_ =", iter_[0])
-    print("info =", info[0])
-    print("infog =", infog[0])
+    print("iter_ =", iter_)
+    print("info =", info)
+    print("infog =", infog)
     print("x =", x_arr[:ndv])
-    print("obj =", obj[0])
+    print("obj =", obj)
 
     if callback:
         callback(x_arr[:ndv])
