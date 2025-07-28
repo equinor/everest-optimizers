@@ -281,7 +281,6 @@ class TestOptQNIPSConstraints:
 
     def test_multiple_linear_constraints(self):
         """Test OptQNIPS with multiple linear constraints (mixed equality and inequality)."""
-        pytest.skip("Linear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """3D quadratic: x^2 + y^2 + z^2"""
@@ -489,7 +488,6 @@ class TestOptQNIPSConstraints:
 
     def test_mixed_constraint_types(self):
         """Test OptQNIPS with mixed constraint types (CompoundConstraint in OPTPP)."""
-        pytest.skip("Linear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """3D objective: x^2 + 2*y^2 + 3*z^2"""
@@ -553,7 +551,6 @@ class TestOptQNIPSConstraints:
 
     def test_constraint_tolerance_sensitivity(self):
         """Test OptQNIPS sensitivity to constraint tolerance settings."""
-        pytest.skip("Linear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """2D quadratic: (x-1)^2 + (y-1)^2"""
@@ -610,7 +607,6 @@ class TestOptQNIPSConstraints:
 
     def test_infeasible_problem(self):
         """Test OptQNIPS behavior with infeasible constraints."""
-        pytest.skip("Linear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """Simple quadratic."""
