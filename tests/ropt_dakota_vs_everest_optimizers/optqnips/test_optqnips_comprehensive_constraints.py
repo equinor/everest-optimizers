@@ -344,7 +344,6 @@ class TestOptQNIPSConstraints:
         Note: This requires implementing custom constraint functions that work with OPTPP's
         NonLinearEquation class, which needs NLP problem setup.
         """
-        pytest.skip("Nonlinear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """2D objective: x^2 + y^2"""
@@ -407,12 +406,11 @@ class TestOptQNIPSConstraints:
                 # This means the constraint is always active, so f* = 4
                 np.testing.assert_allclose(result.fun, 4.0, rtol=1e-2, atol=1e-2)
                 
-        except NotImplementedError:
-            pytest.skip("Nonlinear constraints not yet fully implemented in current OptQNIPS wrapper")
+        except NotImplementedError as e:
+            pytest.skip(f"Nonlinear constraints not yet fully implemented: {e}")
 
     def test_nonlinear_inequality_constraint(self):
         """Test OptQNIPS with nonlinear inequality constraint (NonLinearInequality in OPTPP)."""
-        pytest.skip("Nonlinear constraints not yet implemented in current OptQNIPS wrapper")
         
         def objective(x):
             """2D objective: (x-2)^2 + (y-2)^2"""
@@ -483,8 +481,8 @@ class TestOptQNIPSConstraints:
                     rtol=1e-1, atol=1e-1
                 )
                 
-        except NotImplementedError:
-            pytest.skip("Nonlinear constraints not yet fully implemented in current OptQNIPS wrapper")
+        except NotImplementedError as e:
+            pytest.skip(f"Nonlinear constraints not yet fully implemented: {e}")
 
     def test_mixed_constraint_types(self):
         """Test OptQNIPS with mixed constraint types (CompoundConstraint in OPTPP)."""

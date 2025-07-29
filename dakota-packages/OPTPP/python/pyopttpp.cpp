@@ -4,6 +4,8 @@
 #include <pybind11/stl.h>
 
 #include "NLF.h"
+#include "NLP.h"
+#include "NLPBase.h"
 #include "Opt.h"
 #include "OptQNewton.h"
 #include "OptConstrQNewton.h"
@@ -120,6 +122,44 @@ public:
     }
     return H;
   }
+
+  T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
+    py::gil_scoped_acquire gil;
+    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalC");
+    if (override) {
+      py::object result = override(x);
+      py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
+          result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
+      py::buffer_info buf = result_array.request();
+      if (buf.ndim != 1) {
+        throw std::runtime_error("evalC: Returned numpy array must be 1-D!");
+      }
+      T_SerialDenseVector constraints(buf.shape[0]);
+      std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
+      return constraints;
+    }
+    // If no override, return an empty vector
+    return T_SerialDenseVector(1);
+  }
+
+  Teuchos::SerialDenseMatrix<int,double> evalCG(const T_SerialDenseVector& x) override {
+    py::gil_scoped_acquire gil;
+    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalCG");
+    if (override) {
+      py::object result = override(x);
+      py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
+          result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
+      py::buffer_info buf = result_array.request();
+      if (buf.ndim != 2) {
+        throw std::runtime_error("evalCG: Returned numpy array must be 2-D (gradient matrix)!");
+      }
+      Teuchos::SerialDenseMatrix<int,double> constraint_grad(buf.shape[0], buf.shape[1]);
+      std::memcpy(constraint_grad.values(), buf.ptr, buf.size * sizeof(double));
+      return constraint_grad;
+    }
+    // If no override, return an empty matrix
+    return Teuchos::SerialDenseMatrix<int,double>(this->getDim(), 1);
+  }
 };
 
 PYBIND11_MODULE(pyopttpp, m) {
@@ -215,7 +255,114 @@ PYBIND11_MODULE(pyopttpp, m) {
           return self.amIFeasible(x, epsilon);
       }, py::arg("x"), py::arg("epsilon") = 1e-6);
 
-  // Bind NLF1 using the trampoline class
+  // Bind NLPBase first (abstract base class)
+  py::class_<NLPBase>(m, "NLPBase");
+
+  // Bind NLP class (handle for NLPBase)
+  py::class_<NLP>(m, "NLP")
+      .def(py::init<NLPBase*>(), py::arg("nlpbase"), py::keep_alive<1, 2>())
+      .def("initFcn", &NLP::initFcn)
+      .def("evalF", static_cast<double (NLP::*)()>(&NLP::evalF))
+      .def("evalCF", &NLP::evalCF, py::arg("x"))
+      .def("evalCG", &NLP::evalCG, py::arg("x"))
+      .def("getXc", &NLP::getXc)
+      .def("getF", &NLP::getF)
+      .def("getDim", &NLP::getDim)
+      .def("setX", static_cast<void (NLP::*)(const T_SerialDenseVector&)>(&NLP::setX));
+
+  // Add dummy test functions for debugging
+  m.def("create_dummy_nlf1", [](int ndim) -> NLF1* {
+      // Create a simple dummy NLF1 for testing
+      class DummyNLF1 : public NLF1 {
+      public:
+          DummyNLF1(int n) : NLF1(n) {}
+          
+          void initFcn() override {}
+          
+          real evalF(const T_SerialDenseVector& x) override {
+              return 0.0;
+          }
+          
+          T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
+              return T_SerialDenseVector(getDim());
+          }
+          
+          T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
+              T_SerialDenseVector result(1);
+              result(0) = x(0) * x(0) + x(1) * x(1) - 4.0; // Simple constraint: x^2 + y^2 = 4
+              return result;
+          }
+          
+          Teuchos::SerialDenseMatrix<int,double> evalCG(const T_SerialDenseVector& x) override {
+              Teuchos::SerialDenseMatrix<int,double> grad(getDim(), 1);
+              grad(0, 0) = 2.0 * x(0);
+              grad(1, 0) = 2.0 * x(1);
+              return grad;
+          }
+      };
+      
+      return new DummyNLF1(ndim);
+  }, py::return_value_policy::reference_internal);
+
+  m.def("create_dummy_nlp", [](int ndim) -> NLP* {
+      // Create a simple dummy NLP for testing
+      class DummyNLF1 : public NLF1 {
+      public:
+          DummyNLF1(int n) : NLF1(n) {}
+          
+          void initFcn() override {}
+          
+          real evalF(const T_SerialDenseVector& x) override {
+              return 0.0;
+          }
+          
+          T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
+              return T_SerialDenseVector(getDim());
+          }
+          
+          T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
+              T_SerialDenseVector result(1);
+              result(0) = x(0) * x(0) + x(1) * x(1) - 4.0; // Simple constraint: x^2 + y^2 = 4
+              return result;
+          }
+          
+          Teuchos::SerialDenseMatrix<int,double> evalCG(const T_SerialDenseVector& x) override {
+              Teuchos::SerialDenseMatrix<int,double> grad(getDim(), 1);
+              grad(0, 0) = 2.0 * x(0);
+              grad(1, 0) = 2.0 * x(1);
+              return grad;
+          }
+      };
+      
+      NLF1* dummy_nlf1 = new DummyNLF1(ndim);
+      return new NLP(dummy_nlf1);
+  }, py::return_value_policy::reference_internal);
+
+  m.def("test_basic_nlp_creation", []() -> bool {
+      try {
+          // Test basic NLP creation without inheritance issues
+          class TestNLF1 : public NLF1 {
+          public:
+              TestNLF1() : NLF1(2) {}
+              void initFcn() override {}
+              real evalF(const T_SerialDenseVector& x) override { return 0.0; }
+              T_SerialDenseVector evalG(const T_SerialDenseVector& x) override { 
+                  return T_SerialDenseVector(2); 
+              }
+          };
+          
+          TestNLF1* test_nlf1 = new TestNLF1();
+          NLP* test_nlp = new NLP(test_nlf1);
+          
+          delete test_nlp;
+          delete test_nlf1;
+          return true;
+      } catch (...) {
+          return false;
+      }
+  });
+
+  // Bind NLF1 using the trampoline class - simplified inheritance
   py::class_<NLF1, PyNLF1>(m, "NLF1")
       .def(py::init<int>(), py::arg("ndim"))
       .def("initFcn", &NLF1::initFcn)
@@ -233,8 +380,12 @@ PYBIND11_MODULE(pyopttpp, m) {
           static_cast<T_SerialSymDenseMatrix (NLF1::*)(T_SerialDenseVector&)>(&NLF1::evalH),
           py::arg("x")
       )
+      .def("evalCF", &NLF1::evalCF, py::arg("x"))
+      .def("evalCG", &NLF1::evalCG, py::arg("x"))
+      .def("evalC", &NLF1::evalC, py::arg("x"))
       .def("getXc", &NLF1::getXc)
       .def("getF", &NLF1::getF)
+      .def("getDim", &NLF1::getDim)
       .def("setX", static_cast<void (NLF1::*)(const T_SerialDenseVector&)>(&NLF1::setX))
       .def("setIsExpensive", &NLF1::setIsExpensive, py::arg("is_expensive"))
        .def("setConstraints", [](NLF1& self, CompoundConstraint* cc){ self.setConstraints(cc); }, py::arg("compound_constraint"));
@@ -379,6 +530,10 @@ PYBIND11_MODULE(pyopttpp, m) {
       .def(py::init<NLP*, int>(), py::arg("nlp"), py::arg("numconstraints") = 1)
       .def(py::init<NLP*, const T_SerialDenseVector&, int>(), 
            py::arg("nlp"), py::arg("rhs"), py::arg("numconstraints") = 1);
+
+  // Note: Nonlinear constraints are not yet implemented
+  // The proper implementation requires following OPTPP patterns from examples
+  // like hockfcns.C with C++ constraint functions that have USERNLNCON1 signature
 
   // Bind OptConstrQNewton (constrained Quasi-Newton)
   py::class_<OptConstrQNewton>(m, "OptConstrQNewton")
