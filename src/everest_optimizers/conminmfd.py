@@ -15,7 +15,15 @@ def _minimize_conmin_mfd(
 ) -> OptimizeResult:
     x = np.asarray(x0, dtype=float)
     ndv = len(x)
-    ncon = 1
+
+    # Antall constraints må tilpasses antall user constraints
+    if constraints is not None:
+        ineq_constraints = [c for c in constraints if c.get('type') == 'ineq']
+        ncon = len(ineq_constraints)
+    else:
+        ineq_constraints = []
+        ncon = 0
+
     nacmx1 = ndv + ncon + 4
     nside = 1
 
@@ -59,8 +67,8 @@ def _minimize_conmin_mfd(
     iter_ = np.zeros(1, dtype=np.int32)
     nfdg = 1
     iprint = 3
-    
-    # will be set to default values
+
+    # Will be set to default values
     itmax = 100
     fdch = 1e-6
     fdchm = 1e-6
@@ -70,7 +78,7 @@ def _minimize_conmin_mfd(
     ctlmin = 0.001
     delfun = 0
     dabfun = 0
-    
+
     nscal = 0
     linobj = 0
     itrm = tol
@@ -102,37 +110,32 @@ def _minimize_conmin_mfd(
     # Compute initial objective
     obj[0] = wrapped_fun(x_arr)
 
+    # Evaluate inequality constraints and set g1 values
+    for i, con in enumerate(ineq_constraints):
+        # Each constraint dict should have a 'fun' key for the constraint function
+        g1[i] = con['fun'](x_arr[:ndv])
+
     print("Before conmin call:")
     print("iter_ =", iter_[0])
-    for iteration in range(itmax):
-        conmin_module.conmin(
-            x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
-            delfun, dabfun,
-            fdch, fdchm,
-            ct, ctmin, ctl, ctlmin,
-            alphax, abobj1,
-            theta,
-            obj,
-            ndv, ncon, nside,
-            iprint, nfdg, nscal,
-            linobj, itmax, itrm, 3, igoto,
-            0,
-            info, infog, iter_,
-            n1, n2, n3, n4, n5,
-        )
 
-        if callback:
-            callback(x_arr[:ndv])
-            
-        if igoto[0] == 0:
-            break  # finished
+    conmin_module.conmin(
+        x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
+        delfun, dabfun,
+        fdch, fdchm,
+        ct, ctmin, ctl, ctlmin,
+        alphax, abobj1,
+        theta,
+        obj,
+        ndv, ncon, nside,
+        iprint, nfdg, nscal,
+        linobj, itmax, itrm, 3, igoto,
+        0,
+        info, infog, iter_,
+        n1, n2, n3, n4, n5,
+    )
 
-        # print status hvis du ønsker debugging
-        # print(f"Iteration {iteration+1}: obj={obj[0]}, info={info[0]}, iter_={iter_[0]}")
-
-        if info[0] == 0:
-            # konvergerte, avslutt løkke
-            break
+    if callback:
+        callback(x_arr[:ndv])
 
     success = (info[0] == 0)
     message = "Converged" if success else f"Not converged (info={info[0]})"
