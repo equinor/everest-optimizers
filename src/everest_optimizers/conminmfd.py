@@ -46,7 +46,7 @@ def _minimize_conmin_mfd(
         vlb[:ndv] = np.asarray(lb, dtype=float)
         vub[:ndv] = np.asarray(ub, dtype=float)
 
-    grad = np.zeros(n2)
+    g = np.zeros(n2)
     scal = np.ones(n1)
     df = np.zeros(n1)
     a = np.zeros((n1, n3))
@@ -62,7 +62,7 @@ def _minimize_conmin_mfd(
     info = np.zeros(1, dtype=np.int32)
     infog = np.zeros(1, dtype=np.int32)
     iter_ = np.zeros(1, dtype=np.int32)
-    nfdg = 1
+    nfdg = 0
     iprint = 3
 
     # Will be set to default values
@@ -102,20 +102,20 @@ def _minimize_conmin_mfd(
         compute_grad = lambda xk: jac(xk[:ndv], *args)
 
     # Compute initial gradient (optional, but CONMIN may expect it)
-    grad[:ndv] = compute_grad(x_arr[:ndv])
+    df[:ndv] = compute_grad(x_arr[:ndv])
 
     # Compute initial objective
     obj[0] = wrapped_fun(x_arr)
 
     # Evaluate inequality constraints and set g1 values
     for i, con in enumerate(ineq_constraints):
-        g1[i] = con['fun'](x_arr[:ndv])
+        g[i] = con['fun'](x_arr[:ndv])
 
     print("Before conmin call:")
     print("iter_ =", iter_[0])
 
     conmin_module.conmin(
-        x_arr, vlb, vub, grad, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
+        x_arr, vlb, vub, g, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
         delfun, dabfun,
         fdch, fdchm,
         ct, ctmin, ctl, ctlmin,
