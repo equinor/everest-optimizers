@@ -35,7 +35,7 @@ def test_conmin_rosen_suzuki():
         rosen_suzuki_obj,
         x0,
         method='conmin_mfd',
-        jac=None,  # no gradient provided
+        jac=None,
         constraints=constraints,
         options={'maxiter': 40, 'iprint': 2}
     )

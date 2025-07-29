@@ -16,7 +16,6 @@ def _minimize_conmin_mfd(
     x = np.asarray(x0, dtype=float)
     ndv = len(x)
 
-    # Antall constraints må tilpasses antall user constraints
     if constraints is not None:
         ineq_constraints = [c for c in constraints if c.get('type') == 'ineq']
         ncon = len(ineq_constraints)
@@ -44,10 +43,8 @@ def _minimize_conmin_mfd(
     vub = np.full(n1, 1e20)
     if bounds is not None:
         lb, ub = bounds
-        if lb is not None:
-            vlb[:ndv] = np.asarray(lb, dtype=float)
-        if ub is not None:
-            vub[:ndv] = np.asarray(ub, dtype=float)
+        vlb[:ndv] = np.asarray(lb, dtype=float)
+        vub[:ndv] = np.asarray(ub, dtype=float)
 
     grad = np.zeros(n2)
     scal = np.ones(n1)
@@ -112,7 +109,6 @@ def _minimize_conmin_mfd(
 
     # Evaluate inequality constraints and set g1 values
     for i, con in enumerate(ineq_constraints):
-        # Each constraint dict should have a 'fun' key for the constraint function
         g1[i] = con['fun'](x_arr[:ndv])
 
     print("Before conmin call:")
