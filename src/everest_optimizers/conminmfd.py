@@ -24,7 +24,7 @@ def _minimize_conmin_mfd(
         ncon = 0
 
     nacmx1 = ndv + ncon + 4
-    nside = 1
+    nside = 0
 
     # CONMIN-required dimensions
     n1 = ndv + 2
@@ -63,25 +63,25 @@ def _minimize_conmin_mfd(
     infog = np.zeros(1, dtype=np.int32)
     iter_ = np.zeros(1, dtype=np.int32)
     nfdg = 0
-    iprint = 3
+    iprint = 2
 
-    # Will be set to default values
-    itmax = 100
-    fdch = 1e-6
-    fdchm = 1e-6
+    itmax = 40
+    fdch = 0.01
+    fdchm = 0.01
     ct = -0.1
-    ctmin = 0.001
+    ctmin = 0.004
     ctl = -0.01
     ctlmin = 0.001
-    delfun = 0
+    delfun = 0.0001
     dabfun = 0
+    icndir = 5
 
     nscal = 0
     linobj = 0
-    itrm = tol
-    theta = 0
-    alphax = 0
-    abobj1 = 0
+    itrm = 3
+    theta = 1
+    alphax = 0.1
+    abobj1 = 0.1
     igoto = np.array([1], dtype=np.int32)
 
     def wrapped_fun(x_in):
@@ -124,10 +124,9 @@ def _minimize_conmin_mfd(
         obj,
         ndv, ncon, nside,
         iprint, nfdg, nscal,
-        linobj, itmax, itrm, 3, igoto,
+        linobj, itmax, itrm, icndir, igoto,
         0,
         info, infog, iter_,
-        n1, n2, n3, n4, n5,
     )
 
     if callback:
