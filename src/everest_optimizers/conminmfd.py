@@ -21,10 +21,11 @@ def _minimize_conmin_mfd(
         ncon = len(ineq_constraints)
     else:
         ineq_constraints = []
-        ncon = 0
+        ncon = 1
 
     nacmx1 = ndv + ncon + 4
     nside = 0
+    nac = 0
 
     # CONMIN-required dimensions
     n1 = ndv + 2
@@ -63,17 +64,17 @@ def _minimize_conmin_mfd(
     infog = np.zeros(1, dtype=np.int32)
     iter_ = np.zeros(1, dtype=np.int32)
     nfdg = 0
-    iprint = 2
+    iprint = 3
 
-    itmax = 40
-    fdch = 0.01
-    fdchm = 0.01
+    itmax = 100
+    fdch = 1.0e-5
+    fdchm = 1.0e-5
     ct = -0.1
-    ctmin = 0.004
+    ctmin = 0.001
     ctl = -0.01
     ctlmin = 0.001
-    delfun = 0.0001
-    dabfun = 0
+    delfun = 1.0e-7
+    dabfun = 1.0e-7
     icndir = 5
 
     nscal = 0
@@ -114,23 +115,42 @@ def _minimize_conmin_mfd(
     print("Before conmin call:")
     print("iter_ =", iter_[0])
 
-    conmin_module.conmin(
-        x_arr, vlb, vub, g, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
-        delfun, dabfun,
-        fdch, fdchm,
-        ct, ctmin, ctl, ctlmin,
-        alphax, abobj1,
-        theta,
-        obj,
-        ndv, ncon, nside,
-        iprint, nfdg, nscal,
-        linobj, itmax, itrm, icndir, igoto,
-        0,
-        info, infog, iter_,
-    )
+    for i in range(itmax):
+        conmin_module.conmin(
+            x_arr, vlb, vub, g, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
+            delfun, dabfun,
+            fdch, fdchm,
+            ct, ctmin, ctl, ctlmin,
+            alphax, abobj1,
+            theta,
+            obj,
+            ndv, ncon, nside,
+            iprint, nfdg, nscal,
+            linobj, itmax, itrm, icndir, igoto,
+            nac,
+            info, infog, iter_,
+        )
+        
+        if igoto[0] == 0:
+            break
 
-    if callback:
-        callback(x_arr[:ndv])
+        if info[0] == 1:
+            # Evaluate objective and constraints as requested
+            obj[0] = wrapped_fun(x_arr)
+            for idx, con in enumerate(ineq_constraints):
+                g[idx] = con['fun'](x_arr[:ndv])
+
+        elif info[0] == 2:
+            # Evaluate gradients as requested
+            df[:ndv] = compute_grad(x_arr[:ndv])
+            # If you have gradients for constraints, update them here (optional)
+
+        else:
+            pass
+            # raise RuntimeError(f"Unknown CONMIN info flag: {info[0]}")
+
+        if callback:
+            callback(x_arr[:ndv])
 
     success = (info[0] == 0)
     message = "Converged" if success else f"Not converged (info={info[0]})"
