@@ -1,6 +1,7 @@
 import numpy as np
+from . import myprogram
 from scipy.optimize import OptimizeResult
-from . import conmin_module
+
 
 def _minimize_conmin_mfd(
     fun,
@@ -13,134 +14,24 @@ def _minimize_conmin_mfd(
     callback=None,
     options=None
 ) -> OptimizeResult:
-    x = np.asarray(x0, dtype=float)
-    ndv = len(x)
-
+    x_arr = np.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0], dtype=np.float64)
+    
+    ndv = 4
+    n1 = 6
+    vlb = np.full(n1, -1e20)
+    vub = np.full(n1, 1e20)
+    
+    ncon = 0
     if constraints is not None:
         ineq_constraints = [c for c in constraints if c.get('type') == 'ineq']
         ncon = len(ineq_constraints)
     else:
         ineq_constraints = []
         ncon = 0
-
-    nacmx1 = ndv + ncon + 4
-    nside = 0
-
-    # CONMIN-required dimensions
-    n1 = ndv + 2
-    n2 = ncon + 2 * ndv
-    n3 = nacmx1
-    n4 = max(n3, ndv)
-    n5 = 2 * n4
-
-    tol = tol or 1e-6
-
-    x_arr = np.zeros(n1)
-    x_arr[:ndv] = x
-
-    # Bounds: default infinite, fill from user bounds if provided
-    vlb = np.full(n1, -1e20)
-    vub = np.full(n1, 1e20)
-    if bounds is not None:
-        lb, ub = bounds
-        vlb[:ndv] = np.asarray(lb, dtype=float)
-        vub[:ndv] = np.asarray(ub, dtype=float)
-
+    
+    n2 = 11
     g = np.zeros(n2)
-    scal = np.ones(n1)
-    df = np.zeros(n1)
-    a = np.zeros((n1, n3))
-    s = np.zeros(n1)
-    g1 = np.zeros(n2)
-    g2 = np.zeros(n2)
-    b = np.zeros((n3, n3))
-    c = np.zeros(n4)
-    isc = np.zeros(n2, dtype=np.int32)
-    ic = np.zeros(n3, dtype=np.int32)
-    ms1 = np.zeros(n5, dtype=np.int32)
-    obj = np.array([0.0])
-    info = np.zeros(1, dtype=np.int32)
-    infog = np.zeros(1, dtype=np.int32)
-    iter_ = np.zeros(1, dtype=np.int32)
-    nfdg = 0
-    iprint = 2
-
-    itmax = 40
-    fdch = 0.01
-    fdchm = 0.01
-    ct = -0.1
-    ctmin = 0.004
-    ctl = -0.01
-    ctlmin = 0.001
-    delfun = 0.0001
-    dabfun = 0
-    icndir = 5
-
-    nscal = 0
-    linobj = 0
-    itrm = 3
-    theta = 1
-    alphax = 0.1
-    abobj1 = 0.1
-    igoto = np.array([1], dtype=np.int32)
-
-    def wrapped_fun(x_in):
-        # Only pass the first ndv variables to fun
-        return fun(x_in[:ndv], *args)
-
-    if jac is None:
-        def compute_grad(xk):
-            eps = 1e-8
-            grad_ = np.zeros_like(xk)
-            fx = wrapped_fun(xk)
-            for i in range(len(xk)):
-                x_step = np.copy(xk)
-                x_step[i] += eps
-                grad_[i] = (wrapped_fun(x_step) - fx) / eps
-            return grad_
-    else:
-        compute_grad = lambda xk: jac(xk[:ndv], *args)
-
-    # Compute initial gradient (optional, but CONMIN may expect it)
-    df[:ndv] = compute_grad(x_arr[:ndv])
-
-    # Compute initial objective
-    obj[0] = wrapped_fun(x_arr)
-
-    # Evaluate inequality constraints and set g1 values
     for i, con in enumerate(ineq_constraints):
         g[i] = con['fun'](x_arr[:ndv])
-
-    print("Before conmin call:")
-    print("iter_ =", iter_[0])
-
-    conmin_module.conmin(
-        x_arr, vlb, vub, g, scal, df, a, s, g1, g2, b, c, isc, ic, ms1,
-        delfun, dabfun,
-        fdch, fdchm,
-        ct, ctmin, ctl, ctlmin,
-        alphax, abobj1,
-        theta,
-        obj,
-        ndv, ncon, nside,
-        iprint, nfdg, nscal,
-        linobj, itmax, itrm, icndir, igoto,
-        0,
-        info, infog, iter_,
-    )
-
-    if callback:
-        callback(x_arr[:ndv])
-
-    success = (info[0] == 0)
-    message = "Converged" if success else f"Not converged (info={info[0]})"
-
-    return OptimizeResult(
-        x=x_arr[:ndv],
-        fun=obj[0],
-        success=success,
-        message=message,
-        nfev=None,
-        njev=None,
-        jac=None,
-    )
+    
+    myprogram.run_example(x_arr, vlb, vub, g)
