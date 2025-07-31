@@ -200,6 +200,36 @@ void diagnostic_different_start_obj(int mode, int n, const SerialDenseVector<int
 CompoundConstraint* create_diagnostic_different_start_constraints(int n);
 TestResult run_diagnostic_different_start();
 
+// Diagnostic Test F: Test specific constraint violation patterns
+// minimize: x^2 + 2*y^2 + 3*z^2
+// subject to: Only x + z <= 2 and y + z <= 1 (Skip first constraint)
+void init_diagnostic_skip_first(int n, SerialDenseVector<int,double>& x);
+void diagnostic_skip_first_obj(int mode, int n, const SerialDenseVector<int,double>& x,
+                               double& fx, SerialDenseVector<int,double>& g, int& result);
+CompoundConstraint* create_diagnostic_skip_first_constraints(int n);
+TestResult run_diagnostic_skip_first();
+
+// Diagnostic Test G: Test with very simple constraints
+// minimize: x^2 + y^2 + z^2
+// subject to: x <= 1, y <= 1, z <= 1 (simple individual bounds as inequalities)
+void init_diagnostic_simple_bounds(int n, SerialDenseVector<int,double>& x);
+void diagnostic_simple_bounds_obj(int mode, int n, const SerialDenseVector<int,double>& x,
+                                  double& fx, SerialDenseVector<int,double>& g, int& result);
+CompoundConstraint* create_diagnostic_simple_bounds_constraints(int n);
+TestResult run_diagnostic_simple_bounds();
+
+// Diagnostic Test H: Test evaluation function behavior
+// Same problem as failing test but with detailed constraint evaluation logging
+void init_diagnostic_detailed_eval(int n, SerialDenseVector<int,double>& x);
+void diagnostic_detailed_eval_obj(int mode, int n, const SerialDenseVector<int,double>& x,
+                                  double& fx, SerialDenseVector<int,double>& g, int& result);
+CompoundConstraint* create_diagnostic_detailed_eval_constraints(int n);
+TestResult run_diagnostic_detailed_eval();
+
+// Diagnostic Test I: Test manual constraint evaluation at origin
+// Test what happens when we manually evaluate constraints at the origin [0,0,0]
+TestResult run_diagnostic_manual_evaluation();
+
 // ============================================================================
 // COMPREHENSIVE TEST RUNNER
 // ============================================================================
@@ -223,8 +253,12 @@ struct AllTestResults {
     TestResult diagnostic_two_constraints;
     TestResult diagnostic_one_constraint;
     TestResult diagnostic_different_start;
+    TestResult diagnostic_skip_first;
+    TestResult diagnostic_simple_bounds;
+    TestResult diagnostic_detailed_eval;
+    TestResult diagnostic_manual_evaluation;
     
-    int total_tests() const { return 15; }
+    int total_tests() const { return 19; }
     int passed_tests() const {
         int count = 0;
         if (linear_eq_test1.success) count++;
@@ -242,6 +276,10 @@ struct AllTestResults {
         if (diagnostic_two_constraints.success) count++;
         if (diagnostic_one_constraint.success) count++;
         if (diagnostic_different_start.success) count++;
+        if (diagnostic_skip_first.success) count++;
+        if (diagnostic_simple_bounds.success) count++;
+        if (diagnostic_detailed_eval.success) count++;
+        if (diagnostic_manual_evaluation.success) count++;
         return count;
     }
 };

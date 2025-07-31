@@ -626,6 +626,10 @@ PYBIND11_MODULE(pyopttpp, m) {
       .def_readwrite("diagnostic_two_constraints", &ConstraintTests::AllTestResults::diagnostic_two_constraints)
       .def_readwrite("diagnostic_one_constraint", &ConstraintTests::AllTestResults::diagnostic_one_constraint)
       .def_readwrite("diagnostic_different_start", &ConstraintTests::AllTestResults::diagnostic_different_start)
+      .def_readwrite("diagnostic_skip_first", &ConstraintTests::AllTestResults::diagnostic_skip_first)
+      .def_readwrite("diagnostic_simple_bounds", &ConstraintTests::AllTestResults::diagnostic_simple_bounds)
+      .def_readwrite("diagnostic_detailed_eval", &ConstraintTests::AllTestResults::diagnostic_detailed_eval)
+      .def_readwrite("diagnostic_manual_evaluation", &ConstraintTests::AllTestResults::diagnostic_manual_evaluation)
       .def("total_tests", &ConstraintTests::AllTestResults::total_tests)
       .def("passed_tests", &ConstraintTests::AllTestResults::passed_tests);
 
@@ -676,6 +680,14 @@ PYBIND11_MODULE(pyopttpp, m) {
         "Diagnostic D: Only first constraint from failing test");
   m.def("run_diagnostic_different_start", &ConstraintTests::run_diagnostic_different_start,
         "Diagnostic E: Different starting point for failing test");
+  m.def("run_diagnostic_skip_first", &ConstraintTests::run_diagnostic_skip_first,
+        "Diagnostic F: Skip first constraint from failing test");
+  m.def("run_diagnostic_simple_bounds", &ConstraintTests::run_diagnostic_simple_bounds,
+        "Diagnostic G: Simple individual bounds as inequalities");
+  m.def("run_diagnostic_detailed_eval", &ConstraintTests::run_diagnostic_detailed_eval,
+        "Diagnostic H: Detailed constraint evaluation behavior");
+  m.def("run_diagnostic_manual_evaluation", &ConstraintTests::run_diagnostic_manual_evaluation,
+        "Diagnostic I: Manual constraint evaluation at specific points");
 
   // ============================================================================
   // COMPREHENSIVE TEST RUNNER

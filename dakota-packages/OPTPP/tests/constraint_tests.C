@@ -1188,6 +1188,343 @@ TestResult run_diagnostic_different_start() {
     return result;
 }
 
+// Diagnostic Test F: Test specific constraint violation patterns
+void init_diagnostic_skip_first(int n, SerialDenseVector<int,double>& x) {
+    if (n != 3) return;
+    x(0) = 0.5;
+    x(1) = 0.5;
+    x(2) = 0.5;
+}
+
+void diagnostic_skip_first_obj(int mode, int n, const SerialDenseVector<int,double>& x,
+                               double& fx, SerialDenseVector<int,double>& g, int& result) {
+    if (n != 3) return;
+    
+    if (mode & NLPFunction) {
+        fx = x(0)*x(0) + 2.0*x(1)*x(1) + 3.0*x(2)*x(2);
+        result = NLPFunction;
+    }
+    
+    if (mode & NLPGradient) {
+        g(0) = 2.0 * x(0);
+        g(1) = 4.0 * x(1);
+        g(2) = 6.0 * x(2);
+        result = NLPGradient;
+    }
+}
+
+CompoundConstraint* create_diagnostic_skip_first_constraints(int n) {
+    if (n != 3) return nullptr;
+    
+    // Only x + z <= 2 and y + z <= 1 (Skip the first constraint x + y <= 2)
+    SerialDenseMatrix<int,double> A1(1, 3);
+    A1(0, 0) = -1.0; A1(0, 1) = 0.0; A1(0, 2) = -1.0;  // -x - z >= -2
+    SerialDenseVector<int,double> b1(1);
+    b1(0) = -2.0;
+    LinearInequality* ineq1 = new LinearInequality(A1, b1);
+    
+    SerialDenseMatrix<int,double> A2(1, 3);
+    A2(0, 0) = 0.0; A2(0, 1) = -1.0; A2(0, 2) = -1.0;  // -y - z >= -1
+    SerialDenseVector<int,double> b2(1);
+    b2(0) = -1.0;
+    LinearInequality* ineq2 = new LinearInequality(A2, b2);
+    
+    OptppArray<Constraint> constraints(2);
+    constraints[0] = Constraint(ineq1);
+    constraints[1] = Constraint(ineq2);
+    
+    return new CompoundConstraint(constraints);
+}
+
+TestResult run_diagnostic_skip_first() {
+    TestResult result;
+    
+    try {
+        NLF1 nlp(3, diagnostic_skip_first_obj, init_diagnostic_skip_first, create_diagnostic_skip_first_constraints);
+        
+        OptQNIPS optimizer(&nlp);
+        optimizer.setMaxIter(300);
+        optimizer.setFcnTol(1.0e-6);
+        optimizer.setGradTol(1.0e-6);
+        optimizer.setConTol(1.0e-7);
+        optimizer.setMeritFcn(ArgaezTapia);
+        optimizer.setSearchStrategy(TrustRegion);
+        
+        optimizer.optimize();
+        
+        result.final_point = nlp.getXc();
+        result.final_objective = nlp.getF();
+        result.constraint_violation = check_constraint_violation(result.final_point,
+                                                               create_diagnostic_skip_first_constraints(3));
+        result.iterations = optimizer.getIter();
+        
+        result.success = result.constraint_violation < 1e-5;
+        result.message = result.success ? "PASSED" : "FAILED - constraint violation";
+        
+    } catch (...) {
+        result.success = false;
+        result.message = "FAILED - exception";
+    }
+    
+    return result;
+}
+
+// Diagnostic Test G: Test with very simple constraints
+void init_diagnostic_simple_bounds(int n, SerialDenseVector<int,double>& x) {
+    if (n != 3) return;
+    x(0) = 0.5;
+    x(1) = 0.5;
+    x(2) = 0.5;
+}
+
+void diagnostic_simple_bounds_obj(int mode, int n, const SerialDenseVector<int,double>& x,
+                                  double& fx, SerialDenseVector<int,double>& g, int& result) {
+    if (n != 3) return;
+    
+    if (mode & NLPFunction) {
+        fx = x(0)*x(0) + x(1)*x(1) + x(2)*x(2);
+        result = NLPFunction;
+    }
+    
+    if (mode & NLPGradient) {
+        g(0) = 2.0 * x(0);
+        g(1) = 2.0 * x(1);
+        g(2) = 2.0 * x(2);
+        result = NLPGradient;
+    }
+}
+
+CompoundConstraint* create_diagnostic_simple_bounds_constraints(int n) {
+    if (n != 3) return nullptr;
+    
+    // Simple individual bounds as inequalities: x <= 1, y <= 1, z <= 1
+    // OPTPP uses Ax >= b, so convert: x <= 1 becomes -x >= -1
+    SerialDenseMatrix<int,double> A1(1, 3);
+    A1(0, 0) = -1.0; A1(0, 1) = 0.0; A1(0, 2) = 0.0;  // -x >= -1
+    SerialDenseVector<int,double> b1(1);
+    b1(0) = -1.0;
+    LinearInequality* ineq1 = new LinearInequality(A1, b1);
+    
+    SerialDenseMatrix<int,double> A2(1, 3);
+    A2(0, 0) = 0.0; A2(0, 1) = -1.0; A2(0, 2) = 0.0;  // -y >= -1
+    SerialDenseVector<int,double> b2(1);
+    b2(0) = -1.0;
+    LinearInequality* ineq2 = new LinearInequality(A2, b2);
+    
+    SerialDenseMatrix<int,double> A3(1, 3);
+    A3(0, 0) = 0.0; A3(0, 1) = 0.0; A3(0, 2) = -1.0;  // -z >= -1
+    SerialDenseVector<int,double> b3(1);
+    b3(0) = -1.0;
+    LinearInequality* ineq3 = new LinearInequality(A3, b3);
+    
+    OptppArray<Constraint> constraints(3);
+    constraints[0] = Constraint(ineq1);
+    constraints[1] = Constraint(ineq2);
+    constraints[2] = Constraint(ineq3);
+    
+    return new CompoundConstraint(constraints);
+}
+
+TestResult run_diagnostic_simple_bounds() {
+    TestResult result;
+    
+    try {
+        NLF1 nlp(3, diagnostic_simple_bounds_obj, init_diagnostic_simple_bounds, create_diagnostic_simple_bounds_constraints);
+        
+        OptQNIPS optimizer(&nlp);
+        optimizer.setMaxIter(300);
+        optimizer.setFcnTol(1.0e-6);
+        optimizer.setGradTol(1.0e-6);
+        optimizer.setConTol(1.0e-7);
+        optimizer.setMeritFcn(ArgaezTapia);
+        optimizer.setSearchStrategy(TrustRegion);
+        
+        optimizer.optimize();
+        
+        result.final_point = nlp.getXc();
+        result.final_objective = nlp.getF();
+        result.constraint_violation = check_constraint_violation(result.final_point,
+                                                               create_diagnostic_simple_bounds_constraints(3));
+        result.iterations = optimizer.getIter();
+        
+        result.success = result.constraint_violation < 1e-5;
+        result.message = result.success ? "PASSED" : "FAILED - constraint violation";
+        
+    } catch (...) {
+        result.success = false;
+        result.message = "FAILED - exception";
+    }
+    
+    return result;
+}
+
+// Diagnostic Test H: Test evaluation function behavior
+void init_diagnostic_detailed_eval(int n, SerialDenseVector<int,double>& x) {
+    if (n != 3) return;
+    x(0) = 0.5;
+    x(1) = 0.5;
+    x(2) = 0.5;
+}
+
+void diagnostic_detailed_eval_obj(int mode, int n, const SerialDenseVector<int,double>& x,
+                                  double& fx, SerialDenseVector<int,double>& g, int& result) {
+    if (n != 3) return;
+    
+    if (mode & NLPFunction) {
+        fx = x(0)*x(0) + 2.0*x(1)*x(1) + 3.0*x(2)*x(2);
+        result = NLPFunction;
+    }
+    
+    if (mode & NLPGradient) {
+        g(0) = 2.0 * x(0);
+        g(1) = 4.0 * x(1);
+        g(2) = 6.0 * x(2);
+        result = NLPGradient;
+    }
+}
+
+CompoundConstraint* create_diagnostic_detailed_eval_constraints(int n) {
+    if (n != 3) return nullptr;
+    
+    // Same as original failing test: x + y <= 2, y + z <= 1, x + z <= 2
+    SerialDenseMatrix<int,double> A1(1, 3);
+    A1(0, 0) = -1.0; A1(0, 1) = -1.0; A1(0, 2) = 0.0;  // -x - y >= -2
+    SerialDenseVector<int,double> b1(1);
+    b1(0) = -2.0;
+    LinearInequality* ineq1 = new LinearInequality(A1, b1);
+    
+    SerialDenseMatrix<int,double> A2(1, 3);
+    A2(0, 0) = 0.0; A2(0, 1) = -1.0; A2(0, 2) = -1.0;  // -y - z >= -1
+    SerialDenseVector<int,double> b2(1);
+    b2(0) = -1.0;
+    LinearInequality* ineq2 = new LinearInequality(A2, b2);
+    
+    SerialDenseMatrix<int,double> A3(1, 3);
+    A3(0, 0) = -1.0; A3(0, 1) = 0.0; A3(0, 2) = -1.0;  // -x - z >= -2
+    SerialDenseVector<int,double> b3(1);
+    b3(0) = -2.0;
+    LinearInequality* ineq3 = new LinearInequality(A3, b3);
+    
+    OptppArray<Constraint> constraints(3);
+    constraints[0] = Constraint(ineq1);
+    constraints[1] = Constraint(ineq2);
+    constraints[2] = Constraint(ineq3);
+    
+    return new CompoundConstraint(constraints);
+}
+
+TestResult run_diagnostic_detailed_eval() {
+    TestResult result;
+    
+    try {
+        NLF1 nlp(3, diagnostic_detailed_eval_obj, init_diagnostic_detailed_eval, create_diagnostic_detailed_eval_constraints);
+        
+        OptQNIPS optimizer(&nlp);
+        optimizer.setMaxIter(300);
+        optimizer.setFcnTol(1.0e-6);
+        optimizer.setGradTol(1.0e-6);
+        optimizer.setConTol(1.0e-7);
+        optimizer.setMeritFcn(ArgaezTapia);
+        optimizer.setSearchStrategy(TrustRegion);
+        
+        optimizer.optimize();
+        
+        result.final_point = nlp.getXc();
+        result.final_objective = nlp.getF();
+        
+        // Create fresh constraints for evaluation
+        CompoundConstraint* constraints = create_diagnostic_detailed_eval_constraints(3);
+        result.constraint_violation = check_constraint_violation(result.final_point, constraints);
+        result.iterations = optimizer.getIter();
+        
+        // Check manually what the constraint evaluation gives us
+        if (constraints) {
+            try {
+                // Manually evaluate at origin to compare
+                SerialDenseVector<int,double> origin(3);
+                origin(0) = 0.0; origin(1) = 0.0; origin(2) = 0.0;
+                double origin_violation = check_constraint_violation(origin, constraints);
+                
+                std::ostringstream msg;
+                msg << std::scientific << std::setprecision(6);
+                msg << "Origin violation: " << origin_violation 
+                    << ", Final violation: " << result.constraint_violation;
+                result.message = result.constraint_violation < 1e-5 ? "PASSED - " + msg.str() : 
+                                                                     "FAILED - " + msg.str();
+            } catch (...) {
+                result.message = result.constraint_violation < 1e-5 ? "PASSED" : "FAILED - constraint violation";
+            }
+        } else {
+            result.message = "FAILED - could not create constraints";
+        }
+        
+        result.success = result.constraint_violation < 1e-5;
+        
+    } catch (...) {
+        result.success = false;
+        result.message = "FAILED - exception";
+    }
+    
+    return result;
+}
+
+// Diagnostic Test I: Test manual constraint evaluation at origin
+TestResult run_diagnostic_manual_evaluation() {
+    TestResult result;
+    
+    try {
+        // Create the same constraints as the failing test
+        CompoundConstraint* constraints = create_diagnostic_different_start_constraints(3);
+        
+        if (!constraints) {
+            result.success = false;
+            result.message = "FAILED - could not create constraints";
+            return result;
+        }
+        
+        // Test constraint evaluation at different points
+        SerialDenseVector<int,double> test_point(3);
+        
+        // Test at origin [0, 0, 0]
+        test_point(0) = 0.0; test_point(1) = 0.0; test_point(2) = 0.0;
+        double origin_violation = check_constraint_violation(test_point, constraints);
+        
+        // Test at feasible point [0.5, 0.5, 0.0]
+        test_point(0) = 0.5; test_point(1) = 0.5; test_point(2) = 0.0;
+        double feasible_violation = check_constraint_violation(test_point, constraints);
+        
+        // Test at infeasible point [2, 2, 2]
+        test_point(0) = 2.0; test_point(1) = 2.0; test_point(2) = 2.0;
+        double infeasible_violation = check_constraint_violation(test_point, constraints);
+        
+        // Create detailed message
+        std::ostringstream msg;
+        msg << std::scientific << std::setprecision(6);
+        msg << "Origin[0,0,0]: " << origin_violation 
+            << ", Feasible[0.5,0.5,0]: " << feasible_violation
+            << ", Infeasible[2,2,2]: " << infeasible_violation;
+        
+        result.message = msg.str();
+        result.final_objective = 0.0;
+        result.final_point = test_point;  // Store last test point
+        result.constraint_violation = origin_violation;
+        result.iterations = 0;
+        
+        // This test passes if we can evaluate constraints without crashing
+        // and the origin point should have low constraint violation
+        result.success = (origin_violation < 1e-3) && (infeasible_violation > 1.0);
+        
+    } catch (const std::exception& e) {
+        result.success = false;
+        result.message = std::string("FAILED - exception: ") + e.what();
+    } catch (...) {
+        result.success = false;
+        result.message = "FAILED - unknown exception";
+    }
+    
+    return result;
+}
+
 // ============================================================================
 // COMPREHENSIVE TEST RUNNER
 // ============================================================================
@@ -1243,6 +1580,18 @@ AllTestResults run_all_constraint_tests() {
     
     results.diagnostic_different_start = run_diagnostic_different_start();
     print_test_result("Diagnostic Different Start", results.diagnostic_different_start);
+    
+    results.diagnostic_skip_first = run_diagnostic_skip_first();
+    print_test_result("Diagnostic Skip First", results.diagnostic_skip_first);
+    
+    results.diagnostic_simple_bounds = run_diagnostic_simple_bounds();
+    print_test_result("Diagnostic Simple Bounds", results.diagnostic_simple_bounds);
+    
+    results.diagnostic_detailed_eval = run_diagnostic_detailed_eval();
+    print_test_result("Diagnostic Detailed Eval", results.diagnostic_detailed_eval);
+    
+    results.diagnostic_manual_evaluation = run_diagnostic_manual_evaluation();
+    print_test_result("Diagnostic Manual Eval", results.diagnostic_manual_evaluation);
     
     print_all_test_results(results);
     

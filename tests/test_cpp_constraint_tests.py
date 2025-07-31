@@ -259,6 +259,63 @@ class TestCppConstraintTests:
 
         # This test checks if starting point affects the constraint violation issue
 
+    def test_diagnostic_skip_first(self):
+        """Test skip first constraint from failing test."""
+        result = pyopttpp.run_diagnostic_skip_first()
+
+        print(f"Diagnostic Skip First:")
+        print(f"  Success: {result.success}")
+        print(f"  Final objective: {result.final_objective}")
+        print(f"  Final point: {np.array(result.final_point.to_numpy())}")
+        print(f"  Constraint violation: {result.constraint_violation}")
+        print(f"  Iterations: {result.iterations}")
+        print(f"  Message: {result.message}")
+
+        # This test checks if the issue occurs with different constraint combinations
+
+    def test_diagnostic_simple_bounds(self):
+        """Test simple individual bounds as inequalities."""
+        result = pyopttpp.run_diagnostic_simple_bounds()
+
+        print(f"Diagnostic Simple Bounds:")
+        print(f"  Success: {result.success}")
+        print(f"  Final objective: {result.final_objective}")
+        print(f"  Final point: {np.array(result.final_point.to_numpy())}")
+        print(f"  Constraint violation: {result.constraint_violation}")
+        print(f"  Iterations: {result.iterations}")
+        print(f"  Message: {result.message}")
+
+        # This test checks if simple individual bounds work correctly
+
+    def test_diagnostic_detailed_eval(self):
+        """Test detailed constraint evaluation behavior."""
+        result = pyopttpp.run_diagnostic_detailed_eval()
+
+        print(f"Diagnostic Detailed Eval:")
+        print(f"  Success: {result.success}")
+        print(f"  Final objective: {result.final_objective}")
+        print(f"  Final point: {np.array(result.final_point.to_numpy())}")
+        print(f"  Constraint violation: {result.constraint_violation}")
+        print(f"  Iterations: {result.iterations}")
+        print(f"  Message: {result.message}")
+
+        # This test provides detailed constraint evaluation information
+
+    def test_diagnostic_manual_evaluation(self):
+        """Test manual constraint evaluation at specific points."""
+        result = pyopttpp.run_diagnostic_manual_evaluation()
+
+        print(f"Diagnostic Manual Evaluation:")
+        print(f"  Success: {result.success}")
+        print(f"  Final objective: {result.final_objective}")
+        print(f"  Final point: {np.array(result.final_point.to_numpy())}")
+        print(f"  Constraint violation: {result.constraint_violation}")
+        print(f"  Iterations: {result.iterations}")
+        print(f"  Message: {result.message}")
+
+        # This test manually evaluates constraints at known points
+        # Should provide detailed information about constraint evaluation behavior
+
     def test_comprehensive_test_runner(self):
         """Test the comprehensive test runner that runs all tests."""
         print("\n" + "="*80)
