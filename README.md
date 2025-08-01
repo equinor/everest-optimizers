@@ -90,3 +90,13 @@ clang-format -i your_file.cpp
 ```bash
 find . -regex '.*\.\(cpp\|hpp\|cc\|c\|h\)' -exec clang-format -i {} +
 ```
+
+## Compile Fortran code into .so object
+
+After installing f2py, you can run:
+
+```bash
+f2py -c -m myprogram dakota-packages/CONMIN/src/program.f dakota-packages/CONMIN/src/conmin.f
+```
+
+Then remember to move the .so object into src/everest_optimizers
