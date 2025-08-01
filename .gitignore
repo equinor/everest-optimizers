@@ -11,7 +11,11 @@ venv/
 # C/C++ and CMake build artifacts
 build/
 *.o
-*.so
+
+# Removing this temporarily until we can build the conmin .so file 
+# automatically with pip install.
+# *.so  
+
 *.out
 CMakeCache.txt
 CMakeFiles/
