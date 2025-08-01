@@ -3,7 +3,6 @@ from scipy.optimize import OptimizeResult
 from everest_optimizers.pyoptsparse.pyOpt_optimizer import Optimization
 from everest_optimizers.pyCONMIN.pyCONMIN import CONMIN
 
-
 def _minimize_conmin_mfd(fun, x0, args=(), jac=None, bounds=None, constraints=None, options=None, **kwargs):
     options = options or {}
     constraints = constraints or []
@@ -18,6 +17,7 @@ def _minimize_conmin_mfd(fun, x0, args=(), jac=None, bounds=None, constraints=No
             funcs[f'c{i}'] = constr['fun'](x)
         return funcs, False
 
+    # Should probably use jac instead of sens='FD' below:
     optProb = Optimization("PyOptSparse CONMIN", objfunc, sens='FD')
     lower_bounds = [b[0] for b in bounds]
     upper_bounds = [b[1] for b in bounds]
