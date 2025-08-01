@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from everest_optimizers.pyOpt_optimizer import Optimization
+from everest_optimizers.pyoptsparse.pyOpt_optimizer import Optimization
 from everest_optimizers.pyCONMIN.pyCONMIN import CONMIN
 
 def rosen_suzuki_obj(x):
