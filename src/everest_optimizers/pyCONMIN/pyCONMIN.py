@@ -12,8 +12,8 @@ import time
 import numpy as np
 
 # Local modules
-from ..pyOpt_optimizer import Optimizer
-from ..pyOpt_utils import try_import_compiled_module_from_path
+from everest_optimizers.pyoptsparse.pyOpt_optimizer import Optimizer
+from everest_optimizers.pyoptsparse.pyOpt_utils import try_import_compiled_module_from_path
 
 # import the compiled module
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
