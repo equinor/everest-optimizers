@@ -28,7 +28,7 @@ def minimize(
     This function is intended to be a drop-in replacement for scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton optimization
     algorithm from the OPTPP library.
     
-    Parameters
+    Parameters (parameter structure is based on scipy.optimize.minimize)
     ----------
     fun : callable
         The objective function to be minimized:

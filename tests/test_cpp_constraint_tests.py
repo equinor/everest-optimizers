@@ -135,7 +135,7 @@ class TestCppConstraintTests:
         assert result.success, f"Mixed linear test 1 failed: {result.message}"
 
     def test_nonlinear_equality_constraint(self):
-        """Test nonlinear equality constraint (expected to not be implemented yet)."""
+        """Test nonlinear equality constraint x^2 + y^2 = 4."""
         result = pyopttpp.run_nonlinear_eq_test1()
         
         print(f"Nonlinear Equality Test 1:")
@@ -144,15 +144,14 @@ class TestCppConstraintTests:
         print(f"  Constraint violation: {result.constraint_violation}")
         print(f"  Iterations: {result.iterations}")
         print(f"  Message: {result.message}")
+        if hasattr(result.final_point, 'to_numpy'):
+            print(f"  Final point: {np.array(result.final_point.to_numpy())}")
         
-        # This test is expected to not be implemented yet
-        if "NOT IMPLEMENTED" in result.message:
-            pytest.skip("Nonlinear equality constraints not yet implemented")
-        else:
-            assert result.success, f"Nonlinear equality test 1 failed: {result.message}"
+        # Test should now be implemented - assert success
+        assert result.success, f"Nonlinear equality test 1 failed: {result.message}"
 
     def test_nonlinear_inequality_constraint(self):
-        """Test nonlinear inequality constraint (expected to not be implemented yet)."""
+        """Test nonlinear inequality constraint x^2 + y^2 <= 1."""
         result = pyopttpp.run_nonlinear_ineq_test1()
         
         print(f"Nonlinear Inequality Test 1:")
@@ -161,15 +160,14 @@ class TestCppConstraintTests:
         print(f"  Constraint violation: {result.constraint_violation}")
         print(f"  Iterations: {result.iterations}")
         print(f"  Message: {result.message}")
+        if hasattr(result.final_point, 'to_numpy'):
+            print(f"  Final point: {np.array(result.final_point.to_numpy())}")
         
-        # This test is expected to not be implemented yet
-        if "NOT IMPLEMENTED" in result.message:
-            pytest.skip("Nonlinear inequality constraints not yet implemented")
-        else:
-            assert result.success, f"Nonlinear inequality test 1 failed: {result.message}"
+        # Test should now be implemented - assert success
+        assert result.success, f"Nonlinear inequality test 1 failed: {result.message}"
 
     def test_mixed_nonlinear_constraints(self):
-        """Test mixed nonlinear constraints (expected to not be implemented yet)."""
+        """Test mixed nonlinear constraints with equality, inequality, and bounds."""
         result = pyopttpp.run_mixed_nonlinear_test1()
         
         print(f"Mixed Nonlinear Test 1:")
@@ -178,12 +176,11 @@ class TestCppConstraintTests:
         print(f"  Constraint violation: {result.constraint_violation}")
         print(f"  Iterations: {result.iterations}")
         print(f"  Message: {result.message}")
+        if hasattr(result.final_point, 'to_numpy'):
+            print(f"  Final point: {np.array(result.final_point.to_numpy())}")
         
-        # This test is expected to not be implemented yet
-        if "NOT IMPLEMENTED" in result.message:
-            pytest.skip("Mixed nonlinear constraints not yet implemented")
-        else:
-            assert result.success, f"Mixed nonlinear test 1 failed: {result.message}"
+        # Test should now be implemented - assert success
+        assert result.success, f"Mixed nonlinear test 1 failed: {result.message}"
 
     # ========================================================================
     # DIAGNOSTIC TESTS FOR MULTIPLE LINEAR INEQUALITY CONSTRAINT ISSUE

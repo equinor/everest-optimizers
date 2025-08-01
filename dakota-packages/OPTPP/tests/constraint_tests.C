@@ -707,15 +707,75 @@ void nonlinear_eq_test1_con(int mode, int n, const SerialDenseVector<int,double>
 }
 
 CompoundConstraint* create_nonlinear_eq_test1_constraints(int n) {
-    // Nonlinear constraints require specialized NLP setup
-    // This is a placeholder - full implementation would need NLP objects
-    return nullptr;
+    if (n != 2) return nullptr;
+    
+    // Create nonlinear equality constraint: x^2 + y^2 = 4
+    NLP* constraint_nlp = new NLP(new NLF1(n, 1, nonlinear_eq_test1_con, init_nonlinear_eq_test1));
+    Constraint nleqn = new NonLinearEquation(constraint_nlp);
+    CompoundConstraint* constraints = new CompoundConstraint(nleqn);
+    return constraints;
 }
 
 TestResult run_nonlinear_eq_test1() {
     TestResult result;
-    result.success = false;
-    result.message = "NOT IMPLEMENTED - nonlinear constraints require specialized NLP setup";
+    const int n = 2;
+    
+    try {
+        // Create the NLP problem
+        NLF1* nlp = new NLF1(n, nonlinear_eq_test1_obj, init_nonlinear_eq_test1);
+        
+        // Set constraints
+        CompoundConstraint* constraints = create_nonlinear_eq_test1_constraints(n);
+        nlp->setConstraints(constraints);
+        
+        // Create optimizer (use QNIPS for constrained problems)
+        OptQNIPS optimizer(nlp);
+        optimizer.setMaxIter(100);
+        optimizer.setFcnTol(1.0e-6);
+        optimizer.setConTol(1.0e-6);
+        
+        // Initialize
+        SerialDenseVector<int,double> x(n);
+        init_nonlinear_eq_test1(n, x);
+        nlp->setX(x);
+        nlp->initFcn();
+        
+        // Optimize
+        optimizer.optimize();
+        
+        // Get results
+        SerialDenseVector<int,double> final_x = nlp->getXc();
+        double final_f = nlp->getF();
+        
+        // Check constraint violation
+        double constraint_viol = 0.0;
+        if (constraints) {
+            constraint_viol = check_constraint_violation(final_x, constraints);
+        }
+        
+        // Populate result
+        result.final_point = final_x;
+        result.final_objective = final_f;
+        result.constraint_violation = constraint_viol;
+        result.iterations = optimizer.getIter();
+        
+        // Success criteria: constraint violation < 1e-4
+        result.success = (constraint_viol < 1.0e-4);
+        result.message = result.success ? "SUCCESS" : "FAILED - constraint violation too large";
+        
+        // Cleanup
+        optimizer.cleanup();
+        delete nlp;
+        delete constraints;
+        
+    } catch (const std::exception& e) {
+        result.success = false;
+        result.message = std::string("EXCEPTION: ") + e.what();
+    } catch (...) {
+        result.success = false;
+        result.message = "UNKNOWN EXCEPTION";
+    }
+    
     return result;
 }
 
@@ -758,13 +818,75 @@ void nonlinear_ineq_test1_con(int mode, int n, const SerialDenseVector<int,doubl
 }
 
 CompoundConstraint* create_nonlinear_ineq_test1_constraints(int n) {
-    return nullptr;  // Placeholder
+    if (n != 2) return nullptr;
+    
+    // Create nonlinear inequality constraint: x^2 + y^2 <= 1 (transformed to 1 - x^2 - y^2 >= 0)
+    NLP* constraint_nlp = new NLP(new NLF1(n, 1, nonlinear_ineq_test1_con, init_nonlinear_ineq_test1));
+    Constraint nlieq = new NonLinearInequality(constraint_nlp);
+    CompoundConstraint* constraints = new CompoundConstraint(nlieq);
+    return constraints;
 }
 
 TestResult run_nonlinear_ineq_test1() {
     TestResult result;
-    result.success = false;
-    result.message = "NOT IMPLEMENTED - nonlinear constraints require specialized NLP setup";
+    const int n = 2;
+    
+    try {
+        // Create the NLP problem
+        NLF1* nlp = new NLF1(n, nonlinear_ineq_test1_obj, init_nonlinear_ineq_test1);
+        
+        // Set constraints
+        CompoundConstraint* constraints = create_nonlinear_ineq_test1_constraints(n);
+        nlp->setConstraints(constraints);
+        
+        // Create optimizer (use QNIPS for constrained problems)
+        OptQNIPS optimizer(nlp);
+        optimizer.setMaxIter(100);
+        optimizer.setFcnTol(1.0e-6);
+        optimizer.setConTol(1.0e-6);
+        
+        // Initialize
+        SerialDenseVector<int,double> x(n);
+        init_nonlinear_ineq_test1(n, x);
+        nlp->setX(x);
+        nlp->initFcn();
+        
+        // Optimize
+        optimizer.optimize();
+        
+        // Get results
+        SerialDenseVector<int,double> final_x = nlp->getXc();
+        double final_f = nlp->getF();
+        
+        // Check constraint violation
+        double constraint_viol = 0.0;
+        if (constraints) {
+            constraint_viol = check_constraint_violation(final_x, constraints);
+        }
+        
+        // Populate result
+        result.final_point = final_x;
+        result.final_objective = final_f;
+        result.constraint_violation = constraint_viol;
+        result.iterations = optimizer.getIter();
+        
+        // Success criteria: constraint violation < 1e-4
+        result.success = (constraint_viol < 1.0e-4);
+        result.message = result.success ? "SUCCESS" : "FAILED - constraint violation too large";
+        
+        // Cleanup
+        optimizer.cleanup();
+        delete nlp;
+        delete constraints;
+        
+    } catch (const std::exception& e) {
+        result.success = false;
+        result.message = std::string("EXCEPTION: ") + e.what();
+    } catch (...) {
+        result.success = false;
+        result.message = "UNKNOWN EXCEPTION";
+    }
+    
     return result;
 }
 
@@ -809,13 +931,95 @@ void mixed_nonlinear_test1_con(int mode, int n, const SerialDenseVector<int,doub
 }
 
 CompoundConstraint* create_mixed_nonlinear_test1_constraints(int n) {
-    return nullptr;  // Placeholder
+    if (n != 3) return nullptr;
+    
+    // Create mixed nonlinear constraints:
+    // - Equality: x^2 + y^2 = 1 
+    // - Inequality: z^2 <= 4 (transformed to 4 - z^2 >= 0)
+    // - Bounds: 0 <= x,y,z <= 10
+    
+    // Create nonlinear constraints
+    NLP* constraint_nlp = new NLP(new NLF1(n, 2, mixed_nonlinear_test1_con, init_mixed_nonlinear_test1));
+    
+    // Create constraints for equality and inequality
+    SerialDenseVector<int,double> rhs(2);
+    rhs(0) = 0.0;  // x^2 + y^2 - 1 = 0
+    rhs(1) = 0.0;  // 4 - z^2 >= 0 (already in correct form)
+    
+    // First constraint is equality, second is inequality
+    Constraint nleqn = new NonLinearEquation(constraint_nlp, rhs, 1);  // Only first constraint is equality
+    
+    // Add bounds constraints
+    SerialDenseVector<int,double> lower(n), upper(n);
+    lower(0) = 0.0; lower(1) = 0.0; lower(2) = 0.0;
+    upper(0) = 10.0; upper(1) = 10.0; upper(2) = 10.0;
+    Constraint bounds = new BoundConstraint(n, lower, upper);
+    
+    // Combine constraints
+    CompoundConstraint* constraints = new CompoundConstraint(nleqn, bounds);
+    return constraints;
 }
 
 TestResult run_mixed_nonlinear_test1() {
     TestResult result;
-    result.success = false;
-    result.message = "NOT IMPLEMENTED - mixed nonlinear constraints require specialized NLP setup";
+    const int n = 3;
+    
+    try {
+        // Create the NLP problem
+        NLF1* nlp = new NLF1(n, mixed_nonlinear_test1_obj, init_mixed_nonlinear_test1);
+        
+        // Set constraints
+        CompoundConstraint* constraints = create_mixed_nonlinear_test1_constraints(n);
+        nlp->setConstraints(constraints);
+        
+        // Create optimizer (use QNIPS for constrained problems)
+        OptQNIPS optimizer(nlp);
+        optimizer.setMaxIter(150);
+        optimizer.setFcnTol(1.0e-6);
+        optimizer.setConTol(1.0e-6);
+        
+        // Initialize
+        SerialDenseVector<int,double> x(n);
+        init_mixed_nonlinear_test1(n, x);
+        nlp->setX(x);
+        nlp->initFcn();
+        
+        // Optimize
+        optimizer.optimize();
+        
+        // Get results
+        SerialDenseVector<int,double> final_x = nlp->getXc();
+        double final_f = nlp->getF();
+        
+        // Check constraint violation
+        double constraint_viol = 0.0;
+        if (constraints) {
+            constraint_viol = check_constraint_violation(final_x, constraints);
+        }
+        
+        // Populate result
+        result.final_point = final_x;
+        result.final_objective = final_f;
+        result.constraint_violation = constraint_viol;
+        result.iterations = optimizer.getIter();
+        
+        // Success criteria: constraint violation < 1e-4
+        result.success = (constraint_viol < 1.0e-4);
+        result.message = result.success ? "SUCCESS" : "FAILED - constraint violation too large";
+        
+        // Cleanup
+        optimizer.cleanup();
+        delete nlp;
+        delete constraints;
+        
+    } catch (const std::exception& e) {
+        result.success = false;
+        result.message = std::string("EXCEPTION: ") + e.what();
+    } catch (...) {
+        result.success = false;
+        result.message = "UNKNOWN EXCEPTION";
+    }
+    
     return result;
 }
 
