@@ -39,7 +39,7 @@ def _minimize_conmin_mfd(
     x_arr = np.zeros(n1)
     x_arr[:ndv] = x
 
-    # Bounds: default infinite, fill from user bounds if provided
+    # Bounds
     vlb = np.full(n1, -1e20)
     vub = np.full(n1, 1e20)
     if bounds is not None:
@@ -102,13 +102,9 @@ def _minimize_conmin_mfd(
     else:
         compute_grad = lambda xk: jac(xk[:ndv], *args)
 
-    # Compute initial gradient (optional, but CONMIN may expect it)
     df[:ndv] = compute_grad(x_arr[:ndv])
-
-    # Compute initial objective
     obj[0] = wrapped_fun(x_arr)
 
-    # Evaluate inequality constraints and set g1 values
     for i, con in enumerate(ineq_constraints):
         g[i] = con['fun'](x_arr[:ndv])
 
@@ -135,19 +131,12 @@ def _minimize_conmin_mfd(
             break
 
         if info[0] == 1:
-            # Evaluate objective and constraints as requested
             obj[0] = wrapped_fun(x_arr)
             for idx, con in enumerate(ineq_constraints):
                 g[idx] = con['fun'](x_arr[:ndv])
 
         elif info[0] == 2:
-            # Evaluate gradients as requested
             df[:ndv] = compute_grad(x_arr[:ndv])
-            # If you have gradients for constraints, update them here (optional)
-
-        else:
-            pass
-            # raise RuntimeError(f"Unknown CONMIN info flag: {info[0]}")
 
         if callback:
             callback(x_arr[:ndv])

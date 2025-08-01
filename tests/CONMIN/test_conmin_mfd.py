@@ -3,8 +3,6 @@ import pytest
 from everest_optimizers.pyOpt_optimizer import Optimization
 from everest_optimizers.pyCONMIN.pyCONMIN import CONMIN
 
-
-# Objective function
 def rosen_suzuki_obj(x):
     return (
         x[0]**2 - 5*x[0] +
@@ -13,7 +11,6 @@ def rosen_suzuki_obj(x):
         x[3]**2 + 7*x[3] + 50
     )
 
-# Constraint functions
 def constraint1(x):
     return x[0]**2 + x[0] + x[1]**2 - x[1] + x[2]**2 + x[2] + x[3]**2 - x[3] - 8
 
@@ -37,7 +34,6 @@ def test_conmin_rosen_suzuki():
         fail = False
         return funcs, fail
 
-    # Build optimization problem
     optProb = Optimization("Rosen-Suzuki Problem", objfunc, sens='FD')
     optProb.addVarGroup('x', 4, 'c', lower=-10.0, upper=10.0, value=x0)
     optProb.addObj('obj')
@@ -46,10 +42,9 @@ def test_conmin_rosen_suzuki():
     optProb.addCon('g3', upper=0.0)
 
 
-    optimizer = CONMIN(options={"IPRINT": 3, "ITMAX": 100})
+    optimizer = CONMIN(options={"IPRINT": 2, "ITMAX": 100})
     sol = optimizer(optProb)
 
-    # Expected optimal values (tolerances can be adjusted)
     expected_x = np.array([0.0, 1.0, 2.0, -1.0])
     expected_fun = 6.0
 
