@@ -13,9 +13,7 @@ import numpy as np
 
 # Local modules
 from everest_optimizers.pyoptsparse.pyOpt_optimizer import Optimizer
-from everest_optimizers.pyoptsparse.pyOpt_utils import (
-    try_import_compiled_module_from_path,
-)
+from everest_optimizers.pyoptsparse.pyOpt_utils import try_import_compiled_module_from_path
 
 # import the compiled module
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -36,9 +34,7 @@ class CONMIN(Optimizer):
             raise ImportError(conmin)
 
         self.set_options = []
-        super().__init__(
-            name, category, defaultOptions=defOpts, informs=informs, options=options
-        )
+        super().__init__(name, category, defaultOptions=defOpts, informs=informs, options=options)
 
         # CONMIN needs Jacobians in dense format
         self.jacType = "dense2d"
@@ -63,14 +59,7 @@ class CONMIN(Optimizer):
         return defOpts
 
     def __call__(
-        self,
-        optProb,
-        sens=None,
-        sensStep=None,
-        sensMode=None,
-        storeHistory=None,
-        hotStart=None,
-        storeSens=True,
+        self, optProb, sens=None, sensStep=None, sensMode=None, storeHistory=None, hotStart=None, storeSens=True
     ):
         """
         This is the main routine used to solve the optimization
@@ -239,9 +228,7 @@ class CONMIN(Optimizer):
             optTime = time.time() - t0
 
             if self.storeHistory:
-                self.metadata["endTime"] = datetime.datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
+                self.metadata["endTime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.metadata["optTime"] = optTime
                 self.hist.writeData("metadata", self.metadata)
                 self.hist.close()

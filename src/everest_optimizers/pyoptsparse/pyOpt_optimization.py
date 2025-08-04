@@ -31,13 +31,7 @@ from .pyOpt_variable import Variable
 
 
 class Optimization:
-    def __init__(
-        self,
-        name: str,
-        objFun: Callable,
-        comm=None,
-        sens: Optional[Union[str, Callable]] = None,
-    ):
+    def __init__(self, name: str, objFun: Callable, comm=None, sens: Optional[Union[str, Callable]] = None):
         """
         The main purpose of this class is to describe the structure and
         potentially, sparsity pattern of an optimization problem.
@@ -243,9 +237,7 @@ class Optimization:
 
         # Check that the type is ok
         if varType not in ["c", "i", "d"]:
-            raise ValueError(
-                "Type must be one of 'c' for continuous, 'i' for integer or 'd' for discrete."
-            )
+            raise ValueError("Type must be one of 'c' for continuous, 'i' for integer or 'd' for discrete.")
 
         value = _broadcast_to_array("value", value, nVars)
         lower = _broadcast_to_array("lower", lower, nVars, allow_none=True)
@@ -277,14 +269,10 @@ class Optimization:
         if name in self.variables:
             # Check that the variables happen to be the same
             if not len(self.variables[name]) == len(varList):
-                raise KeyError(
-                    f"The supplied name '{name}' for a variable group has already been used!"
-                )
+                raise KeyError(f"The supplied name '{name}' for a variable group has already been used!")
             for i in range(len(varList)):
                 if not varList[i] == self.variables[name][i]:
-                    raise KeyError(
-                        f"The supplied name '{name}' for a variable group has already been used!"
-                    )
+                    raise KeyError(f"The supplied name '{name}' for a variable group has already been used!")
             # We we got here, we know that the variables we wanted to
             # add are **EXACTLY** the same so that's cool. We'll just
             # overwrite with the varList below.
@@ -470,14 +458,10 @@ class Optimization:
         """
         self.finalized = False
         if name in self.constraints:
-            raise KeyError(
-                f"The supplied name '{name}' for a constraint group has already been used."
-            )
+            raise KeyError(f"The supplied name '{name}' for a constraint group has already been used.")
 
         # Simply add constraint object
-        self.constraints[name] = Constraint(
-            name, nCon, linear, wrt, jac, lower, upper, scale
-        )
+        self.constraints[name] = Constraint(name, nCon, linear, wrt, jac, lower, upper, scale)
 
     def getDVs(self):
         """
@@ -596,13 +580,7 @@ class Optimization:
 
         # Header describing what we are printing:
         print("+" + "-" * 78 + "-" + "+")
-        print(
-            "|"
-            + " " * 19
-            + "Sparsity structure of constraint Jacobian"
-            + " " * 19
-            + "|"
-        )
+        print("|" + " " * 19 + "Sparsity structure of constraint Jacobian" + " " * 19 + "|")
         print("+" + "-" * 78 + "-" + "+")
 
         # We will do this with a 2d numpy array of characters since it
@@ -615,9 +593,7 @@ class Optimization:
         for iCon in self.constraints:
             nRow += 1  # Name
             con = self.constraints[iCon]
-            maxConNameLen = max(
-                maxConNameLen, len(con.name) + 6 + int(np.log10(con.ncon)) + 1
-            )
+            maxConNameLen = max(maxConNameLen, len(con.name) + 6 + int(np.log10(con.ncon)) + 1)
             nRow += 1  # Line
 
         # And now the columns:
@@ -717,26 +693,15 @@ class Optimization:
 
                     # Format and print the size of the design variable
                     elif i > longestNameLength:
-                        var_str = (
-                            "("
-                            + str(self.dvOffset[dvGroup][1] - self.dvOffset[dvGroup][0])
-                            + ")"
-                        )
+                        var_str = "(" + str(self.dvOffset[dvGroup][1] - self.dvOffset[dvGroup][0]) + ")"
                         half_length = len(var_str) / 2
                         k = int(varCenters[j])
-                        txt[
-                            i,
-                            int(k - half_length + 1) : int(
-                                k - half_length + 1 + len(var_str)
-                            ),
-                        ] = list(var_str)
+                        txt[i, int(k - half_length + 1) : int(k - half_length + 1 + len(var_str))] = list(var_str)
 
         for i in range(len(txt)):
             print("".join(txt[i]))
 
-    def getDVConIndex(
-        self, startIndex: int = 1, printIndex: bool = True
-    ) -> Tuple[OrderedDict, OrderedDict]:
+    def getDVConIndex(self, startIndex: int = 1, printIndex: bool = True) -> Tuple[OrderedDict, OrderedDict]:
         """
         Return the index of a scalar DV/constraint, or the beginning
         and end index (inclusive) of a DV/constraint array.
@@ -814,11 +779,7 @@ class Optimization:
 
         for dvGroup in self.variables:
             n = len(self.variables[dvGroup])
-            self.dvOffset[dvGroup] = [
-                dvCounter,
-                dvCounter + n,
-                self.variables[dvGroup][0].scalar,
-            ]
+            self.dvOffset[dvGroup] = [dvCounter, dvCounter + n, self.variables[dvGroup][0].scalar]
             dvCounter += n
         self.ndvs = dvCounter
 
@@ -912,9 +873,7 @@ class Optimization:
                     data.extend(con.jac[dvGroup]["coo"][IDATA])
 
                 # Now create a coo, convert to CSR and store
-                con.linearJacobian = coo_matrix(
-                    (data, (row, col)), shape=[con.ncon, self.ndvs]
-                ).tocsr()
+                con.linearJacobian = coo_matrix((data, (row, col)), shape=[con.ncon, self.ndvs]).tocsr()
 
     def getOrdering(
         self, conOrder: List[str], oneSided: bool, noEquality: bool = False
@@ -1057,13 +1016,9 @@ class Optimization:
                 else:
                     xg[dvGroup] = x[..., istart:iend].copy()
             except IndexError as e:
-                raise ValueError(
-                    "Error processing x. There is a mismatch in the number of variables."
-                ) from e
+                raise ValueError("Error processing x. There is a mismatch in the number of variables.") from e
         if imax != self.ndvs:
-            raise ValueError(
-                "Error processing x. There is a mismatch in the number of variables."
-            )
+            raise ValueError("Error processing x. There is a mismatch in the number of variables.")
         return xg
 
     def processXtoVec(self, x: dict) -> ndarray:
@@ -1098,13 +1053,9 @@ class Optimization:
                 else:
                     x_array[..., istart:iend] = x[dvGroup]
             except IndexError as e:
-                raise ValueError(
-                    "Error deprocessing x. There is a mismatch in the number of variables."
-                ) from e
+                raise ValueError("Error deprocessing x. There is a mismatch in the number of variables.") from e
         if imax != self.ndvs:
-            raise ValueError(
-                "Error deprocessing x. There is a mismatch in the number of variables."
-            )
+            raise ValueError("Error deprocessing x. There is a mismatch in the number of variables.")
 
         return x_array
 
@@ -1133,9 +1084,7 @@ class Optimization:
                 try:
                     f = np.squeeze(funcs[objKey]).item()
                 except ValueError as e:
-                    raise ValueError(
-                        f"The objective return value, '{objKey}' must be a scalar!"
-                    ) from e
+                    raise ValueError(f"The objective return value, '{objKey}' must be a scalar!") from e
                 # Store objective for printing later
                 self.objectives[objKey].value = np.real(f)
                 fobj.append(f)
@@ -1181,11 +1130,7 @@ class Optimization:
         return fobj
 
     def processContoVec(
-        self,
-        fcon_in: Dict1DType,
-        scaled: bool = True,
-        dtype: str = "d",
-        natural: bool = False,
+        self, fcon_in: Dict1DType, scaled: bool = True, dtype: str = "d", natural: bool = False
     ) -> ndarray:
         """A function that converts a dictionary of constraints into a vector
 
@@ -1239,9 +1184,7 @@ class Optimization:
                 # Store constraint values for printing later
                 con.value = np.real(copy.copy(c))
             else:
-                raise KeyError(
-                    f"No constraint values were found for the constraint '{iCon}'."
-                )
+                raise KeyError(f"No constraint values were found for the constraint '{iCon}'.")
 
         # Perform scaling on the original Jacobian:
         if scaled:
@@ -1258,12 +1201,7 @@ class Optimization:
                 return fcon
 
     def processContoDict(
-        self,
-        fcon_in: ndarray,
-        scaled: bool = True,
-        dtype: str = "d",
-        natural: bool = False,
-        multipliers: bool = False,
+        self, fcon_in: ndarray, scaled: bool = True, dtype: str = "d", natural: bool = False, multipliers: bool = False
     ) -> Dict1DType:
         """A function that converts an array of constraints into a dictionary
 
@@ -1398,9 +1336,7 @@ class Optimization:
                     else:
                         raise KeyError(f"The dvGroup key '{dvGroup}' is not valid")
             else:
-                raise KeyError(
-                    f"The key for the objective gradient, '{objKey}', was not found."
-                )
+                raise KeyError(f"The key for the objective gradient, '{objKey}', was not found.")
             iObj += 1
 
         # Note that we looped over the keys in funcsSens[objKey]
@@ -1655,7 +1591,9 @@ class Optimization:
         """
         TOL = 1.0e-6
 
-        text = f"\n\nOptimization Problem -- {self.name}\n{'=' * 80}\n    Objective Function: {self.objFun.__name__}\n\n"
+        text = (
+            f"\n\nOptimization Problem -- {self.name}\n{'=' * 80}\n    Objective Function: {self.objFun.__name__}\n\n"
+        )
         text += "\n   Objectives\n"
 
         num_c = max(len(obj) for obj in self.objectives)
@@ -1674,16 +1612,7 @@ class Optimization:
 
         fmt = "    {0:>7s}  {1:{width}s}   {2:>4s}   {3:>14}   {4:>14}   {5:>14}   {6:>8s}\n"
         text += "\n   Variables (c - continuous, i - integer, d - discrete)\n"
-        text += fmt.format(
-            "Index",
-            "Name",
-            "Type",
-            "Lower Bound",
-            "Value",
-            "Upper Bound",
-            "Status",
-            width=num_c,
-        )
+        text += fmt.format("Index", "Name", "Type", "Lower Bound", "Value", "Upper Bound", "Status", width=num_c)
         fmt = "    {0:7d}  {1:{width}s}   {2:>4s}   {3:14.6E}   {4:14.6E}   {5:14.6E}   {6:>8s}\n"
 
         idx = 0
@@ -1719,21 +1648,10 @@ class Optimization:
                     upper = max(choices)
                     status = ""
                 else:
-                    raise ValueError(
-                        f"Unrecognized type for variable {var.name}: {var.type}"
-                    )
+                    raise ValueError(f"Unrecognized type for variable {var.name}: {var.type}")
 
                 if not minimal_print or status:
-                    text += fmt.format(
-                        idx,
-                        var.name,
-                        var.type,
-                        lower,
-                        value,
-                        upper,
-                        status,
-                        width=num_c,
-                    )
+                    text += fmt.format(idx, var.name, var.type, lower, value, upper, status, width=num_c)
                 idx += 1
 
         if len(self.constraints) > 0:
@@ -1753,15 +1671,7 @@ class Optimization:
             num_c = max(len(self.constraints[i].name) for i in self.constraints)
             fmt = "    {0:>7s}  {1:{width}s} {2:>4s} {3:>14}  {4:>14}  {5:>14}  {6:>8s}  {7:>14s}\n"
             text += fmt.format(
-                "Index",
-                "Name",
-                "Type",
-                "Lower",
-                "Value",
-                "Upper",
-                "Status",
-                lambdaStar_label,
-                width=num_c,
+                "Index", "Name", "Type", "Lower", "Value", "Upper", "Status", lambdaStar_label, width=num_c
             )
             fmt = "    {0:7d}  {1:{width}s} {2:>4s} {3:>14.6E}  {4:>14.6E}  {5:>14.6E}  {6:>8s}  {7:>14.5E}\n"
             idx = 0
@@ -1799,15 +1709,7 @@ class Optimization:
 
                     if not minimal_print or status:
                         text += fmt.format(
-                            idx,
-                            c.name,
-                            typ,
-                            lower,
-                            value,
-                            upper,
-                            status,
-                            lambdaStar[con_name][j],
-                            width=num_c,
+                            idx, c.name, typ, lower, value, upper, status, lambdaStar[con_name][j], width=num_c
                         )
                     idx += 1
 

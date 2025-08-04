@@ -12,14 +12,7 @@ from .pyOpt_types import Dict1DType, Dict2DType
 
 
 class Gradient:
-    def __init__(
-        self,
-        optProb: Optimization,
-        sensType: str,
-        sensStep: float = None,
-        sensMode: str = "",
-        comm=None,
-    ):
+    def __init__(self, optProb: Optimization, sensType: str, sensStep: float = None, sensMode: str = "", comm=None):
         """
         Gradient class for automatically computing gradients with finite
         difference or complex step.
@@ -77,9 +70,7 @@ class Gradient:
         fobj = self.optProb.processObjtoVec(funcs, scaled=False)
 
         if self.sensType == "cs":
-            fcon = self.optProb.processContoVec(
-                funcs, scaled=False, dtype="D", natural=True
-            )
+            fcon = self.optProb.processContoVec(funcs, scaled=False, dtype="D", natural=True)
         else:
             fcon = self.optProb.processContoVec(funcs, scaled=False, natural=True)
 
