@@ -12,6 +12,7 @@ import shutil
 class CustomBuildExt(build_ext):
     def run(self):
       
+        orig_dir = os.getcwd()
         # Add more paths if needed
         # Step 0: Delete OPTPP build folder to avoid problems when building multiple times
         for path in ["dakota-packages/OPTPP/build"]:
@@ -76,6 +77,7 @@ class CustomBuildExt(build_ext):
         ]
 
         subprocess.run(f2py_cmd, check=True, stdout=sys.stdout, stderr=sys.stderr)
+        os.chdir(orig_dir)
 
         # Finally call regular build_ext
         print("Running standard build_ext...")
