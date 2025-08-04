@@ -19,6 +19,7 @@ if src_path not in sys.path:
 
 _Function = Callable[[NDArray[np.float64]], float]
 
+
 def pytest_addoption(parser: Any) -> Any:
     parser.addoption(
         "--run-external",
@@ -88,6 +89,7 @@ def fixture_test_functions() -> tuple[_Function, _Function]:
 def evaluator(test_functions: Any) -> Callable[[list[_Function]], Any]:
     def _evaluator(test_functions: list[_Function] = test_functions) -> Any:
         return partial(_function_runner, functions=test_functions)
+
     return _evaluator
 
 
@@ -131,10 +133,10 @@ def everest_objective_fixture(test_functions, enopt_config):
     [initial_values_1, initial_values_2, initial_values_3],
 )
 def test_unconstrained_convergence(
-    enopt_config: Any, 
-    evaluator: Any, 
-    everest_objective: Any, 
-    initial_values: list[float]
+    enopt_config: Any,
+    evaluator: Any,
+    everest_objective: Any,
+    initial_values: list[float],
 ) -> None:
     """Tests that ropt and everest-optimizers converge to a similar solution."""
     # Run ropt optimizer
@@ -145,14 +147,16 @@ def test_unconstrained_convergence(
 
     # Run everest-optimizer
     from everest_optimizers import minimize
-    everest_result = minimize(everest_objective, initial_values, method="optpp_q_newton")
+
+    everest_result = minimize(
+        everest_objective, initial_values, method="optpp_q_newton"
+    )
     everest_solution = everest_result.x
     assert everest_solution is not None
 
     # Compare solutions
-    np.testing.assert_allclose(
-        ropt_solution, everest_solution, rtol=1e-2, atol=1e-2
-    )
+    np.testing.assert_allclose(ropt_solution, everest_solution, rtol=1e-2, atol=1e-2)
+
 
 @pytest.mark.skip(reason="Skipping bound constraint tests for now")
 @pytest.mark.parametrize(
