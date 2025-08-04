@@ -43,7 +43,6 @@ dependencies = [
     "ninja",
     "meson",
     "sqlitedict>=1.6",
-    "baseclasses",
     "mdolab-baseclasses>=1.3.1",
 ]
 
