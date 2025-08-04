@@ -7,6 +7,7 @@ import subprocess
 import os
 import sys
 import shutil
+import glob
 
 
 class CustomBuildExt(build_ext):
@@ -15,10 +16,19 @@ class CustomBuildExt(build_ext):
         orig_dir = os.getcwd()
         # Add more paths if needed
         # Step 0: Delete OPTPP build folder to avoid problems when building multiple times
-        for path in ["dakota-packages/OPTPP/build"]:
-            if os.path.exists(path):
-                print(f"Removing directory: {path}")
-                shutil.rmtree(path)
+        paths = [
+        "dakota-packages/OPTPP/build",
+        "src/everest_optimizers/pyCONMIN/*.so"
+        ]
+
+        for path in paths:
+            for resolved_path in glob.glob(path):
+                if os.path.isdir(resolved_path):
+                    print(f"Removing directory: {resolved_path}")
+                    shutil.rmtree(resolved_path)
+                elif os.path.isfile(resolved_path):
+                    print(f"Removing file: {resolved_path}")
+                    os.remove(resolved_path)
                 
         # Step 1: Link trilinos if needed
         optpp_dir = os.path.abspath("dakota-packages/OPTPP")
