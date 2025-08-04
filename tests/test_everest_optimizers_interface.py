@@ -111,9 +111,12 @@ class TestEverestOptimizersInterface:
 
         # Test callback
         with pytest.raises(
-            NotImplementedError, match="Callback function not implemented for optpp_q_newton"
+            NotImplementedError,
+            match="Callback function not implemented for optpp_q_newton",
         ):
-            minimize(dummy_func, [1.0], method="optpp_q_newton", callback=lambda x: None)
+            minimize(
+                dummy_func, [1.0], method="optpp_q_newton", callback=lambda x: None
+            )
 
     def test_input_validation(self):
         """Test input validation."""
@@ -167,7 +170,9 @@ class TestEverestOptimizersInterface:
         def func_with_args(x, a, b):
             return a * (x[0] - 1) ** 2 + b * (x[1] - 2) ** 2
 
-        result = minimize(func_with_args, [0.0, 0.0], args=(2, 3), method="optpp_q_newton")
+        result = minimize(
+            func_with_args, [0.0, 0.0], args=(2, 3), method="optpp_q_newton"
+        )
 
         assert result.success
         assert np.allclose(result.x, [1.0, 2.0], rtol=1e-3)
