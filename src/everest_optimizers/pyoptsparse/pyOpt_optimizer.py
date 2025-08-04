@@ -21,16 +21,7 @@ from .pyOpt_gradient import Gradient
 from .pyOpt_history import History
 from .pyOpt_optimization import Optimization
 from .pyOpt_solution import Solution
-from .pyOpt_utils import (
-    EPS,
-    IDATA,
-    INFINITY,
-    convertToCOO,
-    convertToDense,
-    extractRows,
-    mapToCSC,
-    scaleRows,
-)
+from .pyOpt_utils import EPS, IDATA, INFINITY, convertToCOO, convertToDense, extractRows, mapToCSC, scaleRows
 
 # isort: off
 
@@ -90,14 +81,7 @@ class Optimizer(BaseSolver):
         self.storeSens: bool = True
 
         # Cache storage
-        self.cache: Dict[str, Any] = {
-            "x": None,
-            "fobj": None,
-            "fcon": None,
-            "gobj": None,
-            "gcon": None,
-            "fail": None,
-        }
+        self.cache: Dict[str, Any] = {"x": None, "fobj": None, "fcon": None, "gobj": None, "gcon": None, "fail": None}
 
         # A second-level cache for optimizers that require callbacks
         # for each constraint. (eg. PSQP etc)
@@ -118,9 +102,7 @@ class Optimizer(BaseSolver):
         self.userObjCalls = 0
         self.userSensCalls = 0
 
-    def _setSens(
-        self, sens: Union[None, str, Callable], sensStep: float, sensMode: str
-    ):
+    def _setSens(self, sens: Union[None, str, Callable], sensStep: float, sensMode: str):
         """
         Common function to setup sens function
         """
@@ -154,9 +136,7 @@ class Optimizer(BaseSolver):
         elif sens.lower() in ["fd", "fdr", "cd", "cdr", "cs"]:
             # Create the gradient class that will operate just like if
             # the user supplied function
-            self.sens = Gradient(
-                self.optProb, sens.lower(), sensStep, sensMode, self.optProb.comm
-            )
+            self.sens = Gradient(self.optProb, sens.lower(), sensStep, sensMode, self.optProb.comm)
         else:
             raise ValueError(
                 "Unknown value given for sens. Must be one of [None,'FD','FDR','CD','CDR','CS'] or a python function handle"
@@ -194,9 +174,7 @@ class Optimizer(BaseSolver):
                     if os.path.exists(hotStart):
                         self.hotStart = History(hotStart, temp=False, flag="r")
                     else:
-                        pyOptSparseWarning(
-                            "Hot start file does not exist. Performing a regular start"
-                        )
+                        pyOptSparseWarning("Hot start file does not exist. Performing a regular start")
 
             self.storeHistory = False
             if storeHistory:
@@ -208,10 +186,7 @@ class Optimizer(BaseSolver):
                     # we need major=False here since not all optimizers support major iteration counting
                     # even though in theory the first call counter should always be major
                     init_DV = self.hotStart.getValues(
-                        names=self.hotStart.getDVNames(),
-                        callCounters=[0],
-                        major=False,
-                        allowSens=True,
+                        names=self.hotStart.getDVNames(), callCounters=[0], major=False, allowSens=True
                     )
                     self.optProb.setDVs(init_DV)
                     # we also save these metadata values
@@ -371,10 +346,7 @@ class Optimizer(BaseSolver):
         returns = []
         # Start with fobj:
         if "fobj" in evaluate:
-            if (
-                not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all()
-                or "funcs" not in self.cache
-            ):
+            if not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all() or "funcs" not in self.cache:
                 # The previous evaluated point is different than the point requested
                 # OR this is a recursive call to _masterFunc2 from a gradient evaluation that occured
                 # at the beginning of a hot started optimization
@@ -427,10 +399,7 @@ class Optimizer(BaseSolver):
             hist["funcs"] = self.cache["funcs"]
 
         if "fcon" in evaluate:
-            if (
-                not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all()
-                or "funcs" not in self.cache
-            ):
+            if not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all() or "funcs" not in self.cache:
                 # The previous evaluated point is different than the point requested
                 # OR this is a recursive call to _masterFunc2 from a gradient evaluation that occured
                 # at the beginning of a hot started optimization
@@ -484,10 +453,7 @@ class Optimizer(BaseSolver):
             hist["funcs"] = self.cache["funcs"]
 
         if "gobj" in evaluate:
-            if (
-                not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all()
-                or "funcs" not in self.cache
-            ):
+            if not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all() or "funcs" not in self.cache:
                 # The previous evaluated point is different than the point requested for the derivative
                 # OR this is the first call to _masterFunc2 in a hot started optimization
                 # Recursively call the routine with ['fobj', 'fcon']
@@ -546,10 +512,7 @@ class Optimizer(BaseSolver):
                 hist["funcsSens"] = self.cache["funcsSens"]
 
         if "gcon" in evaluate:
-            if (
-                not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all()
-                or "funcs" not in self.cache
-            ):
+            if not np.isclose(x, self.cache["x"], atol=EPS, rtol=EPS).all() or "funcs" not in self.cache:
                 # The previous evaluated point is different than the point requested for the derivative
                 # OR this is the first call to _masterFunc2 in a hot started optimization
                 # Recursively call the routine with ['fobj', 'fcon']
@@ -678,9 +641,7 @@ class Optimizer(BaseSolver):
         Special internal evaluation for optimizers that have a
         separate callback for each constraint"""
 
-        fobj, fcon, gobj, gcon, fail = self._masterFunc(
-            x, ["fobj", "fcon", "gobj", "gcon"]
-        )
+        fobj, fcon, gobj, gcon, fail = self._masterFunc(x, ["fobj", "fcon", "gobj", "gcon"])
 
         self.storedData["x"] = x.copy()
         self.storedData["fobj"] = fobj
@@ -778,9 +739,7 @@ class Optimizer(BaseSolver):
                     xs.append(var.value)
 
                 else:
-                    raise ValueError(
-                        f"{self.name} cannot handle integer or discrete design variables"
-                    )
+                    raise ValueError(f"{self.name} cannot handle integer or discrete design variables")
 
         blx = np.array(blx)
         bux = np.array(bux)
@@ -829,17 +788,13 @@ class Optimizer(BaseSolver):
         nobj = len(self.optProb.objectives.keys())
         ff = []
         if nobj == 0:
-            raise ValueError(
-                "No objective function was supplied! One can be added using a call to optProb.addObj()"
-            )
+            raise ValueError("No objective function was supplied! One can be added using a call to optProb.addObj()")
         for objKey in self.optProb.objectives:
             ff.append(self.optProb.objectives[objKey].value)
 
         return np.real(np.squeeze(ff))
 
-    def _createSolution(
-        self, optTime, sol_inform, obj, xopt, multipliers=None
-    ) -> Solution:
+    def _createSolution(self, optTime, sol_inform, obj, xopt, multipliers=None) -> Solution:
         """
         Generic routine to create the solution after an optimizer
         finishes.
@@ -852,14 +807,10 @@ class Optimizer(BaseSolver):
         xStar = self.optProb.processXtoDict(xuser)
 
         if multipliers is not None:
-            multipliers = self.optProb.processContoDict(
-                multipliers, scaled=True, multipliers=True
-            )
+            multipliers = self.optProb.processContoDict(multipliers, scaled=True, multipliers=True)
 
             # objective scaling
-            if (
-                len(self.optProb.objectives.keys()) == 1
-            ):  # we assume there is only one objective
+            if len(self.optProb.objectives.keys()) == 1:  # we assume there is only one objective
                 obj = list(self.optProb.objectives.keys())[0]
                 for con in multipliers.keys():
                     multipliers[con] /= self.optProb.objectives[obj].scale
@@ -1009,9 +960,7 @@ class Optimizer(BaseSolver):
 # =============================================================================
 
 # List of optimizers as an enum
-Optimizers = Enum(
-    "Optimizers", "SNOPT IPOPT SLSQP NLPQLP CONMIN NSGA2 PSQP ALPSO ParOpt"
-)
+Optimizers = Enum("Optimizers", "SNOPT IPOPT SLSQP NLPQLP CONMIN NSGA2 PSQP ALPSO ParOpt")
 
 
 def OPT(optName, *args, **kwargs):

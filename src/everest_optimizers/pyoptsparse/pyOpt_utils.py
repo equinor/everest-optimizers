@@ -536,9 +536,7 @@ def _csc_to_coo(mat: dict) -> dict:
     return {"coo": [coo_rows, coo_cols, coo_data], "shape": mat["shape"]}
 
 
-def _broadcast_to_array(
-    name: str, value: ArrayType, n_values: int, allow_none: bool = False
-):
+def _broadcast_to_array(name: str, value: ArrayType, n_values: int, allow_none: bool = False):
     """
     Broadcast an input to an array with a specified length
 
