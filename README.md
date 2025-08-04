@@ -67,10 +67,7 @@ ruff check --select ALL
 - To only run ruff on a select folder or file, do these commands (for example):
 
 ```bash
-ruff format src/
 ruff check src/
-
-ruff format src/everest_optimizers_utils/dummy_implementation.py
 ruff check src/everest_optimizers_utils/dummy_implementation.py
 ```
 

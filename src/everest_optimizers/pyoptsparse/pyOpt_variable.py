@@ -48,9 +48,7 @@ class Variable:
             self.offset = offset
         elif self.type == "d":
             if len(choices) == 0:
-                raise ValueError(
-                    "A discrete variable requires to input an array of choices."
-                )
+                raise ValueError("A discrete variable requires to input an array of choices.")
             self.value = self.choices[int(value)]
             self.lower = 0
             self.upper = len(self.choices)
