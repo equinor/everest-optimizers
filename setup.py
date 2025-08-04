@@ -59,6 +59,23 @@ class CustomBuildExt(build_ext):
             ["cmake", "--build", build_dir, "--", "-j"],
             check=True, stdout=sys.stdout, stderr=sys.stderr
         )
+        
+        # Step 5: Build CONMIN Fortran module with f2py
+        print("Running f2py to build CONMIN module...")
+        f2py_dir = os.path.abspath("src/everest_optimizers/pyCONMIN")
+        os.makedirs(f2py_dir, exist_ok=True)
+        os.chdir(f2py_dir)
+
+        f2py_cmd = [
+            sys.executable, "-m", "numpy.f2py", "-m", "conmin", "-c",
+            "source/f2py/conmin.pyf",
+            "source/openunit.f", "source/cnmn00.f", "source/cnmn01.f", "source/cnmn02.f",
+            "source/cnmn03.f", "source/cnmn04.f", "source/cnmn05.f", "source/cnmn06.f",
+            "source/cnmn07.f", "source/cnmn08.f", "source/cnmn09.f",
+            "source/conmin.f", "source/closeunit.f"
+        ]
+
+        subprocess.run(f2py_cmd, check=True, stdout=sys.stdout, stderr=sys.stderr)
 
         # Finally call regular build_ext
         print("Running standard build_ext...")
