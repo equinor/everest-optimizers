@@ -10,6 +10,7 @@ import os
 import sys
 
 import numpy as np
+import pytest
 from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint
 
@@ -116,3 +117,64 @@ def test_bounds_and_linear_inequality():
     expected_solution = np.array([1.5, -0.5])
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
+def test_multiple_bounds():
+    bounds = Bounds([2.5, -1.5], [3.0, -1.0])
+    x0 = np.array([2.8, -1.2])
+    result = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        bounds=bounds,
+        options=DEFAULT_OPTIONS
+    )
+    assert result.success
+    expected_solution = np.array([2.5, -1.0])
+    np.testing.assert_allclose(result.x, expected_solution, rtol=1e-3, atol=1e-3)
+
+def test_bounds_and_multiple_linear_constraints():
+    bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
+    A = np.array([[1, 1], [1, -1]])
+    lb = np.array([1, 0])
+    ub = np.array([np.inf, 0])
+    constraints = LinearConstraint(A, lb, ub)
+    x0 = np.array([0.0, 0.0])
+    result = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        bounds=bounds,
+        constraints=constraints,
+        options=DEFAULT_OPTIONS
+    )
+    assert result.success
+    expected_solution = np.array([0.5, 0.5])
+    np.testing.assert_allclose(result.x, expected_solution, rtol=1e-3, atol=1e-3)
+
+
+
+@pytest.mark.parametrize(
+    "x0",
+    [
+        np.array([0.0, 0.0]),
+        np.array([3.0, 0.0]),
+        np.array([-10.0, -10.0]),
+        np.array([2.4, -1.0]),
+        np.array([10.0, 10.0]),
+    ],
+)
+def test_start_feasible_and_infeasible(x0: NDArray[np.float64]):
+    """Test with starting points that may be inside or outside the feasible region."""
+    bounds = Bounds([2.5, -np.inf], [np.inf, np.inf])
+    result = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        bounds=bounds,
+        options=DEFAULT_OPTIONS
+    )
+    assert result.success
+    expected_solution = np.array([2.5, -1.0])
+    np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)

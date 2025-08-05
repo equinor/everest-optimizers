@@ -83,7 +83,7 @@ def test_high_convergence_tolerance_inaccurate():
     assert not np.allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.parametrize("tolerance", [1e+2, 1, 1e-2, 1e-4, 1e-6, 1e-8, 1e-10, -1e+1000, 1e+1000,]) # TODO: investigate if this is correct
+@pytest.mark.parametrize("tolerance", [1e+2, 1, 1e-2, 1e-4, 1e-6, 1e-8, 1e-10, -1e+1000, 1e+1000,]) # TODO: investigate if this tolerance parameter is handled correctly
 def test_gradient_tolerance_options(tolerance: float):
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {
@@ -117,7 +117,7 @@ def test_too_low_max_iterations():
         bounds=BOUNDS, constraints=CONSTRAINTS, options=options
     )
     assert result.success # algorithm terminates successfully 
-    assert not np.allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
+    assert not np.allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3) # but fails to converge to the expected solution
 
 
 @pytest.mark.parametrize("debug_flag", [True, False])
