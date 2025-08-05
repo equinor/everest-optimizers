@@ -1,0 +1,153 @@
+"""Test suite for everest_optimizers.minimize() with method='optpp_q_nips'
+
+Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from everest_optimizers.minimize().
+In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
+
+Runs a set of standard optimization problems through both everest_optimizers.minimize() and scipy.optimize.minimize()
+and compares the results. Checks for approximately equal numerical values of the solutions.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+import numpy as np
+from numpy.typing import NDArray
+from scipy import optimize as sp_optimize
+from scipy.optimize import LinearConstraint, Bounds
+
+src_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+from everest_optimizers import minimize
+
+DEFAULT_OPTIONS = {
+    'debug': False,
+    'max_iterations': 200,
+    'convergence_tolerance': 1e-6,
+    'gradient_tolerance': 1e-6,
+}
+
+def objective(x: NDArray[np.float64]) -> float:
+    return (x[0] - 2.0)**2 + (x[1] + 1.0)**2
+
+def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
+
+def test_linear_inequality_constraint():
+    A = np.array([[1, 1]])
+    lb = np.array([-np.inf])
+    ub = np.array([1])
+    constraints = LinearConstraint(A, lb, ub)
+    x0 = np.array([0.0, 0.0])
+    res_everest = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        constraints=constraints,
+        options=DEFAULT_OPTIONS
+    )
+    assert res_everest.success
+
+    res_scipy = sp_optimize.minimize(
+        objective, x0, method='SLSQP', jac=objective_grad, constraints=constraints
+    )
+    assert res_scipy.success
+
+    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
+
+def test_linear_mixed_constraints():
+    A = np.array([[1, 1], [1, 0]])
+    lb = np.array([1, -np.inf])
+    ub = np.array([1, 1.5])
+    constraints = LinearConstraint(A, lb, ub)
+    x0 = np.array([0.0, 0.0])
+    res_everest = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        constraints=constraints,
+        options=DEFAULT_OPTIONS
+    )
+    assert res_everest.success
+
+    res_scipy = sp_optimize.minimize(
+        objective, x0, method='SLSQP', jac=objective_grad, constraints=constraints
+    )
+    assert res_scipy.success
+
+    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
+
+
+def test_bounds_and_linear_inequality():
+    bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
+    A = np.array([[1, 1]])
+    lb = np.array([1])
+    ub = np.array([np.inf])
+    constraints = LinearConstraint(A, lb, ub)
+    x0 = np.array([0.0, 0.0])
+    res_everest = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        bounds=bounds,
+        constraints=constraints,
+        options=DEFAULT_OPTIONS
+    )
+    assert res_everest.success
+
+    res_scipy = sp_optimize.minimize(
+        objective, x0, method='SLSQP', jac=objective_grad, bounds=bounds, constraints=constraints
+    )
+    assert res_scipy.success
+
+    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
+
+def test_unconstrained_bfgs():
+    x0 = np.array([0.0, 0.0])
+    res_everest = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        options=DEFAULT_OPTIONS
+    )
+    assert res_everest.success
+
+    res_scipy = sp_optimize.minimize(
+        objective, x0, method='BFGS', jac=objective_grad
+    )
+    assert res_scipy.success
+
+    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
+
+
+def test_bounds_lbfgsb():
+    bounds = Bounds([-1.0, -1.0], [1.0, 1.0])
+    x0 = np.array([0.0, 0.0])
+    res_everest = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        bounds=bounds,
+        options=DEFAULT_OPTIONS
+    )
+    assert res_everest.success
+
+    res_scipy = sp_optimize.minimize(
+        objective, x0, method='L-BFGS-B', jac=objective_grad, bounds=bounds
+    )
+    assert res_scipy.success
+
+    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
