@@ -1,20 +1,22 @@
 # everest-optimizers
 
+The everest-optimizers repository aims to replace the carolina repository by implementing the two algorithms OPTPP_Q_NEWTON and CONMIN_MFD from Dakota. This removes the need of building Dakota through Carolina every time you need to use these two algorithms. Dakota is huge and quite cumbersome to build, so by replacing this dependency we can gain a lot of time.
+
 ## Getting Started
 
 ### Prerequisites
 
 ### Installation
 
-1.  (optional) Create and activate a virtual environment:
+1. (Optional) We recommend using a virtual enviroment. This can be created and activated by one of the following approaches:
 
+- Using uv:
 ```bash
 uv venv
 source .venv/bin/activate
 ```
 
-or 
-
+- Without uv
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -23,7 +25,7 @@ source venv/bin/activate
 2.  Install the project:
 
 ```bash
-pip install .
+pip install .[test]
 ```
 
 ### Running the project
@@ -93,13 +95,3 @@ clang-format -i your_file.cpp
 ```bash
 find . -regex '.*\.\(cpp\|hpp\|cc\|c\|h\)' -exec clang-format -i {} +
 ```
-
-## Compile Fortran code into .so object
-
-After installing f2py, you can run:
-
-```bash
-f2py -c -m myprogram dakota-packages/CONMIN/src/program.f dakota-packages/CONMIN/src/conmin.f
-```
-
-Then remember to move the .so object into src/everest_optimizers
