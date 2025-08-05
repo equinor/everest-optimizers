@@ -296,11 +296,9 @@ def _minimize_optqnips_enhanced(
     # Set search method (Dakota keyword mapping)
     if search_method.lower() == 'trust_region':
         optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustRegion)
-    elif search_method.lower() == 'value_based_line_search':
+    elif search_method.lower() == 'line_search':
         optimizer.setSearchStrategy(pyopttpp.SearchStrategy.LineSearch)
-    elif search_method.lower() == 'gradient_based_line_search':
-        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.LineSearch)  # Same as value-based in OptQNIPS
-    elif search_method.lower() == 'tr_pds':
+    elif search_method.lower() == 'trust_pds':
         optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
     else:
         # Try legacy names for backward compatibility
@@ -311,7 +309,7 @@ def _minimize_optqnips_enhanced(
         elif search_method.lower() == 'trustpds':
             optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
         else:
-            raise ValueError(f"Unknown search method: {search_method}. Valid options: trust_region, value_based_line_search, gradient_based_line_search, tr_pds")
+            raise ValueError(f"Unknown search method: {search_method}. Valid options: trust_region, line_search, trust_pds")
 
     # Set trust region parameters
     optimizer.setTRSize(tr_size)
