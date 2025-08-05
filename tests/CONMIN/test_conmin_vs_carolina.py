@@ -192,7 +192,7 @@ def test_compare_dakota_and_everest_minimizers(x0):
     expected_fun = 0.0
 
     assert np.allclose(everest_result.x, expected_x, atol=1e-3)
-    assert np.isclose(dakota_best_point, expected_x, atol=1e-6)
+    assert np.allclose(dakota_best_point, expected_x, atol=1e-6)
     
     assert np.isclose(everest_result.fun, expected_fun, atol=1e-6)
     assert np.isclose(dakota_best_fun, expected_fun, atol=1e-6)
