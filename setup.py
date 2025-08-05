@@ -116,18 +116,7 @@ class CustomBuildExt(build_ext):
         print("Running standard build_ext...")
         super().run()
 
-
-ext_modules = [
-    Pybind11Extension(
-        "everest_optimizers_helpers",
-        [],
-        language="c++",
-        cxx_std=17,
-    ),
-]
-
 setup(
-    ext_modules=ext_modules,
     cmdclass={"build_ext": CustomBuildExt},
     zip_safe=False,
 )
