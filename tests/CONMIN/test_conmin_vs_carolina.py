@@ -177,7 +177,7 @@ def test_compare_dakota_and_everest_minimizers(x0):
         method="conmin_mfd",
         bounds=[(-2.0, 2.0), (-2.0, 2.0)],
         constraints=constraints,
-        options={"ITMAX": 100},
+        options={"ITMAX": 50},
     )
     assert everest_result.success
 
@@ -192,8 +192,11 @@ def test_compare_dakota_and_everest_minimizers(x0):
     expected_fun = 0.0
 
     assert np.allclose(everest_result.x, expected_x, atol=1e-3)
+    assert np.isclose(dakota_best_point, expected_x, atol=1e-6)
+    
     assert np.isclose(everest_result.fun, expected_fun, atol=1e-6)
     assert np.isclose(dakota_best_fun, expected_fun, atol=1e-6)
+    
     assert np.isclose(dakota_best_fun, everest_result.fun, atol=1e-6)
     
     print("Dakota best point:", dakota_best_point)
