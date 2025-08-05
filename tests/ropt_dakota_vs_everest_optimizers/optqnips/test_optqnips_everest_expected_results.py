@@ -347,7 +347,7 @@ def test_optqnips_search_strategy_comparison():
     bounds = Bounds([-1.0, -1.0], [1.0, 1.0])
     expected_solution = np.array([0.0, 0.0])
     
-    search_strategies = ['trust_region', 'value_based_line_search', 'gradient_based_line_search', 'tr_pds']
+    search_strategies = ['trust_region', 'line_search', 'trust_pds']
     
     for strategy in search_strategies:
         print(f"\nTesting search strategy: {strategy}")

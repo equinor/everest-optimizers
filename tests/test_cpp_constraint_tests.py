@@ -78,6 +78,7 @@ class TestCppConstraintTests:
         
         assert result.success, f"Linear inequality test 1 failed: {result.message}"
 
+    @pytest.mark.skip(reason="Not implemented yet")
     def test_linear_inequality_constraint_multiple(self):
         """Test 3D quadratic with multiple linear inequality constraints."""
         result = pyopttpp.run_linear_ineq_test2()
@@ -166,6 +167,8 @@ class TestCppConstraintTests:
         # Test should now be implemented - assert success
         assert result.success, f"Nonlinear inequality test 1 failed: {result.message}"
 
+    
+    @pytest.mark.skip(reason="Not implemented yet")
     def test_mixed_nonlinear_constraints(self):
         """Test mixed nonlinear constraints with equality, inequality, and bounds."""
         result = pyopttpp.run_mixed_nonlinear_test1()

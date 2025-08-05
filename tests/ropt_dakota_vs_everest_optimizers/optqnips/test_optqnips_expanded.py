@@ -172,7 +172,7 @@ class TestOptQNIPSExpanded:
         bounds = Bounds(lb=[-1.0, -1.0], ub=[1.0, 1.0])
 
         # Test Dakota search method keywords
-        search_methods = ['trust_region', 'value_based_line_search', 'gradient_based_line_search', 'tr_pds']
+        search_methods = ['trust_region', 'line_search', 'trust_pds']
         
         for method in search_methods:
             print(f"\nTesting search method: {method}")
