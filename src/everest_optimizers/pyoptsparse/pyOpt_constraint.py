@@ -72,7 +72,12 @@ class Constraint:
         # All (inequality) constraints get added to
         # "twoSidedConstraints". This will be used in optimizers that
         # can do two-sided constraints properly
-        twoSidedConstraints: Dict[str, List] = {"lower": [], "upper": [], "ind": [], "fact": []}
+        twoSidedConstraints: Dict[str, List] = {
+            "lower": [],
+            "upper": [],
+            "ind": [],
+            "fact": [],
+        }
 
         # All (inequality) constraints are also added to
         # "oneSidedConstraints". These are processed such that the
@@ -82,7 +87,12 @@ class Constraint:
         # defined which is precisely 1.0 or -1.0. The -1.0 appears
         # when a greater-than-constraint is turned into a
         # less-than-constraint.
-        oneSidedConstraints: Dict[str, List] = {"lower": [], "upper": [], "ind": [], "fact": []}
+        oneSidedConstraints: Dict[str, List] = {
+            "lower": [],
+            "upper": [],
+            "ind": [],
+            "fact": [],
+        }
 
         for icon in range(self.ncon):
             # Check for equality constraint:
@@ -204,7 +214,9 @@ class Constraint:
                 try:
                     self.wrt = list(self.wrt)
                 except Exception:
-                    raise TypeError(f"The 'wrt' argument to constraint '{self.name}' must be an iterable list")
+                    raise TypeError(
+                        f"The 'wrt' argument to constraint '{self.name}' must be an iterable list"
+                    )
 
             # We allow 'None' to be in the list...they are null so
             # just pop them out:
@@ -300,7 +312,10 @@ class Constraint:
                 self.jac[dvGroup] = convertToCOO(self.jac[dvGroup])
 
                 # Generically check the shape:
-                if self.jac[dvGroup]["shape"][0] != self.ncon or self.jac[dvGroup]["shape"][1] != ndvs:
+                if (
+                    self.jac[dvGroup]["shape"][0] != self.ncon
+                    or self.jac[dvGroup]["shape"][1] != ndvs
+                ):
                     raise ValueError(
                         f"The supplied Jacobian for dvGroup {dvGroup}' in constraint {self.name}, was the incorrect size. "
                         + f"Expecting a Jacobian of size ({self.ncon}, {ndvs}) but received a Jacobian of size "

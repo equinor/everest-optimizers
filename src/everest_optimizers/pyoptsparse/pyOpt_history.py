@@ -178,7 +178,10 @@ class History:
         for i in range(last, 0, -1):
             key = str(i)
             xuser = self.optProb.processXtoVec(self.db[key]["xuser"])
-            if np.isclose(xuser, x, atol=EPS, rtol=EPS).all() and "funcs" in self.db[key].keys():
+            if (
+                np.isclose(xuser, x, atol=EPS, rtol=EPS).all()
+                and "funcs" in self.db[key].keys()
+            ):
                 callCounter = i
                 break
         return callCounter
@@ -215,7 +218,9 @@ class History:
             if "funcs" in val.keys():
                 self.extraFuncsNames.update(val["funcs"].keys())
         # remove objective and constraint keys
-        self.extraFuncsNames = self.extraFuncsNames.difference(self.conNames).difference(self.objNames)
+        self.extraFuncsNames = self.extraFuncsNames.difference(
+            self.conNames
+        ).difference(self.objNames)
 
         from .__init__ import __version__  # isort: skip
 
@@ -264,7 +269,11 @@ class History:
         if self.flag != "r":
             return
         # we remove linear constraints
-        conNames = [con for con in self.conInfo.keys() if not self.optProb.constraints[con].linear]
+        conNames = [
+            con
+            for con in self.conInfo.keys()
+            if not self.optProb.constraints[con].linear
+        ]
         return copy.deepcopy(conNames)
 
     def getObjNames(self):
@@ -492,7 +501,15 @@ class History:
             return
         return copy.deepcopy(self.callCounters)
 
-    def getValues(self, names=None, callCounters=None, major=True, scale=False, stack=False, allowSens=False):
+    def getValues(
+        self,
+        names=None,
+        callCounters=None,
+        major=True,
+        scale=False,
+        stack=False,
+        allowSens=False,
+    ):
         """
         Parses an existing history file and returns a data dictionary used to post-process optimization results, containing the requested optimization iteration history.
 
@@ -631,7 +648,9 @@ class History:
         self._previousIterCounter = -1
         # loop over call counters, check if each counter is valid, and parse
         for i in callCounters:
-            val = self._readValidCallCounter(i, user_specified_callCounter, allowSens, major)
+            val = self._readValidCallCounter(
+                i, user_specified_callCounter, allowSens, major
+            )
             if val is not None:  # if i is valid
                 conDict, objDict, DVDict = self._processIterDict(val, scale=scale)
                 for name in names:
@@ -660,7 +679,10 @@ class History:
                 data[name] = np.expand_dims(data[name], 1)
 
         # Raise warning for IPOPT's duplicated history
-        if self.db["metadata"]["optimizer"] == "IPOPT" and "iter" not in self.db["0"].keys():
+        if (
+            self.db["metadata"]["optimizer"] == "IPOPT"
+            and "iter" not in self.db["0"].keys()
+        ):
             pyOptSparseWarning(
                 "The optimization history of IPOPT has duplicated entries at every iteration. "
                 + "Fix the history manually, or re-run the optimization with a current version of pyOptSparse to generate a correct history file. "
@@ -718,7 +740,9 @@ class History:
                 # exclude the duplicated history (only when we have "iter" recorded)
                 if "iter" in val.keys():
                     duplicate_flag = val["iter"] == self._previousIterCounter
-                    self._previousIterCounter = val["iter"]  # update iterCounter for next i
+                    self._previousIterCounter = val[
+                        "iter"
+                    ]  # update iterCounter for next i
                     if duplicate_flag and not user_specified_callCounter:
                         # this is a duplicate
                         return None
