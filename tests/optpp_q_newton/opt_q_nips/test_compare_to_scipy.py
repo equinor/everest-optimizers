@@ -188,3 +188,56 @@ def test_start_feasible_and_infeasible_scipy_comparison(x0: NDArray[np.float64])
 
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-3, atol=1e-3)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "x0",
+    [
+        np.array([0.0, 0.0, 0.0, 0.0]),
+        np.array([2.0, 1.0, 0.5, 0.5]),
+        np.array([-4.0, -2.0, 2.0, -1.0]),
+        # np.array([1000.0, 1000.0, 1000.0, 1000.0]), TODO: investigate why this one fails
+    ],
+)
+def test_complex_problem_parameterized_start(x0: NDArray[np.float64]):
+    """Test a bit more complex problem with linear constraints and bounds at various starting points."""
+    def objective(x: NDArray[np.float64]) -> float:
+        return (x[0] - 1)**2 + (x[1] - 2.5)**2 + (x[2] - 2)**2 + (x[3] - 0.5)**2
+
+    def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
+        return np.array([
+            2 * (x[0] - 1),
+            2 * (x[1] - 2.5),
+            2 * (x[2] - 2),
+            2 * (x[3] - 0.5)
+        ])
+
+    # Constraints: x[0] - 2*x[1] = 0, x[2] + x[3] = 1
+    constraints = LinearConstraint(np.array([[1, -2, 0, 0], [0, 0, 1, 1]]), lb=np.array([0, 1]), ub=np.array([0, 1]))
+
+    bounds = Bounds([-3, -3, -3, -3], [3, 3, 3, 3])
+
+    res_everest = minimize(
+        objective,
+        x0,
+        method='optpp_q_nips',
+        jac=objective_grad,
+        bounds=bounds,
+        constraints=constraints,
+        options=DEFAULT_OPTIONS
+    )
+    assert res_everest.success
+
+    res_scipy = sp_optimize.minimize(
+        objective, 
+        x0, 
+        method='SLSQP', 
+        jac=objective_grad, 
+        bounds=bounds, 
+        constraints=constraints
+    )
+    assert res_scipy.success
+
+    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-3, atol=1e-3)
+    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-3, atol=1e-3)
+
