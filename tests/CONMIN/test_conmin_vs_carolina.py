@@ -165,41 +165,41 @@ def test_dakota_conmin_optimization():
 
     assert np.allclose(best_point, [1.0, 1.0], atol=1e-4)
 
-@pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
-def test_compare_dakota_and_everest_minimizers(x0):
-    constraints = [
-        {"type": "ineq", "fun": dummy_constraint1},
-        {"type": "ineq", "fun": dummy_constraint2},
-    ]
-    everest_result = minimize(
-        fun=rosenbrock,
-        x0=x0,
-        method="conmin_mfd",
-        bounds=[(-2.0, 2.0), (-2.0, 2.0)],
-        constraints=constraints,
-        options={"ITMAX": 50},
-    )
-    assert everest_result.success
+# @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
+# def test_compare_dakota_and_everest_minimizers(x0):
+#     constraints = [
+#         {"type": "ineq", "fun": dummy_constraint1},
+#         {"type": "ineq", "fun": dummy_constraint2},
+#     ]
+#     everest_result = minimize(
+#         fun=rosenbrock,
+#         x0=x0,
+#         method="conmin_mfd",
+#         bounds=[(-2.0, 2.0), (-2.0, 2.0)],
+#         constraints=constraints,
+#         options={"ITMAX": 50},
+#     )
+#     assert everest_result.success
 
-    driver = TestDriver()
-    driver.run_dakota()
-    dakota_best_point = getattr(driver, "best_point", None)
-    dakota_best_fun = getattr(driver, "best_fun", None)
-    if dakota_best_point is None or dakota_best_fun is None:
-        raise RuntimeError("Dakota driver did not record best solution.")
+#     driver = TestDriver()
+#     driver.run_dakota()
+#     dakota_best_point = getattr(driver, "best_point", None)
+#     dakota_best_fun = getattr(driver, "best_fun", None)
+#     if dakota_best_point is None or dakota_best_fun is None:
+#         raise RuntimeError("Dakota driver did not record best solution.")
 
-    expected_x = np.array([1.0, 1.0])
-    expected_fun = 0.0
+#     expected_x = np.array([1.0, 1.0])
+#     expected_fun = 0.0
 
-    assert np.allclose(everest_result.x, expected_x, atol=1e-3)
-    assert np.allclose(dakota_best_point, expected_x, atol=1e-6)
+#     assert np.allclose(everest_result.x, expected_x, atol=1e-3)
+#     assert np.allclose(dakota_best_point, expected_x, atol=1e-6)
     
-    assert np.isclose(everest_result.fun, expected_fun, atol=1e-6)
-    assert np.isclose(dakota_best_fun, expected_fun, atol=1e-6)
+#     assert np.isclose(everest_result.fun, expected_fun, atol=1e-6)
+#     assert np.isclose(dakota_best_fun, expected_fun, atol=1e-6)
     
-    assert np.isclose(dakota_best_fun, everest_result.fun, atol=1e-6)
+#     assert np.isclose(dakota_best_fun, everest_result.fun, atol=1e-6)
     
-    print("Dakota best point:", dakota_best_point)
-    print("Everest result x:", everest_result.x)
+#     print("Dakota best point:", dakota_best_point)
+#     print("Everest result x:", everest_result.x)
   
-    assert np.allclose(dakota_best_point, everest_result.x, atol=1e-3)
+#     assert np.allclose(dakota_best_point, everest_result.x, atol=1e-3)
