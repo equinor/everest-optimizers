@@ -79,8 +79,11 @@ def test_linear_mixed_constraints():
     )
     assert res_everest.success
 
+    # Separate constraints for scipy to avoid warning
+    eq_constraints = LinearConstraint(A[0, :], lb[0], ub[0])
+    ineq_constraints = LinearConstraint(A[1, :], lb[1], ub[1])
     res_scipy = sp_optimize.minimize(
-        objective, x0, method='SLSQP', jac=objective_grad, constraints=constraints
+        objective, x0, method='SLSQP', jac=objective_grad, constraints=[eq_constraints, ineq_constraints]
     )
     assert res_scipy.success
 
