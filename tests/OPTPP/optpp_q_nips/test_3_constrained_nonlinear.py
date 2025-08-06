@@ -3,7 +3,7 @@
 Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from everest_optimizers.minimize().
 In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 
-TODO: opt_q_nips needs to be implemented to handle the nonlinearly constrained problems.
+TODO: optpp_q_nips needs to be implemented to handle the nonlinearly constrained problems.
 """
 
 from __future__ import annotations
