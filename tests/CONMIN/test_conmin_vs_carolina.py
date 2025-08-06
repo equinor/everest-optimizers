@@ -131,7 +131,7 @@ def dummy_constraint1(x):
 def dummy_constraint2(x):
     return -x[0] - x[1] - 10  # <= 0
 
-@pytest.mark.skipif(platform.system() == "Darwin", reason="Doesn't work on macOS")
+@pytest.mark.skipif(platform.system() == "darwin", reason="Doesn't work on macOS")
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
 def test_rosenbrock_with_everest_minimize(x0):
     constraints = [
