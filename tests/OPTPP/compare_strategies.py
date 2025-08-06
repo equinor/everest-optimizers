@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tests/OptQNewton/compare_strategies.py
 """
-Compare the performance of different search strategies for OptQNewton.
+Plot different search paths using different search strategies with method OptQNewton.
 """
 
 import sys
@@ -266,7 +266,7 @@ def compare_strategies():
         plt.ylabel("x2")
         plt.legend()
         plt.grid(True)
-        plt.savefig(f"comparison_from_start_{i}.png")
+        # plt.savefig(f"comparison_from_start_{i}.png")
         plt.show()
         plt.close()
 

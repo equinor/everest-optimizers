@@ -17,7 +17,7 @@ import numpy as np
 
 # Add the pyopttpp path
 pyopttpp_path = os.path.join(
-    os.path.dirname(__file__), "..", "dakota-packages", "OPTPP", "build", "python"
+    os.path.dirname(__file__), "..", "..", "dakota-packages", "OPTPP", "build", "python"
 )
 if pyopttpp_path not in sys.path:
     sys.path.insert(0, pyopttpp_path)
