@@ -1,9 +1,7 @@
 """Test suite for everest_optimizers.minimize() with method='optpp_constr_q_newton'
 
-Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from everest_optimizers.minimize().
-In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
-
-The tests here are intended to fail since the method optpp_constr_q_newton requires bounds or constraints.
+Testing the Constrained Quasi-Newton Solver method from everest_optimizers.minimize().
+In Dakota OPTPP this optimization algorithm is referred to as OptConstrQNewton.
 """
 
 
@@ -29,7 +27,6 @@ DEFAULT_OPTIONS = {
     'gradient_tolerance': 1e-6,
 }
 
-@pytest.mark.xfail(reason="optpp_constr_q_newton requires bounds or constraints")
 def test_rosenbrock_simple():
     def rosenbrock_obj(x: NDArray[np.float64]) -> float:
         return 100 * (x[1] - x[0]**2)**2 + (1 - x[0])**2
@@ -41,43 +38,11 @@ def test_rosenbrock_simple():
         return grad
 
     x0 = np.array([0.0, 0.0])
-    result = minimize(
-        rosenbrock_obj,
-        x0,
-        method='optpp_constr_q_newton',
-        jac=rosenbrock_grad,
-        options=DEFAULT_OPTIONS
-    )
-    assert result.success
-    np.testing.assert_allclose(result.x, [1.0, 1.0], rtol=1e-4, atol=1e-4)
-    assert result.fun < 1e-8
-
-@pytest.mark.xfail(reason="optpp_constr_q_newton requires bounds or constraints")
-@pytest.mark.parametrize(
-    "start_point",
-    [
-        np.array([10.0, 10.0]),
-        np.array([-5.0, 8.0]),
-        np.array([0.1, 0.9]),
-        np.array([-2.0, -2.0]),
-    ],
-)
-def test_quadratic_from_multiple_starts(start_point: NDArray[np.float64]):
-    def objective(x: NDArray[np.float64]) -> float:
-        return (x[0] - 2.0)**2 + (x[1] + 1.0)**2
-
-    def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
-        return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
-
-    result = minimize(
-        objective,
-        start_point,
-        method='optpp_constr_q_newton',
-        jac=objective_grad,
-        options=DEFAULT_OPTIONS
-    )
-    assert result.success
-    expected_solution = np.array([2.0, -1.0])
-    np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
-    assert result.fun < 1e-8
-
+    with pytest.raises(ValueError, match="Either bounds or constraints must be provided for constrained optimization"):
+        minimize(
+            rosenbrock_obj,
+            x0,
+            method='optpp_constr_q_newton',
+            jac=rosenbrock_grad,
+            options=DEFAULT_OPTIONS
+        )

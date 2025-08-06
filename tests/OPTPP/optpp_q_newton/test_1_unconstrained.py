@@ -2,8 +2,6 @@
 
 Testing the OptQNewton (Quasi-Newton Solver) method from everest_optimizers.minimize().
 In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
-
-The tests here are intended to fail since the method optpp_q_newton is for purely unconstrained optimization problems.
 """
 
 

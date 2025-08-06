@@ -1,9 +1,7 @@
-"""Tests for nonlinearly constrained problems using everest_optimizers.minimize() with method='optpp_q_newton'
+"""Test suite for everest_optimizers.minimize() with method='optpp_q_newton'
 
 Testing the OptQNewton (Quasi-Newton Solver) method from everest_optimizers.minimize().
 In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
-
-The tests here are intended to fail since the method optpp_q_newton is for purely unconstrained optimization problems.
 """
 
 from __future__ import annotations
@@ -36,7 +34,6 @@ def objective(x):
 def objective_grad(x):
     return np.array([2*(x[0] - 2), 2*(x[1] - 2)])
 
-@pytest.mark.xfail(reason="optpp_q_newton does not support non-linear equality constraints")
 def test_nonlinear_equality_constraint():
     def nonlinear_constraint(x):
         return np.array([x[0]**2 + x[1]**2 - 4.0])
@@ -49,20 +46,16 @@ def test_nonlinear_equality_constraint():
         nonlinear_constraint, 0.0, 0.0, jac=nonlinear_constraint_jac
     )
 
-    result = minimize(
-        objective,
-        x0,
-        method='optpp_q_newton',
-        jac=objective_grad,
-        constraints=constraint,
-        options=DEFAULT_OPTIONS
-    )
-    if result.success:
-        constraint_value = result.x[0]**2 + result.x[1]**2
-        np.testing.assert_allclose(constraint_value, 4.0, rtol=1e-3, atol=1e-3)
-        np.testing.assert_allclose(result.fun, 4.0, rtol=1e-2, atol=1e-2)
+    with pytest.raises(NotImplementedError, match="optpp_q_newton does not support constraints"):
+        minimize(
+            objective,
+            x0,
+            method='optpp_q_newton',
+            jac=objective_grad,
+            constraints=constraint,
+            options=DEFAULT_OPTIONS
+        )
     
-@pytest.mark.xfail(reason="optpp_q_newton does not support non-linear inequality constraints")
 def test_nonlinear_inequality_constraint():
     def nonlinear_constraint(x):
         return np.array([1.0 - x[0]**2 - x[1]**2])
@@ -74,18 +67,12 @@ def test_nonlinear_inequality_constraint():
     constraint = NonlinearConstraint(
         nonlinear_constraint, 0.0, np.inf, jac=nonlinear_constraint_jac
     )
-    result = minimize(
-        objective,
-        x0,
-        method='optpp_q_newton',
-        jac=objective_grad,
-        constraints=constraint,
-        options=DEFAULT_OPTIONS
-    )
-    if result.success:
-        constraint_value = result.x[0]**2 + result.x[1]**2
-        assert constraint_value <= 1.0 + 1e-4
-        expected_direction = np.array([2.0, 2.0]) / np.linalg.norm([2.0, 2.0])
-        np.testing.assert_allclose(
-            result.x / np.linalg.norm(result.x), expected_direction, rtol=1e-1, atol=1e-1
+    with pytest.raises(NotImplementedError, match="optpp_q_newton does not support constraints"):
+        minimize(
+            objective,
+            x0,
+            method='optpp_q_newton',
+            jac=objective_grad,
+            constraints=constraint,
+            options=DEFAULT_OPTIONS
         )

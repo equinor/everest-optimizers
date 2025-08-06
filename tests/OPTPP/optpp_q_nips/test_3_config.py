@@ -1,7 +1,7 @@
-"""Tests for expected solutions using everest_optimizers.minimize() with method='optpp_q_nips'
+"""Test suite for everest_optimizers.minimize() with method='optpp_q_nips'
 
-This test suite verifies that the different configuration options for the
-'optpp_q_nips' solver are correctly handled.
+Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from everest_optimizers.minimize().
+In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 """
 
 from __future__ import annotations

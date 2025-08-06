@@ -184,7 +184,7 @@ def _minimize_optqnewton(
         raise NotImplementedError("optpp_q_newton does not support bounds")
     
     if constraints is not None:
-        raise NotImplementedError("optpp_q_newton does not support constraints. Use method='optpp_constr_q_newton' instead.")
+        raise NotImplementedError("optpp_q_newton does not support constraints")
     
     if callback is not None:
         raise NotImplementedError("Callback function not implemented for optpp_q_newton")

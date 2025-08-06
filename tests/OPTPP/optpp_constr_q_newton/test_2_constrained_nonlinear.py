@@ -1,7 +1,7 @@
-"""Tests for nonlinearly constrained problems using everest_optimizers.minimize() with method='optpp_constr_q_newton'
+"""Test suite for everest_optimizers.minimize() with method='optpp_constr_q_newton'
 
-Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from everest_optimizers.minimize().
-In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
+Testing the Constrained Quasi-Newton Solver method from everest_optimizers.minimize().
+In Dakota OPTPP this optimization algorithm is referred to as OptConstrQNewton.
 """
 
 from __future__ import annotations

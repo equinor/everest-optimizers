@@ -1,7 +1,7 @@
-"""Tests for expected solutions using everest_optimizers.minimize() with method='optpp_q_newton'
+"""Test suite for everest_optimizers.minimize() with method='optpp_q_newton'
 
-This test suite verifies that the different configuration options for the
-'optpp_q_newton' solver are correctly handled.
+Testing the OptQNewton (Quasi-Newton Solver) method from everest_optimizers.minimize().
+In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
 """
 
 from __future__ import annotations

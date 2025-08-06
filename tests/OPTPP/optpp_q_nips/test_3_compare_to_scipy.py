@@ -115,25 +115,16 @@ def test_bounds_and_linear_inequality():
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.xfail(reason="optpp_q_nips requires bounds or constraints")
 def test_unconstrained():
     x0 = np.array([0.0, 0.0])
-    res_everest = minimize(
-        objective,
-        x0,
-        method='optpp_q_nips',
-        jac=objective_grad,
-        options=DEFAULT_OPTIONS
-    )
-    assert not res_everest.success
-
-    res_scipy = sp_optimize.minimize(
-        objective, x0, method='BFGS', jac=objective_grad
-    )
-    assert res_scipy.success
-
-    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
-    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
+    with pytest.raises(ValueError, match="Either bounds or constraints must be provided for OptQNIPS"):
+        minimize(
+            objective,
+            x0,
+            method='optpp_q_nips',
+            jac=objective_grad,
+            options=DEFAULT_OPTIONS
+        )
 
 
 def test_bounds():
