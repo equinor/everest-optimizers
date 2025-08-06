@@ -131,7 +131,6 @@ def dummy_constraint1(x):
 def dummy_constraint2(x):
     return -x[0] - x[1] - 10  # <= 0
 
-@pytest.mark.skipif(platform.system() == "darwin", reason="Doesn't work on macOS")
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
 def test_rosenbrock_with_everest_minimize(x0):
     constraints = [
@@ -154,7 +153,7 @@ def test_rosenbrock_with_everest_minimize(x0):
     assert np.allclose(result.x, expected_x, atol=1e-3)
     assert np.isclose(result.fun, expected_fun, atol=1e-6)
 
-
+@pytest.mark.skipif(platform.system() == "darwin", reason="Doesn't work on macOS")
 def test_dakota_conmin_optimization():
     driver = TestDriver()
     driver.run_dakota()
@@ -166,6 +165,7 @@ def test_dakota_conmin_optimization():
     assert np.allclose(best_point, [1.0, 1.0], atol=1e-4)
 
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
+@pytest.mark.skipif(platform.system() == "darwin", reason="Doesn't work on macOS")
 def test_compare_dakota_and_everest_minimizers(x0):
     constraints = [
         {"type": "ineq", "fun": dummy_constraint1},
