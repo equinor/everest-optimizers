@@ -26,7 +26,7 @@ from everest_optimizers.minimize import minimize
 
 class TestDriver(DakotaBase):
     __test__ = False
-    
+
     def __init__(self, force_exception=False):
         dakota_input = DakotaInput(
             environment=[
@@ -43,7 +43,7 @@ class TestDriver(DakotaBase):
                 "analytic_gradients",
                 "analytic_hessians",
             ],
-            constraints=[]
+            constraints=[],
         )
         super(TestDriver, self).__init__(dakota_input)
 
@@ -106,7 +106,7 @@ class TestDriver(DakotaBase):
                 fx = x[1] - 3 * x[0] * x[0]
                 h = [[[-400 * fx + 2, -400 * x[0]], [-400 * x[0], 200]]]
                 retval["fnHessians"] = array(h)
-                
+
             retval["cons"] = array([c1, c2])
             if self.force_exception:
                 raise RuntimeError("Forced exception")
@@ -120,7 +120,7 @@ class TestDriver(DakotaBase):
 
 
 def rosenbrock(x):
-    return 100 * (x[1] - x[0]**2)**2 + (1 - x[0])**2
+    return 100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
 
 
 def dummy_constraint1(x):
@@ -129,6 +129,7 @@ def dummy_constraint1(x):
 
 def dummy_constraint2(x):
     return -x[0] - x[1] - 10  # <= 0
+
 
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
 def test_rosenbrock_with_everest_minimize(x0):
@@ -152,6 +153,7 @@ def test_rosenbrock_with_everest_minimize(x0):
     assert np.allclose(result.x, expected_x, atol=1e-3)
     assert np.isclose(result.fun, expected_fun, atol=1e-6)
 
+
 @pytest.mark.skipif(sys.platform == "darwin", reason="Doesn't work on macOS")
 def test_dakota_conmin_optimization():
     driver = TestDriver()
@@ -159,9 +161,12 @@ def test_dakota_conmin_optimization():
 
     best_point = getattr(driver, "best_point", None)
     if best_point is None:
-        raise RuntimeError("No best_point attribute found on driver - please add code to save the solution.")
+        raise RuntimeError(
+            "No best_point attribute found on driver - please add code to save the solution."
+        )
 
     assert np.allclose(best_point, [1.0, 1.0], atol=1e-4)
+
 
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
 @pytest.mark.skipif(sys.platform == "darwin", reason="Doesn't work on macOS")
@@ -192,13 +197,13 @@ def test_compare_dakota_and_everest_minimizers(x0):
 
     assert np.allclose(everest_result.x, expected_x, atol=1e-3)
     assert np.allclose(dakota_best_point, expected_x, atol=1e-6)
-    
+
     assert np.isclose(everest_result.fun, expected_fun, atol=1e-6)
     assert np.isclose(dakota_best_fun, expected_fun, atol=1e-6)
-    
+
     assert np.isclose(dakota_best_fun, everest_result.fun, atol=1e-6)
-    
+
     print("Dakota best point:", dakota_best_point)
     print("Everest result x:", everest_result.x)
-  
+
     assert np.allclose(dakota_best_point, everest_result.x, atol=1e-3)
