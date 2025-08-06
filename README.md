@@ -49,6 +49,12 @@ pytest path/to/your_file.py
 pytest path/to/your_file.py::name_of_test
 ```
 
+If you want to add print statements / see the print statements in the terminal, you should run:
+
+```bash
+pytest tests -s
+```
+
 ### Linting and Formatting
 
 Python:
