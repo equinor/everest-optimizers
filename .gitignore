@@ -38,4 +38,4 @@ muq2/MUQ/config.h
 # Workflow
 docs/llm/
 myscheme
-
+pytest_output.txt

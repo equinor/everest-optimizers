@@ -4,6 +4,12 @@ find_package(pybind11 REQUIRED)
 
 pybind11_add_module(pyopttpp
   pyopttpp.cpp
+  ../tests/constraint_tests.C
+)
+
+target_include_directories(pyopttpp PRIVATE
+  ../tests
+  ../include
 )
 
 target_link_libraries(pyopttpp PRIVATE

@@ -276,6 +276,643 @@ def _minimize_optqnewton(
             nit=0,
             success=False,
             status=1,
-            message=f"Optimization failed: {str(e)}",
-            jac=None,
+            message=f'Optimization failed: {str(e)}',
+            jac=None
+        )
+
+
+def _minimize_optqnips(
+    fun: Callable,
+    x0: np.ndarray,
+    args: tuple = (),
+    method: str = 'optpp_q_nips',
+    jac: Optional[Callable] = None,
+    hess: Optional[Callable] = None,
+    hessp: Optional[Callable] = None,
+    bounds: Any = None,
+    constraints: Any = None,
+    tol: Optional[float] = None,
+    callback: Optional[Callable] = None,
+    options: Optional[Dict[str, Any]] = None
+) -> OptimizeResult:
+    """
+    Minimize a scalar function with constraints using OptQNIPS (Quasi-Newton Interior-Point Solver).
+    
+    OptQNIPS is an interior-point method that uses merit functions to handle constraints.
+    It supports the same constraint types as OptConstrQNewton but uses a different algorithm
+    approach based on interior-point methods with merit functions.
+    """
+    # Import pyopttpp
+    pyopttpp = _import_pyopttpp()
+
+    # Convert inputs
+    x0 = np.asarray(x0, dtype=float)
+    if x0.ndim != 1:
+        raise ValueError("x0 must be 1-dimensional")
+
+    if bounds is None and constraints is None:
+        raise ValueError("Either bounds or constraints must be provided for OptQNIPS")
+
+    # Set up options
+    if options is None:
+        options = {}
+
+    search_strategy = options.get('search_strategy', 'TrustRegion')
+    tr_size = options.get('tr_size', 100.0)
+    debug = options.get('debug', False)
+    output_file = options.get('output_file', None)
+    
+    # OptQNIPS-specific options
+    mu = options.get('mu', 0.1)  # perturbation parameter
+    centering_param = options.get('centering_parameter', 0.1)  # centering parameter (sigma)
+    step_length_to_bdry = options.get('step_length_to_bdry', 0.95)  # percentage to boundary (tau)
+
+    # The problem definition doesn't need to know about constraints, as they are handled by the C++ part.
+    problem = _OptQNewtonProblem(fun, x0, args, jac, pyopttpp)
+
+    # Process constraints (same logic as OptConstrQNewton)
+    constraint_list = []
+    if bounds is not None:
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        bound_constraint = pyopttpp.BoundConstraint(len(x0), pyopttpp.SerialDenseVector(lb), pyopttpp.SerialDenseVector(ub))
+        constraint_list.append(bound_constraint)
+
+    if constraints is not None:
+        # Handle various constraint types
+        if hasattr(constraints, '__iter__') and not isinstance(constraints, dict):
+            # List of constraints
+            for constraint in constraints:
+                if hasattr(constraint, 'A') and hasattr(constraint, 'lb') and hasattr(constraint, 'ub'):
+                    # LinearConstraint from scipy
+                    A_matrix = pyopttpp.SerialDenseMatrix(constraint.A)
+                    if np.allclose(constraint.lb, constraint.ub):
+                        # Equality constraint: lb == ub
+                        linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                        constraint_list.append(linear_eq)
+                    else:
+                        # Inequality constraint: lb <= Ax <= ub
+                        # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                        if np.isfinite(constraint.lb).all() and np.isinf(constraint.ub).all():
+                            # Convert Ax >= lb to Ax - lb >= 0
+                            linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                            constraint_list.append(linear_ineq)
+                        else:
+                            raise NotImplementedError(
+                                "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                                "(Ax >= lb with infinite upper bounds) are currently supported."
+                            )
+                else:
+                    raise ValueError(f"Unknown constraint type: {type(constraint)}")
+        else:
+            # Single constraint
+            if hasattr(constraints, 'A') and hasattr(constraints, 'lb') and hasattr(constraints, 'ub'):
+                # LinearConstraint from scipy
+                A_matrix = pyopttpp.SerialDenseMatrix(constraints.A)
+                if np.allclose(constraints.lb, constraints.ub):
+                    # Equality constraint: lb == ub
+                    linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                    constraint_list.append(linear_eq)
+                else:
+                    # Inequality constraint: lb <= Ax <= ub  
+                    # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                    if np.isfinite(constraints.lb).all() and np.isinf(constraints.ub).all():
+                        # Convert Ax >= lb to Ax - lb >= 0
+                        linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                        constraint_list.append(linear_ineq)
+                    else:
+                        raise NotImplementedError(
+                            "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                            "(Ax >= lb with infinite upper bounds) are currently supported."
+                        )
+            else:
+                raise ValueError(f"Unknown constraint type: {type(constraints)}")
+
+    if not constraint_list:
+        raise ValueError("No valid constraints were processed.")
+
+    # Create C++ compound constraint object
+    if len(constraint_list) == 1 and hasattr(constraint_list[0], '__class__') and 'BoundConstraint' in str(constraint_list[0].__class__):
+        # Use the bounds-only helper for backwards compatibility
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+    else:
+        # For general constraints, use the constraint list approach
+        try:
+            # Wrap each constraint in a Constraint handle
+            wrapped_constraints = []
+            for constr in constraint_list:
+                wrapped_constraint = pyopttpp.create_constraint(constr)
+                wrapped_constraints.append(wrapped_constraint)
+            cc_ptr = pyopttpp.create_compound_constraint(wrapped_constraints)
+        except (AttributeError, TypeError) as e:
+            # Fall back to bounds-only if LinearConstraint classes are not available
+            if bounds is not None:
+                lb = np.asarray(bounds.lb, dtype=float)
+                ub = np.asarray(bounds.ub, dtype=float)
+                inf = 1.0e30
+                lb[np.isneginf(lb)] = -inf
+                ub[np.isposinf(ub)] = inf
+                cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+            else:
+                raise NotImplementedError("Linear constraints are not available in the current build. Only bounds constraints are supported.") from e
+    
+    # Attach constraints to the NLF1 problem
+    problem.nlf1_problem.setConstraints(cc_ptr)
+    
+    # Create OptQNIPS optimizer
+    optimizer = pyopttpp.OptQNIPS(problem.nlf1_problem)
+
+    # Set search strategy
+    if search_strategy == 'TrustRegion':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustRegion)
+    elif search_strategy == 'LineSearch':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.LineSearch)
+    elif search_strategy == 'TrustPDS':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
+    else:
+        raise ValueError(f"Unknown search strategy: {search_strategy}")
+
+    # Set trust region size
+    optimizer.setTRSize(tr_size)
+
+    # Set OptQNIPS-specific parameters
+    optimizer.setMu(mu)
+    optimizer.setCenteringParameter(centering_param)
+    optimizer.setStepLengthToBdry(step_length_to_bdry)
+
+    # Set debug mode
+    if debug:
+        optimizer.setDebug()
+
+    # Set output file
+    if output_file:
+        optimizer.setOutputFile(output_file, 0)
+
+    # Run optimization
+    try:
+        optimizer.optimize()
+        solution_vector = problem.nlf1_problem.getXc()
+        x_final = solution_vector.to_numpy()
+        # Ensure caller sees feasible result if bounds are provided
+        if bounds is not None:
+            x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
+        f_final = problem.nlf1_problem.getF()
+        result = OptimizeResult(
+            x=x_final,
+            fun=f_final,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=True,
+            status=0,
+            message='Optimization terminated successfully',
+            jac=problem.current_g if problem.current_g is not None else None
+        )
+        optimizer.cleanup()
+        return result
+    except Exception as e:
+        optimizer.cleanup()
+        return OptimizeResult(
+            x=x0,
+            fun=None,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=False,
+            status=1,
+            message=f'OptQNIPS optimization failed: {str(e)}',
+            jac=None
+        )
+
+
+def _create_nlf2_problem(fun: Callable, x0: np.ndarray, args: tuple,
+                          jac: Optional[Callable], hess: Optional[Callable],
+                          hessp: Optional[Callable],
+                          bounds: Any, constraints: Any,
+                          pyopttpp_module) -> Any:
+    """Create the NLF2 problem for OPTPP (second derivatives)."""
+    raise NotImplementedError("NLF2 problem creation is not implemented yet.")
+
+
+def _minimize_optconstrqnewton(
+    fun: Callable,
+    x0: np.ndarray,
+    args: tuple = (),
+    method: str = 'optpp_constr_q_newton',
+    jac: Optional[Callable] = None,
+    hess: Optional[Callable] = None,
+    hessp: Optional[Callable] = None,
+    bounds: Any = None,
+    constraints: Any = None,
+    tol: Optional[float] = None,
+    callback: Optional[Callable] = None,
+    options: Optional[Dict[str, Any]] = None
+) -> OptimizeResult:
+    """
+    Minimize a scalar function with constraints using OptConstrQNewton.
+    """
+    # Import pyopttpp
+    pyopttpp = _import_pyopttpp()
+
+    # Convert inputs
+    x0 = np.asarray(x0, dtype=float)
+    if x0.ndim != 1:
+        raise ValueError("x0 must be 1-dimensional")
+
+    if bounds is None and constraints is None:
+        raise ValueError("Either bounds or constraints must be provided for constrained optimization")
+
+    # Set up options
+    if options is None:
+        options = {}
+
+    search_strategy = options.get('search_strategy', 'TrustRegion')
+    tr_size = options.get('tr_size', 100.0)
+    debug = options.get('debug', False)
+    output_file = options.get('output_file', None)
+
+    # The problem definition doesn't need to know about constraints, as they are handled by the C++ part.
+    problem = _OptQNewtonProblem(fun, x0, args, jac, pyopttpp)
+
+    # Process constraints
+    constraint_list = []
+    if bounds is not None:
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        bound_constraint = pyopttpp.BoundConstraint(len(x0), pyopttpp.SerialDenseVector(lb), pyopttpp.SerialDenseVector(ub))
+        constraint_list.append(bound_constraint)
+
+    if constraints is not None:
+        # Handle various constraint types
+        if hasattr(constraints, '__iter__') and not isinstance(constraints, dict):
+            # List of constraints
+            for constraint in constraints:
+                if hasattr(constraint, 'A') and hasattr(constraint, 'lb') and hasattr(constraint, 'ub'):
+                    # LinearConstraint from scipy
+                    A_matrix = pyopttpp.SerialDenseMatrix(constraint.A)
+                    if np.allclose(constraint.lb, constraint.ub):
+                        # Equality constraint: lb == ub
+                        linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                        constraint_list.append(linear_eq)
+                    else:
+                        # Inequality constraint: lb <= Ax <= ub
+                        # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                        if np.isfinite(constraint.lb).all() and np.isinf(constraint.ub).all():
+                            # Convert Ax >= lb to Ax - lb >= 0
+                            linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                            constraint_list.append(linear_ineq)
+                        else:
+                            raise NotImplementedError(
+                                "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                                "(Ax >= lb with infinite upper bounds) are currently supported."
+                            )
+                else:
+                    raise ValueError(f"Unknown constraint type: {type(constraint)}")
+        else:
+            # Single constraint
+            if hasattr(constraints, 'A') and hasattr(constraints, 'lb') and hasattr(constraints, 'ub'):
+                # LinearConstraint from scipy
+                A_matrix = pyopttpp.SerialDenseMatrix(constraints.A)
+                if np.allclose(constraints.lb, constraints.ub):
+                    # Equality constraint: lb == ub
+                    linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                    constraint_list.append(linear_eq)
+                else:
+                    # Inequality constraint: lb <= Ax <= ub  
+                    # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                    if np.isfinite(constraints.lb).all() and np.isinf(constraints.ub).all():
+                        # Convert Ax >= lb to Ax - lb >= 0
+                        linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                        constraint_list.append(linear_ineq)
+                    else:
+                        raise NotImplementedError(
+                            "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                            "(Ax >= lb with infinite upper bounds) are currently supported."
+                        )
+            else:
+                raise ValueError(f"Unknown constraint type: {type(constraints)}")
+
+    if not constraint_list:
+        raise ValueError("No valid constraints were processed.")
+
+    # Create C++ compound constraint object
+    if len(constraint_list) == 1 and hasattr(constraint_list[0], '__class__') and 'BoundConstraint' in str(constraint_list[0].__class__):
+        # Use the bounds-only helper for backwards compatibility
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+    else:
+        # For general constraints, use the constraint list approach
+        try:
+            # Wrap each constraint in a Constraint handle
+            wrapped_constraints = []
+            for constr in constraint_list:
+                wrapped_constraint = pyopttpp.create_constraint(constr)
+                wrapped_constraints.append(wrapped_constraint)
+            cc_ptr = pyopttpp.create_compound_constraint(wrapped_constraints)
+        except (AttributeError, TypeError) as e:
+            # Fall back to bounds-only if LinearConstraint classes are not available
+            if bounds is not None:
+                lb = np.asarray(bounds.lb, dtype=float)
+                ub = np.asarray(bounds.ub, dtype=float)
+                inf = 1.0e30
+                lb[np.isneginf(lb)] = -inf
+                ub[np.isposinf(ub)] = inf
+                cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+            else:
+                raise NotImplementedError("Linear constraints are not available in the current build. Only bounds constraints are supported.") from e
+    
+    # Attach constraints to the NLF1 problem
+    problem.nlf1_problem.setConstraints(cc_ptr)
+    optimizer = pyopttpp.OptConstrQNewton(problem.nlf1_problem)
+
+
+
+    # Set search strategy
+    if search_strategy == 'TrustRegion':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustRegion)
+    elif search_strategy == 'LineSearch':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.LineSearch)
+    elif search_strategy == 'TrustPDS':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
+    else:
+        raise ValueError(f"Unknown search strategy: {search_strategy}")
+
+    # Set trust region size
+    optimizer.setTRSize(tr_size)
+
+    # Set debug mode
+    if debug:
+        optimizer.setDebug()
+
+    # Set output file
+    if output_file:
+        optimizer.setOutputFile(output_file, 0)
+
+    # Run optimization
+    try:
+        optimizer.optimize()
+        solution_vector = problem.nlf1_problem.getXc()
+        x_final = solution_vector.to_numpy()
+        # Ensure caller sees feasible result if bounds are provided
+        if bounds is not None:
+            x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
+        f_final = problem.nlf1_problem.getF()
+        result = OptimizeResult(
+            x=x_final,
+            fun=f_final,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=True,
+            status=0,
+            message='Optimization terminated successfully',
+            jac=problem.current_g if problem.current_g is not None else None
+        )
+        optimizer.cleanup()
+        return result
+    except Exception as e:
+        optimizer.cleanup()
+        return OptimizeResult(
+            x=x0,
+            fun=None,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=False,
+            status=1,
+            message=f'Optimization failed: {str(e)}',
+            jac=None
+        )
+
+
+def _minimize_optqnips(
+    fun: Callable,
+    x0: np.ndarray,
+    args: tuple = (),
+    method: str = 'optpp_q_nips',
+    jac: Optional[Callable] = None,
+    hess: Optional[Callable] = None,
+    hessp: Optional[Callable] = None,
+    bounds: Any = None,
+    constraints: Any = None,
+    tol: Optional[float] = None,
+    callback: Optional[Callable] = None,
+    options: Optional[Dict[str, Any]] = None
+) -> OptimizeResult:
+    """
+    Minimize a scalar function with constraints using OptQNIPS (Quasi-Newton Interior-Point Solver).
+    
+    OptQNIPS is an interior-point method that uses merit functions to handle constraints.
+    It supports the same constraint types as OptConstrQNewton but uses a different algorithm
+    approach based on interior-point methods with merit functions.
+    """
+    # Import pyopttpp
+    pyopttpp = _import_pyopttpp()
+
+    # Convert inputs
+    x0 = np.asarray(x0, dtype=float)
+    if x0.ndim != 1:
+        raise ValueError("x0 must be 1-dimensional")
+
+    if bounds is None and constraints is None:
+        raise ValueError("Either bounds or constraints must be provided for OptQNIPS")
+
+    # Set up options
+    if options is None:
+        options = {}
+
+    search_strategy = options.get('search_strategy', 'TrustRegion')
+    tr_size = options.get('tr_size', 100.0)
+    debug = options.get('debug', False)
+    output_file = options.get('output_file', None)
+    
+    # OptQNIPS-specific options
+    mu = options.get('mu', 0.1)  # perturbation parameter
+    centering_param = options.get('centering_parameter', 0.1)  # centering parameter (sigma)
+    step_length_to_bdry = options.get('step_length_to_bdry', 0.95)  # percentage to boundary (tau)
+
+    # The problem definition doesn't need to know about constraints, as they are handled by the C++ part.
+    problem = _OptQNewtonProblem(fun, x0, args, jac, pyopttpp)
+
+    # Process constraints (same logic as OptConstrQNewton)
+    constraint_list = []
+    if bounds is not None:
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        bound_constraint = pyopttpp.BoundConstraint(len(x0), pyopttpp.SerialDenseVector(lb), pyopttpp.SerialDenseVector(ub))
+        constraint_list.append(bound_constraint)
+
+    if constraints is not None:
+        # Handle various constraint types
+        if hasattr(constraints, '__iter__') and not isinstance(constraints, dict):
+            # List of constraints
+            for constraint in constraints:
+                if hasattr(constraint, 'A') and hasattr(constraint, 'lb') and hasattr(constraint, 'ub'):
+                    # LinearConstraint from scipy
+                    A_matrix = pyopttpp.SerialDenseMatrix(constraint.A)
+                    if np.allclose(constraint.lb, constraint.ub):
+                        # Equality constraint: lb == ub
+                        linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                        constraint_list.append(linear_eq)
+                    else:
+                        # Inequality constraint: lb <= Ax <= ub
+                        # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                        if np.isfinite(constraint.lb).all() and np.isinf(constraint.ub).all():
+                            # Convert Ax >= lb to Ax - lb >= 0
+                            linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraint.lb))
+                            constraint_list.append(linear_ineq)
+                        else:
+                            raise NotImplementedError(
+                                "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                                "(Ax >= lb with infinite upper bounds) are currently supported."
+                            )
+                else:
+                    raise ValueError(f"Unknown constraint type: {type(constraint)}")
+        else:
+            # Single constraint
+            if hasattr(constraints, 'A') and hasattr(constraints, 'lb') and hasattr(constraints, 'ub'):
+                # LinearConstraint from scipy
+                A_matrix = pyopttpp.SerialDenseMatrix(constraints.A)
+                if np.allclose(constraints.lb, constraints.ub):
+                    # Equality constraint: lb == ub
+                    linear_eq = pyopttpp.LinearEquation(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                    constraint_list.append(linear_eq)
+                else:
+                    # Inequality constraint: lb <= Ax <= ub  
+                    # For now, only handle Ax >= lb case (lb finite, ub infinite)
+                    if np.isfinite(constraints.lb).all() and np.isinf(constraints.ub).all():
+                        # Convert Ax >= lb to Ax - lb >= 0
+                        linear_ineq = pyopttpp.LinearInequality(A_matrix, pyopttpp.SerialDenseVector(constraints.lb))
+                        constraint_list.append(linear_ineq)
+                    else:
+                        raise NotImplementedError(
+                            "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                            "(Ax >= lb with infinite upper bounds) are currently supported."
+                        )
+            else:
+                raise ValueError(f"Unknown constraint type: {type(constraints)}")
+
+    if not constraint_list:
+        raise ValueError("No valid constraints were processed.")
+
+    # Create C++ compound constraint object
+    if len(constraint_list) == 1 and hasattr(constraint_list[0], '__class__') and 'BoundConstraint' in str(constraint_list[0].__class__):
+        # Use the bounds-only helper for backwards compatibility
+        lb = np.asarray(bounds.lb, dtype=float)
+        ub = np.asarray(bounds.ub, dtype=float)
+        # OPTPP uses a large number for infinity
+        inf = 1.0e30
+        lb[np.isneginf(lb)] = -inf
+        ub[np.isposinf(ub)] = inf
+        cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+    else:
+        # For general constraints, use the constraint list approach
+        try:
+            # Wrap each constraint in a Constraint handle
+            wrapped_constraints = []
+            for constr in constraint_list:
+                wrapped_constraint = pyopttpp.create_constraint(constr)
+                wrapped_constraints.append(wrapped_constraint)
+            cc_ptr = pyopttpp.create_compound_constraint(wrapped_constraints)
+        except (AttributeError, TypeError) as e:
+            # Fall back to bounds-only if LinearConstraint classes are not available
+            if bounds is not None:
+                lb = np.asarray(bounds.lb, dtype=float)
+                ub = np.asarray(bounds.ub, dtype=float)
+                inf = 1.0e30
+                lb[np.isneginf(lb)] = -inf
+                ub[np.isposinf(ub)] = inf
+                cc_ptr = pyopttpp.create_compound_constraint(lb, ub)
+            else:
+                raise NotImplementedError("Linear constraints are not available in the current build. Only bounds constraints are supported.") from e
+    
+    # Attach constraints to the NLF1 problem
+    problem.nlf1_problem.setConstraints(cc_ptr)
+    
+    # Create OptQNIPS optimizer
+    optimizer = pyopttpp.OptQNIPS(problem.nlf1_problem)
+
+    # Set search strategy
+    if search_strategy == 'TrustRegion':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustRegion)
+    elif search_strategy == 'LineSearch':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.LineSearch)
+    elif search_strategy == 'TrustPDS':
+        optimizer.setSearchStrategy(pyopttpp.SearchStrategy.TrustPDS)
+    else:
+        raise ValueError(f"Unknown search strategy: {search_strategy}")
+
+    # Set trust region size
+    optimizer.setTRSize(tr_size)
+
+    # Set OptQNIPS-specific parameters
+    optimizer.setMu(mu)
+    optimizer.setCenteringParameter(centering_param)
+    optimizer.setStepLengthToBdry(step_length_to_bdry)
+
+    # Set debug mode
+    if debug:
+        optimizer.setDebug()
+
+    # Set output file
+    if output_file:
+        optimizer.setOutputFile(output_file, 0)
+
+    # Run optimization
+    try:
+        optimizer.optimize()
+        solution_vector = problem.nlf1_problem.getXc()
+        x_final = solution_vector.to_numpy()
+        # Ensure caller sees feasible result if bounds are provided
+        if bounds is not None:
+            x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
+        f_final = problem.nlf1_problem.getF()
+        result = OptimizeResult(
+            x=x_final,
+            fun=f_final,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=True,
+            status=0,
+            message='Optimization terminated successfully',
+            jac=problem.current_g if problem.current_g is not None else None
+        )
+        optimizer.cleanup()
+        return result
+    except Exception as e:
+        optimizer.cleanup()
+        return OptimizeResult(
+            x=x0,
+            fun=None,
+            nfev=problem.nfev,
+            njev=problem.njev,
+            nit=0,
+            success=False,
+            status=1,
+            message=f'OptQNIPS optimization failed: {str(e)}',
+            jac=None
         )

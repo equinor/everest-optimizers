@@ -49,6 +49,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest-cov",
+    "matplotlib",
 ]
 dev = [
     "cmake",
