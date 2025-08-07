@@ -4,9 +4,31 @@ The everest-optimizers repository aims to replace the carolina repository by imp
 
 ## Getting Started
 
-### Prerequisites
+### CONMIN
 
-### Installation
+- We have used some python bindings and implementation from pyoptsparse: (https://github.com/mdolab/pyoptsparse/)
+
+- See the following documentation for which input options the implementation have:
+(https://mdolab-pyoptsparse.readthedocs-hosted.com/en/latest/optimizers/CONMIN.html)
+
+To call the CONMIN implementation, we go through the python interface that we have made. Both CONMIN and OPTPP should be called using the minimize() function.
+
+Example:
+
+```python
+result = minimize(
+    fun=obj,
+    x0=x0,
+    method="conmin_mfd",
+    bounds=bounds,
+    constraints=constraints,
+    options={"ITMAX": 100},
+)
+```
+- See also example usage in the tests. For example: [tests/CONMIN/test_conmin_mfd.py](tests/CONMIN/test_conmin_mfd.py)
+
+
+## Installation
 
 1. (Optional) We recommend using a virtual enviroment. This can be created and activated by one of the following approaches:
 
@@ -16,7 +38,7 @@ uv venv
 source .venv/bin/activate
 ```
 
-- Without uv
+- Without uv:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -28,11 +50,17 @@ source venv/bin/activate
 pip install .[test]
 ```
 
-### Running the project
+### Running the tests
 
 To run tests, execute one of the following commands:
 
-- All tests:
+- Recommended:
+
+```bash
+pytest tests
+```
+
+- All tests (this is not recommended as there are existing tests in Trilinos which are not working):
 ```bash
 pytest
 ```
@@ -49,7 +77,7 @@ pytest path/to/your_file.py
 pytest path/to/your_file.py::name_of_test
 ```
 
-If you want to add print statements / see the print statements in the terminal, you should run:
+If you want to add print statements / see the print statements in the terminal, you should run with the -s:
 
 ```bash
 pytest tests -s
@@ -72,7 +100,7 @@ ruff format .
 ruff check --select ALL
 ```
 
-- To only run ruff on a select folder or file, do these commands (for example):
+- To only run ruff on a select folder or file, do these commands example):
 
 ```bash
 ruff format src/
