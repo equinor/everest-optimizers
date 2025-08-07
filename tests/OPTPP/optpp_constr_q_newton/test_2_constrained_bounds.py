@@ -97,7 +97,7 @@ def test_bounds_and_linear_equality():
     expected_solution = np.array([2.0, -1.0])
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 def test_bounds_and_linear_inequality():
     bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
     A = np.array([[1, 1]])
@@ -133,7 +133,7 @@ def test_multiple_bounds():
     expected_solution = np.array([2.5, -1.0])
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-3, atol=1e-3)
 
-@pytest.mark.skip("NotImplementedError")
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_bounds_and_multiple_linear_constraints():
     bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
     A = np.array([[1, 1], [1, -1]])

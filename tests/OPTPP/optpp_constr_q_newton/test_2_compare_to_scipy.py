@@ -39,7 +39,7 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_linear_inequality_constraint():
     A = np.array([[1, 1]])
     lb = np.array([-np.inf])
@@ -64,7 +64,7 @@ def test_linear_inequality_constraint():
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-3, atol=1e-3)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-3, atol=1e-3)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 def test_linear_mixed_constraints():
     A = np.array([[1, 1], [1, 0]])
     lb = np.array([1, -np.inf])
@@ -89,7 +89,7 @@ def test_linear_mixed_constraints():
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 def test_bounds_and_linear_inequality():
     bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
     A = np.array([[1, 1]])
@@ -116,27 +116,7 @@ def test_bounds_and_linear_inequality():
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
-@pytest.mark.skip()
-def test_unconstrained():
-    x0 = np.array([0.0, 0.0])
-    res_everest = minimize(
-        objective,
-        x0,
-        method='optpp_constr_q_newton',
-        jac=objective_grad,
-        options=DEFAULT_OPTIONS
-    )
-    assert not res_everest.success
-
-    res_scipy = sp_optimize.minimize(
-        objective, x0, method='BFGS', jac=objective_grad
-    )
-    assert res_scipy.success
-
-    np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
-    np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
-
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 def test_bounds():
     bounds = Bounds([-1.0, -1.0], [1.0, 1.0])
     x0 = np.array([0.0, 0.0])
@@ -158,7 +138,7 @@ def test_bounds():
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-3, atol=1e-3)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-3, atol=1e-3)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 @pytest.mark.parametrize(
     "x0",
     [
@@ -191,7 +171,7 @@ def test_start_feasible_and_infeasible_scipy_comparison(x0: NDArray[np.float64])
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 @pytest.mark.parametrize(
     "x0",
     [

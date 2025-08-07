@@ -52,7 +52,7 @@ def test_linear_equality_constraint():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
     assert result.fun < 1e-8
 
-@pytest.mark.skip(reason="NotImplementedError: Only linear equality constraints (lb == ub) and one-sided inequalities (Ax >= lb with infinite upper bounds) are currently supported.")
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_linear_inequality_constraint():
     A = np.array([[1, 1]])
     lb = np.array([-np.inf])
@@ -72,7 +72,7 @@ def test_linear_inequality_constraint():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-3, atol=1e-3)
     assert result.fun < 1e-5
 
-@pytest.mark.skip(reason="NotImplementedError: Only linear equality constraints (lb == ub) and one-sided inequalities (Ax >= lb with infinite upper bounds) are currently supported.")
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_linear_mixed_constraints():
     A = np.array([[1, 1], [1, 0]])
     lb = np.array([1, -np.inf])

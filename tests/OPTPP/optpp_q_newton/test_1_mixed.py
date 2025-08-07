@@ -115,7 +115,7 @@ def test_bounds_and_linear_inequality():
             options=DEFAULT_OPTIONS
         )
 
-@pytest.mark.skip("Graceful failure handling for unbounded problems is not implemented")
+@pytest.mark.xfail(reason="Graceful failure handling for unbounded problems is not implemented")
 def test_unbounded_problem():
     """Test an unbounded problem, expecting a failure or specific status."""
     def unbounded_obj(x): return -x[0] - x[1]

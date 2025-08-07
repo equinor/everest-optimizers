@@ -34,7 +34,7 @@ def objective(x):
 def objective_grad(x):
     return np.array([2*(x[0] - 2), 2*(x[1] - 2)])
 
-@pytest.mark.skip(reason="Not implemented yet")
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_nonlinear_equality_constraint():
     def nonlinear_constraint(x):
         return np.array([x[0]**2 + x[1]**2 - 4.0])
@@ -64,7 +64,7 @@ def test_nonlinear_equality_constraint():
     except NotImplementedError as e:
         pytest.skip(f"Nonlinear constraints not yet fully implemented: {e}")
 
-@pytest.mark.skip(reason="Not implemented yet")
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_nonlinear_inequality_constraint():
     def nonlinear_constraint(x):
         return np.array([1.0 - x[0]**2 - x[1]**2])

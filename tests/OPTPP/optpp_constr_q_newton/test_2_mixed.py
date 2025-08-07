@@ -36,7 +36,7 @@ def objective(x: NDArray[np.float64]) -> float:
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_kitchen_sink():
     """A 'kitchen sink' test with bounds, linear equality, and inequality constraints."""
     bounds = Bounds([0, -np.inf], [1.5, np.inf])
@@ -70,7 +70,7 @@ def test_kitchen_sink():
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 def test_active_and_inactive_constraints():
     """Test with a mix of active and inactive constraints at the solution."""
     bounds = Bounds([0, 0], [3, 3])
@@ -98,7 +98,7 @@ def test_active_and_inactive_constraints():
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(np.sum(res_everest.x), 4.0, atol=1e-5)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_redundant_constraints():
     """Test with redundant constraints that should not affect the outcome."""
     bounds = Bounds([0, 0], [3, 3])
@@ -127,7 +127,7 @@ def test_redundant_constraints():
     np.testing.assert_allclose(res_everest.x, res_scipy.x, rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation of constraints and bounds.")
 def test_infeasible_problem():
     """Test an infeasible problem, expecting a failure."""
     bounds = Bounds([2, 2], [3, 3])
@@ -146,7 +146,7 @@ def test_infeasible_problem():
     assert not result.success
 
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Graceful failure handling for unbounded problems is not implemented")
 def test_unbounded_problem():
     """Test an unbounded problem, expecting a failure or specific status."""
     def unbounded_obj(x): return -x[0] - x[1]
@@ -165,7 +165,7 @@ def test_unbounded_problem():
     )
     assert not result.success
 
-@pytest.mark.skip()
+@pytest.mark.xfail(reason="Something is wrong in the implementation. Produced output does not match expected output.")
 def test_higher_dimensions():
     """Test a problem with 10 dimensions."""
     def high_dim_obj(x): return np.sum((x - np.arange(10))**2)
