@@ -100,7 +100,7 @@ ruff format .
 ruff check --select ALL
 ```
 
-- To only run ruff on a select folder or file, do these commands example):
+- To only run ruff on a select folder or file, do these commands (example):
 
 ```bash
 ruff format src/
