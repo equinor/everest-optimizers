@@ -50,6 +50,23 @@ source venv/bin/activate
 pip install .[test]
 ```
 
+
+#### Alternative installation via Docker
+
+Alternatively, you can use Docker to build and run the project with all dependencies:
+
+```bash
+# Build the Docker image
+docker build -t everest-optimizers .
+
+# Run the container to execute tests
+docker run everest-optimizers
+```
+
+This approach automatically sets up all required dependencies and runs the tests in an isolated environment.
+
+
+
 ### Running the tests
 
 To run tests, execute one of the following commands:
