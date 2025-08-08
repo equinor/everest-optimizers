@@ -1,0 +1,7 @@
+Everest Optimizers
+
+The Initial Developer of this library is Equinor ASA. 
+
+This product includes software from the following:
+- pyOptSparse (https://github.com/mdolab/pyoptsparse)
+- Dakota (https://dakota.sandia.gov/, https://github.com/snl-dakota/dakota, https://github.com/snl-dakota/dakota-packages)
