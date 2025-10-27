@@ -1,10 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-    tags: "*"
   pull_request:
 
 env:
@@ -40,26 +36,22 @@ jobs:
           cache-dependency-glob: pyproject.toml
           python-version: "${{ matrix.python-version }}"
 
-      # Install build tools for Ubuntu
       - name: Install build tools (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake doxygen libegl1 liblapack-dev libblas-dev gfortran
+          sudo apt-get install -y build-essential libegl1 liblapack-dev libblas-dev gfortran
         shell: bash
 
-      - name: Install CMake and gfortran for macOS
+      - name: Set FC var for macos 
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cmake
-          brew install gcc  # gcc includes gfortran
+          echo "FC=/opt/homebrew/bin/gfortran-15" >> $GITHUB_ENV
 
-      - name: Install build dependencies
-        run: pip install meson ninja
-
-      - name: Install test dependencies
+      - name: Install project with dependencies
         run: |
-          uv pip install ".[test]"
+          uv sync --all-extras --all-groups
 
       - name: Run tests
-        run: pytest tests/
+        run: |
+          uv run pytest tests/

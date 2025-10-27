@@ -39,3 +39,5 @@ muq2/MUQ/config.h
 docs/llm/
 myscheme
 
+# Third-party includes
+third-party

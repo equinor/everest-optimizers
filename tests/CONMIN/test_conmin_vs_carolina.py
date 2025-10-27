@@ -13,14 +13,13 @@
 #    limitations under the License.
 #
 # ++==++==++==++==++==++==++==++==++==++==
-from __future__ import print_function
-from numpy import array
-import numpy as np
-from traceback import print_exc
 import sys
-import pytest
 
+import numpy as np
+import pytest
 from dakota import DakotaBase, DakotaInput
+from numpy import array
+
 from everest_optimizers.minimize import minimize
 
 

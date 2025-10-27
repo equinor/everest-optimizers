@@ -1,98 +1,80 @@
+
 [build-system]
 requires = [
-    "setuptools>=45",
-    "wheel",
-    "pybind11>=2.6.0",
-    "numpy>=1.15",
-    "cmake>=3.16",
-    "meson",
+  "numpy",
+  "scikit-build-core",
+  "meson",
+  "pybind11",
+  "swig; sys_platform == 'darwin'",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "everest-optimizers"
-version = "0.1.0"
 description = "Everest optimization algorithms for Python"
-readme = "README.md"
-authors = [
-    {name = "Everest Optimizers Team"},
-]
-license = {text = "GPL-3.0"}
+version = "0.2.0"
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Programming Language :: C++",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Scientific/Engineering :: Mathematics",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
 ]
+license = "GPL-3.0-or-later"
+license-files = ["LICEN[CS]E"]
+readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "numpy>=1.15",
-    "pydantic",
-    "carolina",
-    "ropt-dakota",
-    "ropt",
-    "scipy",
-    "pybind11",
-    "cmake",
-    "ninja",
-    "meson",
-    "sqlitedict>=1.6",
-    "mdolab-baseclasses>=1.3.1",
-]
+dependencies = ["scipy", "mdolab-baseclasses", "sqlitedict", "pydantic"]
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
-    "pytest-cov",
+  "pytest",
+  "carolina",
+  "numpy",
+  "cmake",
+  "ropt",
+  "ropt-dakota",
+  "matplotlib",
 ]
 dev = [
-    "cmake",
-    "ninja",
-    "ruff",
+  "meson",
+  "scikit-build-core",
+  "swig; sys_platform == 'darwin'",
+  { include-group = "test" },
 ]
-
-[project.urls]
-"Homepage" = "https://github.com/equinor/everest-optimizers"
-"Bug Tracker" = "https://github.com/equinor/everest-optimizers/issues"
-"Documentation" = "https://everest-optimizers.readthedocs.io/"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-
-[tool.ruff]
-src = ["src"]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["S101"]
+minversion = "6.0"
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = ["error"]
+testpaths = ["tests/CONMIN", "tests/OPTPP"]
 
 [tool.cibuildwheel]
-# Build for these Python versions
-build = "cp38-* cp39-* cp310-* cp311-*"
-# Skip 32-bit builds and PyPy
-skip = "*-win32 *-manylinux_i686 pp*"
-# Test command
-test-command = "pytest {project}/tests"
-test-requires = "pytest"
+build-frontend = "build[uv]"
+test-groups = ["test"]
+test-command = ["pytest {package}/tests/CONMIN", "pytest {package}/tests/OPTPP"]
 
 [tool.cibuildwheel.linux]
-before-all = [
-    "yum install -y cmake gcc-c++ make",
-]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
+manylinux-pypy_aarch64-image = "manylinux_2_28"
 
-[tool.cibuildwheel.macos]
-before-all = [
-    "brew install cmake",
-]
+[tool.ruff]
+target-version = "py311"
 
-[tool.cibuildwheel.windows]
-before-all = [
-    "choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'",
+[tool.ruff.lint]
+extend-select = [
+  "B",   # flake8-bugbear
+  "I",   # isort
+  "PGH", # pygrep-hooks
+  "RUF", # Ruff-specific
+  "UP",  # pyupgrade
 ]
