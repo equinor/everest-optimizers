@@ -1,0 +1,22 @@
+11d10
+< from . import testing
+14,16d12
+< from .pySNOPT.pySNOPT import SNOPT
+< from .pyIPOPT.pyIPOPT import IPOPT
+< from .pySLSQP.pySLSQP import SLSQP
+18,22d13
+< from .pyPSQP.pyPSQP import PSQP
+< from .pyNLPQLP.pyNLPQLP import NLPQLP
+< from .pyNSGA2.pyNSGA2 import NSGA2
+< from .pyALPSO.pyALPSO import ALPSO
+< from .pyParOpt.ParOpt import ParOpt
+35,37d25
+<     "SNOPT",
+<     "IPOPT",
+<     "SLSQP",
+39,43d26
+<     "PSQP",
+<     "NLPQLP",
+<     "NSGA2",
+<     "ALPSO",
+<     "ParOpt",

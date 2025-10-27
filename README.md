@@ -2,6 +2,9 @@
 
 The everest-optimizers repository aims to replace the carolina repository by implementing the two algorithms OPTPP_Q_NEWTON and CONMIN_MFD from Dakota. This removes the need of building Dakota through Carolina every time you need to use these two algorithms. Dakota is huge and quite cumbersome to build, so by replacing this dependency we can gain a lot of time.
 
+## Note
+History starting from 14cb0a7ef00fa56c19f8a3956785b8c6bdbf2cbd and older were filtered to delete all files/folders under dakota-packages except OPTPP.
+
 ## Getting Started
 
 ### CONMIN

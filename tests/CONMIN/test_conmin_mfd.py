@@ -1,6 +1,7 @@
-from everest_optimizers.minimize import minimize
 import numpy as np
 import pytest
+
+from everest_optimizers.minimize import minimize
 
 
 def test_rosen_suzuki_constraints_satisfied():

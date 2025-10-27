@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
-# src/everest_optimizers/minimize.py
+
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
-from typing import Callable, Optional, Union, Dict, Any
 from scipy.optimize import OptimizeResult
 
-from .optqnewton import _minimize_optqnewton
-from .conminmfd import _minimize_conmin_mfd
+from everest_optimizers.conminmfd import _minimize_conmin_mfd
+from everest_optimizers.optqnewton import (
+    _minimize_optconstrqnewton,
+    _minimize_optqnewton,
+)
+from everest_optimizers.optqnips_impl import _minimize_optqnips_enhanced
 
 
 def minimize(
     fun: Callable,
-    x0: Union[np.ndarray, list],
+    x0: np.ndarray | list,
     args: tuple = (),
     method: str = "optpp_q_newton",
-    jac: Optional[Union[Callable, str, bool]] = None,
-    hess: Optional[Union[Callable, str]] = None,
-    hessp: Optional[Callable] = None,
-    bounds: Optional[Any] = None,
-    constraints: Optional[Any] = None,
-    tol: Optional[float] = None,
-    callback: Optional[Callable] = None,
-    options: Optional[Dict[str, Any]] = None,
+    jac: Callable | str | bool | None = None,
+    hess: Callable | str | None = None,
+    hessp: Callable | None = None,
+    bounds: Any | None = None,
+    constraints: Any | None = None,
+    tol: float | None = None,
+    callback: Callable | None = None,
+    options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
     Minimization of scalar function of one or more variables.
@@ -29,7 +34,7 @@ def minimize(
     This function is intended to be a drop-in replacement for scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton optimization
     algorithm from the OPTPP library.
 
-    Parameters
+    Parameters (parameter structure is based on scipy.optimize.minimize)
     ----------
     fun : callable
         The objective function to be minimized:
@@ -50,6 +55,8 @@ def minimize(
     method : str, optional
         Type of solver. Currently supported:
         - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
+        - 'optpp_constr_q_newton': constrained quasi-Newton optimizer from OPTPP
+        - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
 
         More optimizers may be added in the future.
 
@@ -68,10 +75,10 @@ def minimize(
         Hessian times vector product. Not used by optpp_q_newton.
 
     bounds : sequence, optional
-        Bounds on variables. Not supported by optpp_q_newton.
+        Bounds on variables. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
 
     constraints : dict or list, optional
-        Constraints definition. Not supported by optpp_q_newton.
+        Constraints definition. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
 
     tol : float, optional
         Tolerance for termination.
@@ -166,7 +173,34 @@ def minimize(
             fun=fun,
             x0=x0,
             args=args,
+            bounds=bounds,
+            constraints=constraints,
+            options=options,
+        )
+    elif method.lower() == "optpp_constr_q_newton":
+        return _minimize_optconstrqnewton(
+            fun=fun,
+            x0=x0,
+            args=args,
+            method=method,
             jac=jac,
+            hess=hess,
+            hessp=hessp,
+            bounds=bounds,
+            constraints=constraints,
+            tol=tol,
+            callback=callback,
+            options=options,
+        )
+    elif method.lower() == "optpp_q_nips":
+        return _minimize_optqnips_enhanced(
+            fun=fun,
+            x0=x0,
+            args=args,
+            method=method,
+            jac=jac,
+            hess=hess,
+            hessp=hessp,
             bounds=bounds,
             constraints=constraints,
             tol=tol,
@@ -175,5 +209,5 @@ def minimize(
         )
     else:
         raise ValueError(
-            f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'conmin_mfd'"
+            f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips'"
         )

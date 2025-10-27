@@ -1,17 +1,14 @@
 import numpy as np
 from scipy.optimize import OptimizeResult
-from everest_optimizers.pyoptsparse.pyOpt_optimizer import Optimization
-from everest_optimizers.pyCONMIN.pyCONMIN import CONMIN
+
+from everest_optimizers.pyoptsparse import CONMIN, Optimization
 
 
-def _minimize_conmin_mfd(
-    fun, x0, args=(), jac=None, bounds=None, constraints=None, options=None, **kwargs
-):
+def _minimize_conmin_mfd(fun, x0, args=(), bounds=None, constraints=None, options=None):
+    n = len(x0)
     options = options or {}
     constraints = constraints or []
-    bounds = bounds or [(-np.inf, np.inf)] * len(x0)
-
-    n = len(x0)
+    bounds = bounds or [(-np.inf, np.inf)] * n
 
     def objfunc(xdict):
         x = xdict["x"]
@@ -30,20 +27,34 @@ def _minimize_conmin_mfd(
 
     for i, constr in enumerate(constraints):
         cname = f"c{i}"
-        if constr["type"] == "ineq":
-            optProb.addCon(cname, upper=0.0)
-        elif constr["type"] == "eq":
-            optProb.addCon(cname, equals=0.0)
-        else:
-            raise ValueError(f"Unknown constraint type: {constr['type']}")
+        match constr["type"]:
+            case "ineq":
+                optProb.addCon(cname, upper=0.0)
+            case "eq":
+                optProb.addCon(cname, equals=0.0)
+            case other_type:
+                raise ValueError(f"Unknown constraint type: {other_type}")
 
     optimizer = CONMIN(options=options)
-    sol = optimizer(optProb)
+    solution = optimizer(optProb)
+
+    if solution is None:
+        # CONMIN failed or terminated immediately
+        return OptimizeResult(
+            x=x0,  # Return initial point
+            fun=fun(x0, *args),
+            success=False,
+            message="CONMIN terminated immediately",
+            nfev=1,
+        )
+
+    x_arrays = list(solution.xStar.values())
+    x_final = np.concatenate(x_arrays)
 
     return OptimizeResult(
-        x=np.array([v for v in sol.xStar.values()]),
-        fun=sol.fStar,
-        success=sol.optInform.get("value", "") == "",
-        message=sol.optInform.get("text", ""),
-        nfev=sol.userObjCalls,
+        x=x_final,
+        fun=solution.fStar,
+        success=solution.optInform is None,
+        message="" if solution.optInform is None else solution.optInform.message,
+        nfev=solution.userObjCalls,
     )
