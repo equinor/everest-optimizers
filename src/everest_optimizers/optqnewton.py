@@ -162,7 +162,7 @@ def _minimize_optqnewton(
     output_file = options.get("output_file", None)
 
     # Create problem
-    problem = _OptQNewtonProblem(fun, x0, args, jac, pyoptpp)
+    problem = _OptQNewtonProblem(fun, x0, args, jac)
 
     # Create optimizer
     optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
@@ -260,7 +260,7 @@ def _minimize_optconstrqnewton(
     output_file = options.get("output_file", None)
 
     # The problem definition doesn't need to know about constraints, as they are handled by the C++ part.
-    problem = _OptQNewtonProblem(fun, x0, args, jac, pyoptpp)
+    problem = _OptQNewtonProblem(fun, x0, args, jac)
 
     # Process constraints
     constraint_list = []

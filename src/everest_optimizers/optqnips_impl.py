@@ -86,12 +86,11 @@ def _minimize_optqnips_enhanced(
 
     # Create a simple problem class
     class OptQNIPSProblem:
-        def __init__(self, fun, x0, args, jac, pyoptpp):
+        def __init__(self, fun, x0, args, jac):
             self.fun = fun
             self.x0 = np.asarray(x0, dtype=float)
             self.args = args
             self.jac = jac
-            self.pyoptpp = pyoptpp
 
             self.nfev = 0
             self.njev = 0
@@ -105,15 +104,13 @@ def _minimize_optqnips_enhanced(
         def _create_nlf1_problem(self):
             """Create the NLF1 problem for OPTPP."""
 
-            class OptQNIPSNLF1(self.pyoptpp.NLF1):
+            class OptQNIPSNLF1(pyoptpp.NLF1):
                 def __init__(self, parent_problem):
                     super().__init__(len(parent_problem.x0))
                     self.parent = parent_problem
 
                     # Set initial point
-                    init_vector = parent_problem.pyoptpp.SerialDenseVector(
-                        parent_problem.x0
-                    )
+                    init_vector = pyoptpp.SerialDenseVector(parent_problem.x0)
                     self.setX(init_vector)
                     self.setIsExpensive(True)
 
@@ -173,7 +170,7 @@ def _minimize_optqnips_enhanced(
             return OptQNIPSNLF1(self)
 
     # Create problem
-    problem = OptQNIPSProblem(fun, x0, args, jac, pyoptpp)
+    problem = OptQNIPSProblem(fun, x0, args, jac)
 
     # Process constraints - enhanced version supporting multiple constraint types
     constraint_objects = []
@@ -201,7 +198,7 @@ def _minimize_optqnips_enhanced(
         for constraint in constraints:
             if isinstance(constraint, LinearConstraint):
                 # Convert scipy LinearConstraint to OPTPP LinearEquation/LinearInequality
-                optpp_constraints = _convert_linear_constraint(constraint, pyoptpp)
+                optpp_constraints = _convert_linear_constraint(constraint)
                 constraint_objects.extend(optpp_constraints)
             elif isinstance(constraint, NonlinearConstraint):
                 # TEST: Use hardcoded dummy constraints first to verify OPTPP processing
@@ -480,7 +477,7 @@ def _test_dummy_constraint_objects():
         raise
 
 
-def _convert_nonlinear_constraint(scipy_constraint, x0, pyoptpp):
+def _convert_nonlinear_constraint(scipy_constraint, x0):
     """
     Convert a scipy.optimize.NonlinearConstraint to OPTPP NonLinearEquation/NonLinearInequality objects.
 
@@ -495,8 +492,6 @@ def _convert_nonlinear_constraint(scipy_constraint, x0, pyoptpp):
         The scipy constraint to convert
     x0 : np.ndarray
         Initial point (needed for constraint function evaluation)
-    pyoptpp : module
-        The pyoptpp module for creating OPTPP objects
 
     Returns:
     --------
@@ -726,7 +721,7 @@ def _convert_nonlinear_constraint(scipy_constraint, x0, pyoptpp):
     return optpp_constraints
 
 
-def _convert_linear_constraint(scipy_constraint, pyoptpp):
+def _convert_linear_constraint(scipy_constraint):
     """
     Convert a scipy.optimize.LinearConstraint to OPTPP LinearEquation/LinearInequality objects.
 
@@ -734,8 +729,6 @@ def _convert_linear_constraint(scipy_constraint, pyoptpp):
     -----------
     scipy_constraint : scipy.optimize.LinearConstraint
         The scipy constraint to convert
-    pyoptpp : module
-        The pyoptpp module for creating OPTPP objects
 
     Returns:
     --------
