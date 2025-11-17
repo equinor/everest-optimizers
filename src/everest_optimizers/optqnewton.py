@@ -168,14 +168,17 @@ def _minimize_optqnewton(
     optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
 
     # Set search strategy
-    if search_strategy == "TrustRegion":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
-    elif search_strategy == "LineSearch":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
-    elif search_strategy == "TrustPDS":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
-    else:
-        raise ValueError(f"Unknown search strategy: {search_strategy}")
+    match search_strategy:
+        case "TrustRegion":
+            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
+        case "LineSearch":
+            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
+        case "TrustPDS":
+            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
+        case other:
+            raise ValueError(
+                f"Unknown search strategy: {other}. Valid options: TrustRegion, LineSearch, TrustPDS"
+            )
 
     # Set trust region size
     optimizer.setTRSize(tr_size)

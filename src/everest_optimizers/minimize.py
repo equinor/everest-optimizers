@@ -149,47 +149,47 @@ def minimize(
     if not isinstance(args, tuple):
         args = (args,)
 
-    # Route to the appropriate optimizer
-    if method.lower() == "optpp_q_newton":
-        return _minimize_optqnewton(
-            fun=fun,
-            x0=x0,
-            args=args,
-            jac=jac,
-            bounds=bounds,
-            constraints=constraints,
-            options=options,
-        )
-    elif method.lower() == "conmin_mfd":
-        return _minimize_conmin_mfd(
-            fun=fun,
-            x0=x0,
-            args=args,
-            bounds=bounds,
-            constraints=constraints,
-            options=options,
-        )
-    elif method.lower() == "optpp_constr_q_newton":
-        return _minimize_optconstrqnewton(
-            fun=fun,
-            x0=x0,
-            args=args,
-            jac=jac,
-            bounds=bounds,
-            constraints=constraints,
-            options=options,
-        )
-    elif method.lower() == "optpp_q_nips":
-        return _minimize_optqnips_enhanced(
-            fun=fun,
-            x0=x0,
-            args=args,
-            jac=jac,
-            bounds=bounds,
-            constraints=constraints,
-            options=options,
-        )
-    else:
-        raise ValueError(
-            f"Unknown method: {method}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips'"
-        )
+    match method.lower():
+        case "optpp_q_newton":
+            return _minimize_optqnewton(
+                fun=fun,
+                x0=x0,
+                args=args,
+                jac=jac,
+                bounds=bounds,
+                constraints=constraints,
+                options=options,
+            )
+        case "conmin_mfd":
+            return _minimize_conmin_mfd(
+                fun=fun,
+                x0=x0,
+                args=args,
+                bounds=bounds,
+                constraints=constraints,
+                options=options,
+            )
+        case "optpp_constr_q_newton":
+            return _minimize_optconstrqnewton(
+                fun=fun,
+                x0=x0,
+                args=args,
+                jac=jac,
+                bounds=bounds,
+                constraints=constraints,
+                options=options,
+            )
+        case "optpp_q_nips":
+            return _minimize_optqnips_enhanced(
+                fun=fun,
+                x0=x0,
+                args=args,
+                jac=jac,
+                bounds=bounds,
+                constraints=constraints,
+                options=options,
+            )
+        case other:
+            raise ValueError(
+                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips'"
+            )

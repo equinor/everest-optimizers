@@ -47,18 +47,19 @@ def _minimize_optqnips_enhanced(
     merit_function = options.get("merit_function", "argaez_tapia")
 
     # Interior-point specific parameters with Dakota defaults based on merit function
-    if merit_function == "el_bakry":
-        default_centering = 0.2
-        default_step_to_boundary = 0.8
-    elif merit_function == "argaez_tapia":
-        default_centering = 0.2
-        default_step_to_boundary = 0.99995
-    elif merit_function == "van_shanno":
-        default_centering = 0.1
-        default_step_to_boundary = 0.95
-    else:
-        default_centering = 0.2
-        default_step_to_boundary = 0.95
+    match merit_function.lower():
+        case "el_bakry":
+            default_centering = 0.2
+            default_step_to_boundary = 0.8
+        case "argaez_tapia":
+            default_centering = 0.2
+            default_step_to_boundary = 0.99995
+        case "van_shanno":
+            default_centering = 0.1
+            default_step_to_boundary = 0.95
+        case _:
+            default_centering = 0.2
+            default_step_to_boundary = 0.95
 
     centering_parameter = options.get("centering_parameter", default_centering)
     steplength_to_boundary = options.get(
@@ -291,22 +292,14 @@ def _minimize_optqnips_enhanced(
     # Create OptQNIPS optimizer
     optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
 
-    # Set search method (Dakota keyword mapping)
-    if search_method.lower() == "trust_region":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
-    elif search_method.lower() == "line_search":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
-    elif search_method.lower() == "trust_pds":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
-    else:
-        # Try legacy names for backward compatibility
-        if search_method.lower() == "trustregion":
+    match search_method.lower():
+        case "trust_region" | "trustregion":
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
-        elif search_method.lower() == "linesearch":
+        case "line_search" | "linesearch":
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
-        elif search_method.lower() == "trustpds":
+        case "trust_pds" | "trustpds":
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
-        else:
+        case _:
             raise ValueError(
                 f"Unknown search method: {search_method}. Valid options: trust_region, line_search, trust_pds"
             )
@@ -321,21 +314,19 @@ def _minimize_optqnips_enhanced(
     optimizer.setCenteringParameter(centering_parameter)
     optimizer.setStepLengthToBdry(steplength_to_boundary)
 
-    # Set merit function (Dakota keyword mapping)
-    merit_function_map = {
-        "el_bakry": pyoptpp.MeritFcn.NormFmu,  # Dakota el_bakry maps to OPTPP NormFmu
-        "argaez_tapia": pyoptpp.MeritFcn.ArgaezTapia,
-        "van_shanno": pyoptpp.MeritFcn.VanShanno,
-        # Legacy names for backward compatibility
-        "norm_fmu": pyoptpp.MeritFcn.NormFmu,
-    }
-
-    if merit_function.lower() in merit_function_map:
-        optimizer.setMeritFcn(merit_function_map[merit_function.lower()])
-    else:
-        raise ValueError(
-            f"Unknown merit function: {merit_function}. Valid options: el_bakry, argaez_tapia, van_shanno"
-        )
+    match merit_function.lower():
+        case "el_bakry":
+            optimizer.setMeritFcn(pyoptpp.MeritFcn.NormFmu)
+        case "argaez_tapia":
+            optimizer.setMeritFcn(pyoptpp.MeritFcn.ArgaezTapia)
+        case "van_shanno":
+            optimizer.setMeritFcn(pyoptpp.MeritFcn.VanShanno)
+        case "norm_fmu":
+            optimizer.setMeritFcn(pyoptpp.MeritFcn.NormFmu)
+        case merit_fn:
+            raise ValueError(
+                f"Unknown merit function: {merit_fn}. Valid options: el_bakry, argaez_tapia, van_shanno"
+            )
 
     # Set optimization control parameters
     optimizer.setMaxIter(max_iterations)
