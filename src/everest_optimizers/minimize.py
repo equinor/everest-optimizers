@@ -20,11 +20,8 @@ def minimize(
     args: tuple = (),
     method: str = "optpp_q_newton",
     jac: Callable | str | bool | None = None,
-    hess: Callable | str | None = None,
-    hessp: Callable | None = None,
     bounds: Any | None = None,
     constraints: Any | None = None,
-    tol: float | None = None,
     callback: Callable | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
@@ -158,14 +155,9 @@ def minimize(
             fun=fun,
             x0=x0,
             args=args,
-            method=method,
             jac=jac,
-            hess=hess,
-            hessp=hessp,
             bounds=bounds,
             constraints=constraints,
-            tol=tol,
-            callback=callback,
             options=options,
         )
     elif method.lower() == "conmin_mfd":
@@ -182,14 +174,9 @@ def minimize(
             fun=fun,
             x0=x0,
             args=args,
-            method=method,
             jac=jac,
-            hess=hess,
-            hessp=hessp,
             bounds=bounds,
             constraints=constraints,
-            tol=tol,
-            callback=callback,
             options=options,
         )
     elif method.lower() == "optpp_q_nips":
@@ -197,14 +184,9 @@ def minimize(
             fun=fun,
             x0=x0,
             args=args,
-            method=method,
             jac=jac,
-            hess=hess,
-            hessp=hessp,
             bounds=bounds,
             constraints=constraints,
-            tol=tol,
-            callback=callback,
             options=options,
         )
     else:

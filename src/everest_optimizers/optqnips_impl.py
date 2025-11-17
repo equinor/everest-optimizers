@@ -13,14 +13,9 @@ def _minimize_optqnips_enhanced(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
-    method: str = "optpp_q_nips",
     jac: Callable | None = None,
-    hess: Callable | None = None,
-    hessp: Callable | None = None,
     bounds: Any = None,
     constraints: Any = None,
-    tol: float | None = None,
-    callback: Callable | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
