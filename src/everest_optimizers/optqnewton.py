@@ -107,14 +107,9 @@ def _minimize_optqnewton(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
-    method: str = "optpp_q_newton",
     jac: Callable | None = None,
-    hess: Callable | None = None,
-    hessp: Callable | None = None,
     bounds: Any | None = None,
     constraints: Any | None = None,
-    tol: float | None = None,
-    callback: Callable | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
@@ -128,22 +123,12 @@ def _minimize_optqnewton(
         Initial guess.
     args : tuple, optional
         Extra arguments passed to the objective function and its derivatives.
-    method : str, optional
-        Method name (should be 'optpp_q_newton').
     jac : callable, optional
         Method for computing the gradient vector.
-    hess : callable, optional
-        Method for computing the Hessian matrix (not used by optpp_q_newton).
-    hessp : callable, optional
-        Hessian times vector product (not used by optpp_q_newton).
     bounds : sequence, optional
         Bounds on variables (not supported by optpp_q_newton).
     constraints : dict or list, optional
         Constraints definition (not supported by optpp_q_newton).
-    tol : float, optional
-        Tolerance for termination.
-    callback : callable, optional
-        Callback function (not implemented).
     options : dict, optional
         Solver options including:
         - 'search_strategy': 'TrustRegion', 'LineSearch', or 'TrustPDS'
@@ -166,11 +151,6 @@ def _minimize_optqnewton(
 
     if constraints is not None:
         raise NotImplementedError("optpp_q_newton does not support constraints")
-
-    if callback is not None:
-        raise NotImplementedError(
-            "Callback function not implemented for optpp_q_newton"
-        )
 
     # Set up options
     if options is None:
@@ -252,14 +232,9 @@ def _minimize_optconstrqnewton(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
-    method: str = "optpp_constr_q_newton",
     jac: Callable | None = None,
-    hess: Callable | None = None,
-    hessp: Callable | None = None,
     bounds: Any = None,
     constraints: Any = None,
-    tol: float | None = None,
-    callback: Callable | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
