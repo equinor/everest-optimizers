@@ -285,52 +285,28 @@ def _convert_linear_constraint(scipy_constraint):
         lb_i = lb[i]
         ub_i = ub[i]
 
-        # Create OPTPP matrix and vector objects
-        A_matrix = pyoptpp.SerialDenseMatrix(A_row)
-
-        # Determine constraint type based on bounds
-        if np.isfinite(lb_i) and np.isfinite(ub_i):
-            if np.abs(lb_i - ub_i) < 1e-12:
-                # Equality constraint: lb == ub
-                rhs = pyoptpp.SerialDenseVector(np.array([lb_i]))
-                eq_constraint = pyoptpp.LinearEquation(A_matrix, rhs)
-                optpp_constraints.append(eq_constraint)
-            else:
-                # Double-sided inequality: lb <= Ax <= ub
-                # Convert to two single-sided inequalities:
-                # Ax >= lb  =>  Ax - lb >= 0
-                # Ax <= ub  =>  -Ax + ub >= 0
-
-                # Lower bound: Ax >= lb  =>  Ax >= lb (OPTPP standard form)
-                if np.isfinite(lb_i):
-                    rhs_lower = pyoptpp.SerialDenseVector(np.array([lb_i]))
-                    ineq_lower = pyoptpp.LinearInequality(A_matrix, rhs_lower)
-                    optpp_constraints.append(ineq_lower)
-
-                # Upper bound: Ax <= ub  =>  -Ax >= -ub (OPTPP standard form)
-                if np.isfinite(ub_i):
-                    A_neg = -A_row
-                    A_neg_matrix = pyoptpp.SerialDenseMatrix(A_neg)
-                    rhs_upper = pyoptpp.SerialDenseVector(np.array([-ub_i]))
-                    ineq_upper = pyoptpp.LinearInequality(A_neg_matrix, rhs_upper)
-                    optpp_constraints.append(ineq_upper)
-
-        elif np.isfinite(lb_i) and not np.isfinite(ub_i):
-            # One-sided inequality: Ax >= lb (OPTPP standard form)
-            rhs = pyoptpp.SerialDenseVector(np.array([lb_i]))
-            ineq_constraint = pyoptpp.LinearInequality(A_matrix, rhs)
-            optpp_constraints.append(ineq_constraint)
-
-        elif not np.isfinite(lb_i) and np.isfinite(ub_i):
-            # One-sided inequality: Ax <= ub  =>  -Ax >= -ub (OPTPP standard form)
-            A_neg = -A_row
-            A_neg_matrix = pyoptpp.SerialDenseMatrix(A_neg)
-            rhs = pyoptpp.SerialDenseVector(np.array([-ub_i]))
-            ineq_constraint = pyoptpp.LinearInequality(A_neg_matrix, rhs)
-            optpp_constraints.append(ineq_constraint)
-
-        else:
+        if not np.isfinite(lb_i) and not np.isfinite(ub_i):
             # Both bounds are infinite - this is not a real constraint
             continue
+
+        if np.isclose(lb_i - ub_i, 0, atol=1e-12):
+            # Equality constraint: lb == ub
+            A_matrix = pyoptpp.SerialDenseMatrix(A_row)
+            rhs = pyoptpp.SerialDenseVector(np.array([lb_i]))
+            constraint = pyoptpp.LinearEquation(A_matrix, rhs)
+            optpp_constraints.append(constraint)
+            continue
+
+        if np.isfinite(lb_i):
+            A_matrix = pyoptpp.SerialDenseMatrix(A_row)
+            rhs_lower = pyoptpp.SerialDenseVector(np.array([lb_i]))
+            ineq_lower = pyoptpp.LinearInequality(A_matrix, rhs_lower)
+            optpp_constraints.append(ineq_lower)
+
+        if np.isfinite(ub_i):
+            A_neg_matrix = pyoptpp.SerialDenseMatrix(-A_row)
+            rhs_upper = pyoptpp.SerialDenseVector(np.array([-ub_i]))
+            ineq_upper = pyoptpp.LinearInequality(A_neg_matrix, rhs_upper)
+            optpp_constraints.append(ineq_upper)
 
     return optpp_constraints
