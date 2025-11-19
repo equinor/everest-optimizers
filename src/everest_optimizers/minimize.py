@@ -54,6 +54,7 @@ def minimize(
         - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
         - 'optpp_constr_q_newton': constrained quasi-Newton optimizer from OPTPP
         - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
+        - 'conmin_mfd': CONMIN solver
 
         More optimizers may be added in the future.
 
@@ -191,5 +192,5 @@ def minimize(
             )
         case other:
             raise ValueError(
-                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips'"
+                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips', 'conmin_mfd'"
             )

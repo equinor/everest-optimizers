@@ -283,102 +283,6 @@ PYBIND11_MODULE(pyoptpp, m) {
       .def("getDim", &NLP::getDim)
       .def("setX", static_cast<void (NLP::*)(const T_SerialDenseVector&)>(&NLP::setX));
 
-  // Add dummy test functions for debugging
-  m.def(
-      "create_dummy_nlf1",
-      [](int ndim) -> NLF1* {
-        // Create a simple dummy NLF1 for testing
-        class DummyNLF1 : public NLF1 {
-        public:
-          DummyNLF1(int n) : NLF1(n) {}
-
-          void initFcn() override {}
-
-          real evalF(const T_SerialDenseVector& x) override { return 0.0; }
-
-          T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
-            return T_SerialDenseVector(getDim());
-          }
-
-          T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
-            T_SerialDenseVector result(1);
-            result(0) = x(0) * x(0) + x(1) * x(1) - 4.0; // Simple constraint: x^2 + y^2 = 4
-            return result;
-          }
-
-          T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
-            T_SerialDenseMatrix grad(getDim(), 1);
-            grad(0, 0) = 2.0 * x(0);
-            grad(1, 0) = 2.0 * x(1);
-            return grad;
-          }
-        };
-
-        return new DummyNLF1(ndim);
-      },
-      py::return_value_policy::reference_internal
-  );
-
-  m.def(
-      "create_dummy_nlp",
-      [](int ndim) -> NLP* {
-        // Create a simple dummy NLP for testing
-        class DummyNLF1 : public NLF1 {
-        public:
-          DummyNLF1(int n) : NLF1(n) {}
-
-          void initFcn() override {}
-
-          real evalF(const T_SerialDenseVector& x) override { return 0.0; }
-
-          T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
-            return T_SerialDenseVector(getDim());
-          }
-
-          T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
-            T_SerialDenseVector result(1);
-            result(0) = x(0) * x(0) + x(1) * x(1) - 4.0; // Simple constraint: x^2 + y^2 = 4
-            return result;
-          }
-
-          T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
-            T_SerialDenseMatrix grad(getDim(), 1);
-            grad(0, 0) = 2.0 * x(0);
-            grad(1, 0) = 2.0 * x(1);
-            return grad;
-          }
-        };
-
-        NLF1* dummy_nlf1 = new DummyNLF1(ndim);
-        return new NLP(dummy_nlf1);
-      },
-      py::return_value_policy::reference_internal
-  );
-
-  m.def("test_basic_nlp_creation", []() -> bool {
-    try {
-      // Test basic NLP creation without inheritance issues
-      class TestNLF1 : public NLF1 {
-      public:
-        TestNLF1() : NLF1(2) {}
-        void initFcn() override {}
-        real evalF(const T_SerialDenseVector& x) override { return 0.0; }
-        T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
-          return T_SerialDenseVector(2);
-        }
-      };
-
-      TestNLF1* test_nlf1 = new TestNLF1();
-      NLP* test_nlp = new NLP(test_nlf1);
-
-      delete test_nlp;
-      delete test_nlf1;
-      return true;
-    } catch (...) {
-      return false;
-    }
-  });
-
   // Bind NLF1 using the trampoline class - simplified inheritance
   py::class_<NLF1, PyNLF1>(m, "NLF1")
       .def(py::init<int>(), py::arg("ndim"))
@@ -495,55 +399,13 @@ PYBIND11_MODULE(pyoptpp, m) {
       py::return_value_policy::reference, py::arg("lower"), py::arg("upper")
   );
 
-  // Helper to create a Constraint object from a variety of constraint types
-  m.def(
-      "create_constraint",
-      [](py::object constraint_obj) {
-        if (py::isinstance<LinearEquation>(constraint_obj)) {
-          auto* le = constraint_obj.cast<LinearEquation*>();
-          return new Constraint(le);
-        } else if (py::isinstance<LinearInequality>(constraint_obj)) {
-          auto* li = constraint_obj.cast<LinearInequality*>();
-          return new Constraint(li);
-        } else if (py::isinstance<BoundConstraint>(constraint_obj)) {
-          auto* bc = constraint_obj.cast<BoundConstraint*>();
-          return new Constraint(bc);
-        } else if (py::isinstance<NonLinearInequality>(constraint_obj)) {
-          auto* nli = constraint_obj.cast<NonLinearInequality*>();
-          return new Constraint(nli);
-        } else if (py::isinstance<NonLinearEquation>(constraint_obj)) {
-          auto* nle = constraint_obj.cast<NonLinearEquation*>();
-          return new Constraint(nle);
-        }
-        throw std::runtime_error("Unknown constraint type");
-      },
-      py::return_value_policy::reference
-  );
-
-  // Helper to create CompoundConstraint from a list of constraints
   m.def(
       "create_compound_constraint",
-      [](py::list constraints) {
-        OptppArray<Constraint> constraint_array(constraints.size());
-        int i = 0;
-        for (auto& c : constraints) {
-          if (py::isinstance<Constraint>(c)) {
-            // If it's already a Constraint object, use it directly
-            constraint_array[i] = *c.cast<Constraint*>();
-          } else if (py::isinstance<LinearEquation>(c)) {
-            constraint_array[i] = Constraint(c.cast<LinearEquation*>());
-          } else if (py::isinstance<LinearInequality>(c)) {
-            constraint_array[i] = Constraint(c.cast<LinearInequality*>());
-          } else if (py::isinstance<BoundConstraint>(c)) {
-            constraint_array[i] = Constraint(c.cast<BoundConstraint*>());
-          } else if (py::isinstance<NonLinearInequality>(c)) {
-            constraint_array[i] = Constraint(c.cast<NonLinearInequality*>());
-          } else if (py::isinstance<NonLinearEquation>(c)) {
-            constraint_array[i] = Constraint(c.cast<NonLinearEquation*>());
-          } else {
-            throw std::runtime_error("Unknown constraint type in list");
-          }
-          i++;
+      [](std::vector<ConstraintBase*> constraints) {
+        OptppArray<Constraint> constraint_array{};
+        constraint_array.reserve(constraints.size());
+        for (auto c : constraints) {
+          constraint_array.append(Constraint(c));
         }
         return new CompoundConstraint(constraint_array);
       },
