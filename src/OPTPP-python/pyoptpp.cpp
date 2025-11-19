@@ -397,55 +397,13 @@ PYBIND11_MODULE(pyoptpp, m) {
       py::return_value_policy::reference, py::arg("lower"), py::arg("upper")
   );
 
-  // Helper to create a Constraint object from a variety of constraint types
-  m.def(
-      "create_constraint",
-      [](py::object constraint_obj) {
-        if (py::isinstance<LinearEquation>(constraint_obj)) {
-          auto* le = constraint_obj.cast<LinearEquation*>();
-          return new Constraint(le);
-        } else if (py::isinstance<LinearInequality>(constraint_obj)) {
-          auto* li = constraint_obj.cast<LinearInequality*>();
-          return new Constraint(li);
-        } else if (py::isinstance<BoundConstraint>(constraint_obj)) {
-          auto* bc = constraint_obj.cast<BoundConstraint*>();
-          return new Constraint(bc);
-        } else if (py::isinstance<NonLinearInequality>(constraint_obj)) {
-          auto* nli = constraint_obj.cast<NonLinearInequality*>();
-          return new Constraint(nli);
-        } else if (py::isinstance<NonLinearEquation>(constraint_obj)) {
-          auto* nle = constraint_obj.cast<NonLinearEquation*>();
-          return new Constraint(nle);
-        }
-        throw std::runtime_error("Unknown constraint type");
-      },
-      py::return_value_policy::reference
-  );
-
-  // Helper to create CompoundConstraint from a list of constraints
   m.def(
       "create_compound_constraint",
-      [](py::list constraints) {
-        OptppArray<Constraint> constraint_array(constraints.size());
-        int i = 0;
-        for (auto& c : constraints) {
-          if (py::isinstance<Constraint>(c)) {
-            // If it's already a Constraint object, use it directly
-            constraint_array[i] = *c.cast<Constraint*>();
-          } else if (py::isinstance<LinearEquation>(c)) {
-            constraint_array[i] = Constraint(c.cast<LinearEquation*>());
-          } else if (py::isinstance<LinearInequality>(c)) {
-            constraint_array[i] = Constraint(c.cast<LinearInequality*>());
-          } else if (py::isinstance<BoundConstraint>(c)) {
-            constraint_array[i] = Constraint(c.cast<BoundConstraint*>());
-          } else if (py::isinstance<NonLinearInequality>(c)) {
-            constraint_array[i] = Constraint(c.cast<NonLinearInequality*>());
-          } else if (py::isinstance<NonLinearEquation>(c)) {
-            constraint_array[i] = Constraint(c.cast<NonLinearEquation*>());
-          } else {
-            throw std::runtime_error("Unknown constraint type in list");
-          }
-          i++;
+      [](std::vector<ConstraintBase*> constraints) {
+        OptppArray<Constraint> constraint_array{};
+        constraint_array.reserve(constraints.size());
+        for (auto c : constraints) {
+          constraint_array.append(Constraint(c));
         }
         return new CompoundConstraint(constraint_array);
       },

@@ -215,12 +215,7 @@ def _minimize_optqnips_enhanced(
         for i, obj in enumerate(constraint_objects):
             print(f"  Constraint {i}: {type(obj).__name__}")
 
-        if len(constraint_objects) == 1:
-            # Single constraint - create CompoundConstraint with one element
-            cc_ptr = pyoptpp.create_compound_constraint([constraint_objects[0]])
-        else:
-            # Multiple constraints - create CompoundConstraint with all elements
-            cc_ptr = pyoptpp.create_compound_constraint(constraint_objects)
+        cc_ptr = pyoptpp.create_compound_constraint(constraint_objects)
         print("TESTING: CompoundConstraint created successfully")
     else:
         raise ValueError("OptQNIPS requires at least bounds constraints")

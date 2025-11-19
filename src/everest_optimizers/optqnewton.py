@@ -372,11 +372,7 @@ def _minimize_optconstrqnewton(
         # For general constraints, use the constraint list approach
         try:
             # Wrap each constraint in a Constraint handle
-            wrapped_constraints = []
-            for constr in constraint_list:
-                wrapped_constraint = pyoptpp.create_constraint(constr)
-                wrapped_constraints.append(wrapped_constraint)
-            cc_ptr = pyoptpp.create_compound_constraint(wrapped_constraints)
+            cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
         except (AttributeError, TypeError) as e:
             # Fall back to bounds-only if LinearConstraint classes are not available
             if bounds is not None:
