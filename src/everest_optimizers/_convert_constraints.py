@@ -1,10 +1,13 @@
 import numpy as np
+import numpy.typing as npt
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from everest_optimizers import pyoptpp
 
 
-def _convert_nonlinear_constraint(scipy_constraint, x0):
+def _convert_nonlinear_constraint(
+    scipy_constraint: NonlinearConstraint, x0: npt.NDArray[np.float64]
+):
     """
     Convert a scipy.optimize.NonlinearConstraint to OPTPP NonLinearEquation/NonLinearInequality objects.
 
@@ -248,7 +251,7 @@ def _convert_nonlinear_constraint(scipy_constraint, x0):
     return optpp_constraints
 
 
-def _convert_linear_constraint(scipy_constraint):
+def _convert_linear_constraint(scipy_constraint: LinearConstraint):
     """
     Convert a scipy.optimize.LinearConstraint to OPTPP LinearEquation/LinearInequality objects.
 
@@ -266,46 +269,35 @@ def _convert_linear_constraint(scipy_constraint):
 
     # Get constraint matrix and bounds
     A = np.asarray(scipy_constraint.A, dtype=float)
-    lb = np.asarray(scipy_constraint.lb, dtype=float)
-    ub = np.asarray(scipy_constraint.ub, dtype=float)
-
-    # Ensure A is 2D
-    if A.ndim == 1:
-        A = A.reshape(1, -1)
-
-    # Ensure bounds are 1D arrays
-    lb = np.atleast_1d(lb)
-    ub = np.atleast_1d(ub)
-
+    A = np.atleast_2d(A)
     num_constraints = A.shape[0]
 
-    # Process each constraint row
     for i in range(num_constraints):
         A_row = A[i : i + 1, :]  # Keep as 2D for consistency
-        lb_i = lb[i]
-        ub_i = ub[i]
+        lb = scipy_constraint.lb[i]
+        ub = scipy_constraint.ub[i]
 
-        if not np.isfinite(lb_i) and not np.isfinite(ub_i):
+        if not np.isfinite(lb) and not np.isfinite(ub):
             # Both bounds are infinite - this is not a real constraint
             continue
 
-        if np.isclose(lb_i - ub_i, 0, atol=1e-12):
+        if np.isclose(lb - ub, 0, atol=1e-12):
             # Equality constraint: lb == ub
             A_matrix = pyoptpp.SerialDenseMatrix(A_row)
-            rhs = pyoptpp.SerialDenseVector(np.array([lb_i]))
+            rhs = pyoptpp.SerialDenseVector(np.array([lb]))
             constraint = pyoptpp.LinearEquation(A_matrix, rhs)
             optpp_constraints.append(constraint)
             continue
 
-        if np.isfinite(lb_i):
+        if np.isfinite(lb):
             A_matrix = pyoptpp.SerialDenseMatrix(A_row)
-            rhs_lower = pyoptpp.SerialDenseVector(np.array([lb_i]))
+            rhs_lower = pyoptpp.SerialDenseVector(np.array([lb]))
             ineq_lower = pyoptpp.LinearInequality(A_matrix, rhs_lower)
             optpp_constraints.append(ineq_lower)
 
-        if np.isfinite(ub_i):
+        if np.isfinite(ub):
             A_neg_matrix = pyoptpp.SerialDenseMatrix(-A_row)
-            rhs_upper = pyoptpp.SerialDenseVector(np.array([-ub_i]))
+            rhs_upper = pyoptpp.SerialDenseVector(np.array([-ub]))
             ineq_upper = pyoptpp.LinearInequality(A_neg_matrix, rhs_upper)
             optpp_constraints.append(ineq_upper)
 
