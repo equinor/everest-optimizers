@@ -291,14 +291,14 @@ def _convert_linear_constraint(scipy_constraint: LinearConstraint):
 
         if np.isfinite(lb):
             A_matrix = pyoptpp.SerialDenseMatrix(A_row)
-            rhs_lower = pyoptpp.SerialDenseVector(np.array([lb]))
-            ineq_lower = pyoptpp.LinearInequality(A_matrix, rhs_lower)
-            optpp_constraints.append(ineq_lower)
+            rhs = pyoptpp.SerialDenseVector(np.array([lb]))
+            constraint = pyoptpp.LinearInequality(A_matrix, rhs)
+            optpp_constraints.append(constraint)
 
         if np.isfinite(ub):
             A_neg_matrix = pyoptpp.SerialDenseMatrix(-A_row)
-            rhs_upper = pyoptpp.SerialDenseVector(np.array([-ub]))
-            ineq_upper = pyoptpp.LinearInequality(A_neg_matrix, rhs_upper)
-            optpp_constraints.append(ineq_upper)
+            rhs = pyoptpp.SerialDenseVector(np.array([-ub]))
+            constraint = pyoptpp.LinearInequality(A_neg_matrix, rhs)
+            optpp_constraints.append(constraint)
 
     return optpp_constraints
