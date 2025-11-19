@@ -278,7 +278,7 @@ def _minimize_optconstrqnewton(
         bound_constraint = pyoptpp.BoundConstraint(
             len(x0), pyoptpp.SerialDenseVector(lb), pyoptpp.SerialDenseVector(ub)
         )
-        constraint_list.extend(bound_constraint)
+        constraint_list.append(bound_constraint)
 
     if constraints is not None:
         if not isinstance(constraints, Collection):
@@ -297,19 +297,7 @@ def _minimize_optconstrqnewton(
         raise ValueError("No valid constraints were processed.")
 
     # Create C++ compound constraint object
-    if len(constraint_list) == 1 and isinstance(
-        constraint_list[0], pyoptpp.BoundConstraint
-    ):
-        # Use the bounds-only helper for backwards compatibility
-        lb = np.asarray(bounds.lb, dtype=float)
-        ub = np.asarray(bounds.ub, dtype=float)
-        # OPTPP uses a large number for infinity
-        inf = 1.0e30
-        lb[np.isneginf(lb)] = -inf
-        ub[np.isposinf(ub)] = inf
-        cc_ptr = pyoptpp.create_compound_constraint(lb, ub)
-    else:
-        cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
+    cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
 
     # Attach constraints to the NLF1 problem
     problem.nlf1_problem.setConstraints(cc_ptr)
