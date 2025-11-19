@@ -202,67 +202,8 @@ def _minimize_optqnips_enhanced(
                 optpp_constraints = _convert_linear_constraint(constraint)
                 constraint_objects.extend(optpp_constraints)
             elif isinstance(constraint, NonlinearConstraint):
-                # TEST: Use hardcoded dummy constraints first to verify OPTPP processing
-                print(
-                    "TESTING: Using hardcoded dummy constraint instead of complex conversion..."
-                )
-
-                # Determine constraint type from scipy constraint bounds
-                lb = np.asarray(constraint.lb, dtype=float)
-                ub = np.asarray(constraint.ub, dtype=float)
-
-                try:
-                    dummy_nlp = pyoptpp.create_dummy_nlp(len(x0))
-                    print(f"Dummy NLP created successfully for {len(x0)} variables")
-
-                    # Check if it's equality or inequality based on bounds
-                    if (
-                        np.isfinite(lb[0])
-                        and np.isfinite(ub[0])
-                        and abs(lb[0] - ub[0]) < 1e-12
-                    ):
-                        # Equality constraint: x^2 + y^2 = 4 (dummy constraint returns x^2 + y^2 - 4)
-                        print(
-                            "Creating hardcoded NonLinearEquation constraint: x^2 + y^2 = 4"
-                        )
-                        rhs = pyoptpp.SerialDenseVector(
-                            np.array([0.0])
-                        )  # x^2 + y^2 - 4 = 0
-                        eq_constraint = pyoptpp.NonLinearEquation(dummy_nlp, rhs, 1)
-                        constraint_objects.append(eq_constraint)
-                        print(
-                            "Hardcoded NonLinearEquation constraint added successfully"
-                        )
-
-                    elif not np.isfinite(ub[0]) or ub[0] > lb[0]:
-                        # Inequality constraint: treat as x^2 + y^2 <= 4 (dummy returns x^2 + y^2 - 4)
-                        print(
-                            "Creating hardcoded NonLinearInequality constraint: x^2 + y^2 <= 4"
-                        )
-                        rhs = pyoptpp.SerialDenseVector(
-                            np.array([0.0])
-                        )  # x^2 + y^2 - 4 <= 0
-                        ineq_constraint = pyoptpp.NonLinearInequality(dummy_nlp, rhs, 1)
-                        constraint_objects.append(ineq_constraint)
-                        print(
-                            "Hardcoded NonLinearInequality constraint added successfully"
-                        )
-                    else:
-                        print("Unknown constraint bounds - defaulting to equality")
-                        rhs = pyoptpp.SerialDenseVector(np.array([0.0]))
-                        eq_constraint = pyoptpp.NonLinearEquation(dummy_nlp, rhs, 1)
-                        constraint_objects.append(eq_constraint)
-                        print(
-                            "Hardcoded NonLinearEquation constraint added successfully"
-                        )
-
-                except Exception as e:
-                    print(f"ERROR: Even dummy constraint creation failed: {e}")
-                    import traceback
-
-                    traceback.print_exc()
-                    print("Falling back to unconstrained optimization (bounds only)")
-                    # Continue without nonlinear constraints
+                print("Falling back to unconstrained optimization (bounds only)")
+                # Continue without nonlinear constraints
             else:
                 raise ValueError(f"Unsupported constraint type: {type(constraint)}")
 
@@ -392,80 +333,6 @@ def _minimize_optqnips_enhanced(
             message=f"OptQNIPS optimization failed: {e!s}",
             jac=None,
         )
-
-
-def _test_dummy_constraint_objects():
-    """Test dummy constraint objects to isolate segfault causes."""
-    print("Testing basic NLP creation...")
-
-    try:
-        # Test 1: Basic NLP creation test
-        result = pyoptpp.test_basic_nlp_creation()
-        print(f"Basic NLP creation test: {'PASSED' if result else 'FAILED'}")
-
-        # Test 2: Create dummy NLF1
-        print("Creating dummy NLF1...")
-        dummy_nlf1 = pyoptpp.create_dummy_nlf1(2)
-        print("Dummy NLF1 created successfully")
-
-        # Test 3: Create NLP from dummy NLF1
-        print("Creating NLP from dummy NLF1...")
-        nlp_wrapper = pyoptpp.NLP(dummy_nlf1)
-        print("NLP wrapper created successfully")
-
-        # Test 4: Create constraint from NLP
-        print("Creating NonLinearEquation from NLP...")
-        rhs = pyoptpp.SerialDenseVector(np.array([0.0]))
-        eq_constraint = pyoptpp.NonLinearEquation(nlp_wrapper, rhs, 1)
-        print("NonLinearEquation created successfully")
-
-        # Test 5: Create dummy NLP directly
-        print("Creating dummy NLP directly...")
-        dummy_nlp = pyoptpp.create_dummy_nlp(2)
-        print("Dummy NLP created successfully")
-
-        # Test 6: Create constraint from dummy NLP
-        print("Creating NonLinearEquation from dummy NLP...")
-        rhs2 = pyoptpp.SerialDenseVector(np.array([0.0]))
-        eq_constraint2 = pyoptpp.NonLinearEquation(dummy_nlp, rhs2, 1)
-        print("NonLinearEquation from dummy NLP created successfully")
-
-        # Test 7: Try Python-based NLF1 (trampoline class test)
-        print("Testing Python-based NLF1 (trampoline)...")
-
-        class SimpleNLF1(pyoptpp.NLF1):
-            def __init__(self, ndim):
-                super().__init__(ndim)
-                init_vector = pyoptpp.SerialDenseVector(np.zeros(ndim))
-                self.setX(init_vector)
-
-            def evalF(self, x):
-                return 0.0
-
-            def evalG(self, x):
-                return np.zeros(self.getDim())
-
-            def evalCF(self, x):
-                x_np = np.array(x.to_numpy())
-                result = x_np[0] ** 2 + x_np[1] ** 2 - 4.0
-                return pyoptpp.SerialDenseVector(np.array([result]))
-
-        print("Creating SimpleNLF1...")
-        simple_nlf1 = SimpleNLF1(2)
-        print("SimpleNLF1 created successfully")
-
-        print("Creating NLP from SimpleNLF1...")
-        nlp_from_simple = pyoptpp.NLP(simple_nlf1)
-        print("NLP from SimpleNLF1 created successfully")
-
-        return [eq_constraint, eq_constraint2]
-
-    except Exception as e:
-        print(f"ERROR in dummy constraint test: {e}")
-        import traceback
-
-        traceback.print_exc()
-        raise
 
 
 def _convert_nonlinear_constraint(scipy_constraint, x0):
