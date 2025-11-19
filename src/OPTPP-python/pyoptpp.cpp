@@ -18,6 +18,7 @@
 #include "OptConstrQNewton.h"
 #include "OptQNIPS.h"
 #include "OptQNewton.h"
+#include "Teuchos_SerialDenseMatrix.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Teuchos_SerialSymDenseMatrix.hpp"
 
@@ -26,6 +27,7 @@ using namespace OPTPP;
 
 using T_SerialDenseVector = Teuchos::SerialDenseVector<int, double>;
 using T_SerialSymDenseMatrix = Teuchos::SerialSymDenseMatrix<int, double>;
+using T_SerialDenseMatrix = Teuchos::SerialDenseMatrix<int, double>;
 
 // Dummy C++ function for the default case
 void default_update_model(int, int, T_SerialDenseVector) {}
@@ -145,7 +147,7 @@ public:
     return T_SerialDenseVector(1);
   }
 
-  Teuchos::SerialDenseMatrix<int, double> evalCG(const T_SerialDenseVector& x) override {
+  T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
     py::gil_scoped_acquire gil;
     py::function override = py::get_override(static_cast<const NLF1*>(this), "evalCG");
     if (override) {
@@ -156,12 +158,12 @@ public:
       if (buf.ndim != 2) {
         throw std::runtime_error("evalCG: Returned numpy array must be 2-D (gradient matrix)!");
       }
-      Teuchos::SerialDenseMatrix<int, double> constraint_grad(buf.shape[0], buf.shape[1]);
+      T_SerialDenseMatrix constraint_grad(buf.shape[0], buf.shape[1]);
       std::memcpy(constraint_grad.values(), buf.ptr, buf.size * sizeof(double));
       return constraint_grad;
     }
     // If no override, return an empty matrix
-    return Teuchos::SerialDenseMatrix<int, double>(this->getDim(), 1);
+    return T_SerialDenseMatrix(this->getDim(), 1);
   }
 };
 
@@ -218,17 +220,17 @@ PYBIND11_MODULE(pyoptpp, m) {
       .def(py::init<int>());
 
   // Bind Teuchos::SerialDenseMatrix
-  py::class_<Teuchos::SerialDenseMatrix<int, double>>(m, "SerialDenseMatrix", py::buffer_protocol())
+  py::class_<T_SerialDenseMatrix>(m, "SerialDenseMatrix", py::buffer_protocol())
       .def(py::init<int, int>())
       .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
         if (arr.ndim() != 2) {
           throw std::runtime_error("Numpy array must be 2-D");
         }
-        auto mat = new Teuchos::SerialDenseMatrix<int, double>(arr.shape(0), arr.shape(1));
+        auto mat = new T_SerialDenseMatrix(arr.shape(0), arr.shape(1));
         std::memcpy(mat->values(), arr.data(), arr.size() * sizeof(double));
         return mat;
       }))
-      .def_buffer([](Teuchos::SerialDenseMatrix<int, double>& m) -> py::buffer_info {
+      .def_buffer([](T_SerialDenseMatrix& m) -> py::buffer_info {
         return py::buffer_info(
             m.values(), sizeof(double), py::format_descriptor<double>::format(), 2,
             {(size_t)m.numRows(), (size_t)m.numCols()},
@@ -304,8 +306,8 @@ PYBIND11_MODULE(pyoptpp, m) {
             return result;
           }
 
-          Teuchos::SerialDenseMatrix<int, double> evalCG(const T_SerialDenseVector& x) override {
-            Teuchos::SerialDenseMatrix<int, double> grad(getDim(), 1);
+          T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
+            T_SerialDenseMatrix grad(getDim(), 1);
             grad(0, 0) = 2.0 * x(0);
             grad(1, 0) = 2.0 * x(1);
             return grad;
@@ -339,8 +341,8 @@ PYBIND11_MODULE(pyoptpp, m) {
             return result;
           }
 
-          Teuchos::SerialDenseMatrix<int, double> evalCG(const T_SerialDenseVector& x) override {
-            Teuchos::SerialDenseMatrix<int, double> grad(getDim(), 1);
+          T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
+            T_SerialDenseMatrix grad(getDim(), 1);
             grad(0, 0) = 2.0 * x(0);
             grad(1, 0) = 2.0 * x(1);
             return grad;
@@ -452,8 +454,8 @@ PYBIND11_MODULE(pyoptpp, m) {
   // Bind LinearEquation
   py::class_<LinearEquation, LinearConstraint>(m, "LinearEquation")
       .def(
-          py::init<const Teuchos::SerialDenseMatrix<int, double>&, const T_SerialDenseVector&>(),
-          py::arg("A"), py::arg("rhs")
+          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(), py::arg("A"),
+          py::arg("rhs")
       )
       .def("getB", &LinearEquation::getB)
       .def("evalAx", &LinearEquation::evalAx, py::arg("x"));
@@ -461,8 +463,8 @@ PYBIND11_MODULE(pyoptpp, m) {
   // Bind LinearInequality
   py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
       .def(
-          py::init<const Teuchos::SerialDenseMatrix<int, double>&, const T_SerialDenseVector&>(),
-          py::arg("A"), py::arg("rhs")
+          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(), py::arg("A"),
+          py::arg("rhs")
       );
 
   // Bind BoundConstraint
