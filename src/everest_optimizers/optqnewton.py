@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from typing import Any
 
 import numpy as np
 from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
+from everest_optimizers._convert_constraints import _convert_linear_constraint
 
 
 class _OptQNewtonProblem:
@@ -277,88 +278,27 @@ def _minimize_optconstrqnewton(
         bound_constraint = pyoptpp.BoundConstraint(
             len(x0), pyoptpp.SerialDenseVector(lb), pyoptpp.SerialDenseVector(ub)
         )
-        constraint_list.append(bound_constraint)
+        constraint_list.extend(bound_constraint)
 
     if constraints is not None:
-        # Handle various constraint types
-        if hasattr(constraints, "__iter__") and not isinstance(constraints, dict):
-            # List of constraints
-            for constraint in constraints:
-                if (
-                    hasattr(constraint, "A")
-                    and hasattr(constraint, "lb")
-                    and hasattr(constraint, "ub")
-                ):
-                    # LinearConstraint from scipy
-                    A_matrix = pyoptpp.SerialDenseMatrix(constraint.A)
-                    if np.allclose(constraint.lb, constraint.ub):
-                        # Equality constraint: lb == ub
-                        linear_eq = pyoptpp.LinearEquation(
-                            A_matrix, pyoptpp.SerialDenseVector(constraint.lb)
-                        )
-                        constraint_list.append(linear_eq)
-                    else:
-                        # Inequality constraint: lb <= Ax <= ub
-                        # For now, only handle Ax >= lb case (lb finite, ub infinite)
-                        if (
-                            np.isfinite(constraint.lb).all()
-                            and np.isinf(constraint.ub).all()
-                        ):
-                            # Convert Ax >= lb to Ax - lb >= 0
-                            linear_ineq = pyoptpp.LinearInequality(
-                                A_matrix, pyoptpp.SerialDenseVector(constraint.lb)
-                            )
-                            constraint_list.append(linear_ineq)
-                        else:
-                            raise NotImplementedError(
-                                "Only linear equality constraints (lb == ub) and one-sided inequalities "
-                                "(Ax >= lb with infinite upper bounds) are currently supported."
-                            )
-                else:
-                    raise ValueError(f"Unknown constraint type: {type(constraint)}")
-        else:
-            # Single constraint
-            if (
-                hasattr(constraints, "A")
-                and hasattr(constraints, "lb")
-                and hasattr(constraints, "ub")
-            ):
-                # LinearConstraint from scipy
-                A_matrix = pyoptpp.SerialDenseMatrix(constraints.A)
-                if np.allclose(constraints.lb, constraints.ub):
-                    # Equality constraint: lb == ub
-                    linear_eq = pyoptpp.LinearEquation(
-                        A_matrix, pyoptpp.SerialDenseVector(constraints.lb)
-                    )
-                    constraint_list.append(linear_eq)
-                else:
-                    # Inequality constraint: lb <= Ax <= ub
-                    # For now, only handle Ax >= lb case (lb finite, ub infinite)
-                    if (
-                        np.isfinite(constraints.lb).all()
-                        and np.isinf(constraints.ub).all()
-                    ):
-                        # Convert Ax >= lb to Ax - lb >= 0
-                        linear_ineq = pyoptpp.LinearInequality(
-                            A_matrix, pyoptpp.SerialDenseVector(constraints.lb)
-                        )
-                        constraint_list.append(linear_ineq)
-                    else:
-                        raise NotImplementedError(
-                            "Only linear equality constraints (lb == ub) and one-sided inequalities "
-                            "(Ax >= lb with infinite upper bounds) are currently supported."
-                        )
-            else:
-                raise ValueError(f"Unknown constraint type: {type(constraints)}")
+        if not isinstance(constraints, Collection):
+            constraints = [constraints]
+
+        for constraint in constraints:
+            if np.isfinite(constraint.lb) + np.isfinite(constraint.ub) != 1:
+                raise NotImplementedError(
+                    "Only linear equality constraints (lb == ub) and one-sided inequalities "
+                    "(Ax >= lb with infinite upper bounds) are currently supported."
+                )
+            optpp_constraint = _convert_linear_constraint(constraint)
+            constraint_list.extend(optpp_constraint)
 
     if not constraint_list:
         raise ValueError("No valid constraints were processed.")
 
     # Create C++ compound constraint object
-    if (
-        len(constraint_list) == 1
-        and hasattr(constraint_list[0], "__class__")
-        and "BoundConstraint" in str(constraint_list[0].__class__)
+    if len(constraint_list) == 1 and isinstance(
+        constraint_list[0], pyoptpp.BoundConstraint
     ):
         # Use the bounds-only helper for backwards compatibility
         lb = np.asarray(bounds.lb, dtype=float)
@@ -369,23 +309,7 @@ def _minimize_optconstrqnewton(
         ub[np.isposinf(ub)] = inf
         cc_ptr = pyoptpp.create_compound_constraint(lb, ub)
     else:
-        # For general constraints, use the constraint list approach
-        try:
-            # Wrap each constraint in a Constraint handle
-            cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
-        except (AttributeError, TypeError) as e:
-            # Fall back to bounds-only if LinearConstraint classes are not available
-            if bounds is not None:
-                lb = np.asarray(bounds.lb, dtype=float)
-                ub = np.asarray(bounds.ub, dtype=float)
-                inf = 1.0e30
-                lb[np.isneginf(lb)] = -inf
-                ub[np.isposinf(ub)] = inf
-                cc_ptr = pyoptpp.create_compound_constraint(lb, ub)
-            else:
-                raise NotImplementedError(
-                    "Linear constraints are not available in the current build. Only bounds constraints are supported."
-                ) from e
+        cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
 
     # Attach constraints to the NLF1 problem
     problem.nlf1_problem.setConstraints(cc_ptr)
