@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-from scipy.optimize import OptimizeResult
+from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
 
@@ -109,7 +109,7 @@ def _minimize_optqnewton(
     args: tuple = (),
     jac: Callable | None = None,
     bounds: Any | None = None,
-    constraints: Any | None = None,
+    constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
@@ -127,7 +127,7 @@ def _minimize_optqnewton(
         Method for computing the gradient vector.
     bounds : sequence, optional
         Bounds on variables (not supported by optpp_q_newton).
-    constraints : dict or list, optional
+    constraints : list, optional
         Constraints definition (not supported by optpp_q_newton).
     options : dict, optional
         Solver options including:
