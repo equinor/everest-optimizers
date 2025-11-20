@@ -32,7 +32,7 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
 def test_linear_equality_constraint():
     A = np.array([[1, 1]])
     lb = ub = np.array([1])
-    constraints = LinearConstraint(A, lb, ub)
+    constraints = [LinearConstraint(A, lb, ub)]
     x0 = np.array([0.0, 0.0])
     result = minimize(
         objective,
@@ -48,14 +48,11 @@ def test_linear_equality_constraint():
     assert result.fun < 1e-8
 
 
-@pytest.mark.xfail(
-    reason="Something is wrong in the implementation of constraints and bounds."
-)
 def test_linear_inequality_constraint():
     A = np.array([[1, 1]])
     lb = np.array([-np.inf])
     ub = np.array([1])
-    constraints = LinearConstraint(A, lb, ub)
+    constraints = [LinearConstraint(A, lb, ub)]
     x0 = np.array([0.0, 0.0])
     result = minimize(
         objective,
@@ -78,7 +75,7 @@ def test_linear_mixed_constraints():
     A = np.array([[1, 1], [1, 0]])
     lb = np.array([1, -np.inf])
     ub = np.array([1, 1.5])
-    constraints = LinearConstraint(A, lb, ub)
+    constraints = [LinearConstraint(A, lb, ub)]
     x0 = np.array([0.0, 0.0])
     result = minimize(
         objective,
