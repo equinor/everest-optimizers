@@ -33,9 +33,6 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
 
-@pytest.mark.xfail(
-    reason="Something is wrong in the implementation of constraints and bounds."
-)
 def test_linear_inequality_constraint():
     A = np.array([[1, 1]])
     lb = np.array([-np.inf])
