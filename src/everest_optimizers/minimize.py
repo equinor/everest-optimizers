@@ -180,7 +180,7 @@ def minimize(
                 options=options,
             )
         case "optpp_q_nips":
-            return minimize_optqnips_enhanced(
+            return minimize_optqnips(
                 fun=fun,
                 x0=x0,
                 args=args,
