@@ -4,7 +4,7 @@ from scipy.optimize import OptimizeResult
 from everest_optimizers.pyoptsparse import CONMIN, Optimization
 
 
-def _minimize_conmin_mfd(fun, x0, args=(), bounds=None, constraints=None, options=None):
+def minimize_conmin_mfd(fun, x0, args=(), bounds=None, constraints=None, options=None):
     n = len(x0)
     options = options or {}
     constraints = constraints or []
@@ -39,9 +39,8 @@ def _minimize_conmin_mfd(fun, x0, args=(), bounds=None, constraints=None, option
     solution = optimizer(optProb)
 
     if solution is None:
-        # CONMIN failed or terminated immediately
         return OptimizeResult(
-            x=x0,  # Return initial point
+            x=x0,
             fun=fun(x0, *args),
             success=False,
             message="CONMIN terminated immediately",

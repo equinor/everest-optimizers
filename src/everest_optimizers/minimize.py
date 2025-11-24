@@ -6,12 +6,12 @@ from typing import Any
 import numpy as np
 from scipy.optimize import OptimizeResult
 
-from everest_optimizers.conminmfd import _minimize_conmin_mfd
-from everest_optimizers.optqnewton import (
-    _minimize_optconstrqnewton,
-    _minimize_optqnewton,
+from everest_optimizers._conminmfd import minimize_conmin_mfd
+from everest_optimizers._optqnewton import (
+    minimize_optconstrqnewton,
+    minimize_optqnewton,
 )
-from everest_optimizers.optqnips_impl import _minimize_optqnips_enhanced
+from everest_optimizers._optqnips_impl import minimize_optqnips_enhanced
 
 
 def minimize(
@@ -140,19 +140,16 @@ def minimize(
     >>> result = minimize(rosenbrock, x0, method='optpp_q_newton', jac=rosenbrock_grad)
     >>> print(result.x)  # Should be close to [1.0, 1.0]
     """
-    # Convert x0 to numpy array
     x0 = np.asarray(x0, dtype=float)
-
     if x0.ndim != 1:
         raise ValueError("x0 must be 1-dimensional")
 
-    # Convert args to tuple if not already
     if not isinstance(args, tuple):
         args = (args,)
 
     match method.lower():
         case "optpp_q_newton":
-            return _minimize_optqnewton(
+            return minimize_optqnewton(
                 fun=fun,
                 x0=x0,
                 args=args,
@@ -163,7 +160,7 @@ def minimize(
                 options=options,
             )
         case "conmin_mfd":
-            return _minimize_conmin_mfd(
+            return minimize_conmin_mfd(
                 fun=fun,
                 x0=x0,
                 args=args,
@@ -172,7 +169,7 @@ def minimize(
                 options=options,
             )
         case "optpp_constr_q_newton":
-            return _minimize_optconstrqnewton(
+            return minimize_optconstrqnewton(
                 fun=fun,
                 x0=x0,
                 args=args,
@@ -183,7 +180,7 @@ def minimize(
                 options=options,
             )
         case "optpp_q_nips":
-            return _minimize_optqnips_enhanced(
+            return minimize_optqnips_enhanced(
                 fun=fun,
                 x0=x0,
                 args=args,

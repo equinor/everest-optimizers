@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import warnings
 from collections.abc import Callable, Collection
 from typing import Any
@@ -114,7 +112,7 @@ class _OptQNewtonProblem:
         return grad
 
 
-def _minimize_optqnewton(
+def minimize_optqnewton(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
@@ -229,7 +227,7 @@ def _minimize_optqnewton(
         )
 
 
-def _minimize_optconstrqnewton(
+def minimize_optconstrqnewton(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),

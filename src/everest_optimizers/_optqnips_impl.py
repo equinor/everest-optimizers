@@ -11,7 +11,7 @@ from everest_optimizers._convert_constraints import (
 )
 
 
-def _minimize_optqnips_enhanced(
+def minimize_optqnips_enhanced(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
@@ -40,10 +40,7 @@ def _minimize_optqnips_enhanced(
     debug = options.get("debug", False)
     output_file = options.get("output_file", None)
 
-    # Search method (Dakota keyword mapping)
     search_method = options.get("search_method", "trust_region")
-
-    # Merit function (Dakota keyword mapping)
     merit_function = options.get("merit_function", "argaez_tapia")
 
     # Interior-point specific parameters with Dakota defaults based on merit function
