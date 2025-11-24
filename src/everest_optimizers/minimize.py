@@ -11,7 +11,7 @@ from everest_optimizers._optqnewton import (
     minimize_optconstrqnewton,
     minimize_optqnewton,
 )
-from everest_optimizers._optqnips_impl import minimize_optqnips_enhanced
+from everest_optimizers._optqnips import minimize_optqnips
 
 
 def minimize(

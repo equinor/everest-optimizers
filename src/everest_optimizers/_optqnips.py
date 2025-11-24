@@ -11,7 +11,7 @@ from everest_optimizers._convert_constraints import (
 )
 
 
-def minimize_optqnips_enhanced(
+def minimize_optqnips(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
@@ -21,8 +21,6 @@ def minimize_optqnips_enhanced(
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
-    Enhanced OptQNIPS implementation with full parameter support.
-
     This implementation supports all the parameters documented in the Dakota
     quasi-Newton methods documentation.
     """
