@@ -380,6 +380,12 @@ PYBIND11_MODULE(pyoptpp, m) {
             return new LinearInequality(A, rhs);
           },
           py::return_value_policy::reference, py::arg("A"), py::arg("rhs")
+      )
+      .def_static(
+          "create",
+          [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& lower,
+             const T_SerialDenseVector& upper) { return new LinearInequality(A, lower, upper); },
+          py::return_value_policy::reference, py::arg("A"), py::arg("lower"), py::arg("upper")
       );
 
   // Bind BoundConstraint
