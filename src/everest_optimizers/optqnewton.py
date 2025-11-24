@@ -296,7 +296,6 @@ def _minimize_optconstrqnewton(
     if not constraint_list:
         raise ValueError("No valid constraints were processed.")
 
-    # Create C++ compound constraint object
     cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
 
     # Attach constraints to the NLF1 problem

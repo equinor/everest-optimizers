@@ -28,7 +28,6 @@ def _minimize_optqnips_enhanced(
     This implementation supports all the parameters documented in the Dakota
     quasi-Newton methods documentation.
     """
-    # Convert inputs
     x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
         raise ValueError("x0 must be 1-dimensional")
@@ -36,7 +35,6 @@ def _minimize_optqnips_enhanced(
     if bounds is None and constraints is None:
         raise ValueError("Either bounds or constraints must be provided for OptQNIPS")
 
-    # Set up options
     if options is None:
         options = {}
 
@@ -76,8 +74,6 @@ def _minimize_optqnips_enhanced(
     convergence_tolerance = options.get("convergence_tolerance", 1e-4)
     gradient_tolerance = options.get("gradient_tolerance", 1e-4)
     constraint_tolerance = options.get("constraint_tolerance", 1e-6)
-
-    # Max step parameter
     max_step = options.get("max_step", 1000.0)
 
     # Speculative gradients (not implemented but recognized)
@@ -89,7 +85,6 @@ def _minimize_optqnips_enhanced(
     gradient_multiplier = options.get("gradient_multiplier", 0.1)
     search_pattern_size = options.get("search_pattern_size", 64)
 
-    # Create a simple problem class
     class OptQNIPSProblem:
         def __init__(self, fun, x0, args, jac):
             self.fun = fun
@@ -103,7 +98,6 @@ def _minimize_optqnips_enhanced(
             self.current_f = None
             self.current_g = None
 
-            # Create the NLF1 problem
             self.nlf1_problem = self._create_nlf1_problem()
 
         def _create_nlf1_problem(self):
@@ -174,13 +168,10 @@ def _minimize_optqnips_enhanced(
 
             return OptQNIPSNLF1(self)
 
-    # Create problem
     problem = OptQNIPSProblem(fun, x0, args, jac)
 
-    # Process constraints - enhanced version supporting multiple constraint types
     constraint_objects = []
 
-    # Handle bounds constraints
     if bounds is not None:
         lb = np.asarray(bounds.lb, dtype=float)
         ub = np.asarray(bounds.ub, dtype=float)
@@ -195,7 +186,6 @@ def _minimize_optqnips_enhanced(
         bound_constraint = pyoptpp.BoundConstraint(len(x0), lb_vec, ub_vec)
         constraint_objects.append(bound_constraint)
 
-    # Handle general constraints (linear and nonlinear)
     if constraints is not None:
         if not isinstance(constraints, (list, tuple)):
             constraints = [constraints]
@@ -211,18 +201,13 @@ def _minimize_optqnips_enhanced(
             else:
                 raise ValueError(f"Unsupported constraint type: {type(constraint)}")
 
-    # Create compound constraint from all constraint objects
     if constraint_objects:
         cc_ptr = pyoptpp.create_compound_constraint(constraint_objects)
     else:
         raise ValueError("OptQNIPS requires at least bounds constraints")
 
-    # Attach constraints to the NLF1 problem
-    print("TESTING: Attaching constraints to NLF1 problem...")
     problem.nlf1_problem.setConstraints(cc_ptr)
-    print("TESTING: Constraints attached successfully")
 
-    # Create OptQNIPS optimizer
     optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
 
     match search_method.lower():
@@ -268,28 +253,18 @@ def _minimize_optqnips_enhanced(
     optimizer.setGradTol(gradient_tolerance)
     optimizer.setConTol(constraint_tolerance)
 
-    # Note: max_step is handled by setTRSize in OptQNIPS
     if "max_step" in options:
         optimizer.setTRSize(max_step)
-
-    # Set debug mode
     if debug:
         optimizer.setDebug()
-
-    # Set output file
     if output_file:
         optimizer.setOutputFile(output_file, 0)
 
-    # Run optimization
     try:
-        print("TESTING: Starting OptQNIPS optimization with constraints...")
-        print(f"TESTING: Initial point: {x0}")
         optimizer.optimize()
-        print("TESTING: Optimization completed")
 
         solution_vector = problem.nlf1_problem.getXc()
         x_final = solution_vector.to_numpy()
-        print(f"TESTING: Final solution: {x_final}")
 
         # Ensure caller sees feasible result if bounds are provided
         if bounds is not None:

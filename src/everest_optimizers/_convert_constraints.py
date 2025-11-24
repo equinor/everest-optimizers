@@ -34,7 +34,6 @@ def _convert_nonlinear_constraint(
     lb = np.asarray(scipy_constraint.lb, dtype=float)
     ub = np.asarray(scipy_constraint.ub, dtype=float)
 
-    # Ensure bounds are 1D arrays
     lb = np.atleast_1d(lb)
     ub = np.atleast_1d(ub)
 
