@@ -170,82 +170,38 @@ def _convert_nonlinear_constraint(
 
     # Process each constraint
     for i in range(num_constraints):
-        lb_i = lb[i] if i < len(lb) else lb[-1]
-        ub_i = ub[i] if i < len(ub) else ub[-1]
+        if not np.isfinite(lb[i]) and not np.isfinite(ub[i]):
+            # Both bounds are infinite - this is not a real constraint
+            continue
 
-        # Determine constraint type based on bounds
-        if np.isfinite(lb_i) and np.isfinite(ub_i):
-            if np.abs(lb_i - ub_i) < 1e-12:
-                # Equality constraint: lb == ub, so c(x) = lb
-                # Follow OPTPP pattern from hockfcns.C: new NLP(new NLF1(...))
-                constraint_nlf1 = create_constraint_nlf1(
-                    scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=False
-                )
-                nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
+        if np.isclose(lb[i] - ub[i], 0, atol=1e-12):
+            # Equality constraint: lb == ub, so c(x) = lb
+            constraint_nlf1 = create_constraint_nlf1(
+                scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=False
+            )
+            nlp_wrapper = pyoptpp.NLP.create(constraint_nlf1)
+            rhs = pyoptpp.SerialDenseVector(np.array(lb[i]))
+            constraint = pyoptpp.NonLinearEquation.create(nlp_wrapper, rhs, 1)
+            optpp_constraints.append(constraint)
+            continue
 
-                # For OPTPP, equality constraint is c(x) - rhs = 0
-                rhs = pyoptpp.SerialDenseVector(np.array([lb_i]))
-                eq_constraint = pyoptpp.NonLinearEquation(nlp_wrapper, rhs, 1)
-                optpp_constraints.append(eq_constraint)
-            else:
-                # Double-sided inequality: lb <= c(x) <= ub
-                # Split into two constraints following OPTPP standard form (Ax >= b)
-
-                if np.isfinite(lb_i):
-                    # c(x) >= lb  =>  c(x) - lb >= 0
-                    # Follow OPTPP pattern from hockfcns.C: new NLP(new NLF1(...))
-                    constraint_nlf1 = create_constraint_nlf1(
-                        scipy_constraint.fun,
-                        scipy_constraint.jac,
-                        x0,
-                        i,
-                        is_negated=False,
-                    )
-                    nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
-                    rhs_lower = pyoptpp.SerialDenseVector(np.array([lb_i]))
-                    ineq_lower = pyoptpp.NonLinearInequality(nlp_wrapper, rhs_lower, 1)
-                    optpp_constraints.append(ineq_lower)
-
-                if np.isfinite(ub_i):
-                    # c(x) <= ub  =>  -c(x) + ub >= 0 (OPTPP standard form)
-                    # Follow OPTPP pattern from hockfcns.C: new NLP(new NLF1(...))
-                    constraint_nlf1 = create_constraint_nlf1(
-                        scipy_constraint.fun,
-                        scipy_constraint.jac,
-                        x0,
-                        i,
-                        is_negated=True,
-                    )
-                    nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
-                    rhs_upper = pyoptpp.SerialDenseVector(np.array([-ub_i]))
-                    ineq_upper = pyoptpp.NonLinearInequality(nlp_wrapper, rhs_upper, 1)
-                    optpp_constraints.append(ineq_upper)
-
-        elif np.isfinite(lb_i) and not np.isfinite(ub_i):
-            # One-sided inequality: c(x) >= lb
-            # Follow OPTPP pattern from hockfcns.C: new NLP(new NLF1(...))
+        if np.isfinite(lb[i]):
             constraint_nlf1 = create_constraint_nlf1(
                 scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=False
             )
             nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
-            rhs = pyoptpp.SerialDenseVector(np.array([lb_i]))
-            ineq_constraint = pyoptpp.NonLinearInequality(nlp_wrapper, rhs, 1)
-            optpp_constraints.append(ineq_constraint)
+            rhs = pyoptpp.SerialDenseVector(np.array(lb[i]))
+            constraint = pyoptpp.NonLinearInequality(nlp_wrapper, rhs, 1)
+            optpp_constraints.append(constraint)
 
-        elif not np.isfinite(lb_i) and np.isfinite(ub_i):
-            # One-sided inequality: c(x) <= ub  =>  -c(x) + ub >= 0 (OPTPP standard form)
-            # Follow OPTPP pattern from hockfcns.C: new NLP(new NLF1(...))
+        if np.isfinite(ub[i]):
             constraint_nlf1 = create_constraint_nlf1(
                 scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=True
             )
             nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
-            rhs = pyoptpp.SerialDenseVector(np.array([-ub_i]))
-            ineq_constraint = pyoptpp.NonLinearInequality(nlp_wrapper, rhs, 1)
-            optpp_constraints.append(ineq_constraint)
-
-        else:
-            # Both bounds are infinite - this is not a real constraint
-            continue
+            rhs = pyoptpp.SerialDenseVector(np.array(-ub[i]))
+            constraint = pyoptpp.NonLinearInequality(nlp_wrapper, rhs, 1)
+            optpp_constraints.append(constraint)
 
     return optpp_constraints
 
