@@ -5,7 +5,7 @@ from everest_optimizers import pyoptpp
 
 
 def _create_constraint_nlf1(
-    constraint_func, constraint_jac, x0_ref, constraint_index, is_negated=False
+    constraint_func, constraint_jac, x0, constraint_index, is_negated=False
 ):
     # Create callback functions for constraint evaluation
     def eval_cf(x):
@@ -37,17 +37,15 @@ def _create_constraint_nlf1(
             if is_negated:
                 grad_row = -grad_row
 
-            return grad_row.reshape(len(x0_ref), 1)
+            return grad_row.reshape(len(x0), 1)
         except Exception as e:
             raise RuntimeError(
                 f"Error evaluating nonlinear constraint gradient: {e}"
             ) from e
 
-    x0_vector = pyoptpp.SerialDenseVector(x0_ref)
-    nlf1_base = pyoptpp.NLF1.create_constrained(
-        len(x0_ref), eval_cf, eval_cg, x0_vector
-    )
-    return nlf1_base
+    x0_vector = pyoptpp.SerialDenseVector(x0)
+    nlf1 = pyoptpp.NLF1.create_constrained(len(x0), eval_cf, eval_cg, x0_vector)
+    return nlf1
 
 
 def _finite_difference_constraint_gradient(x, constraint_func, constraint_index):
