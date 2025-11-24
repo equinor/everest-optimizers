@@ -42,22 +42,22 @@ def test_nonlinear_equality_constraint():
     constraint = NonlinearConstraint(
         nonlinear_constraint, 0.0, 0.0, jac=nonlinear_constraint_jac
     )
-    try:
-        result = minimize(
-            objective,
-            x0,
-            method="optpp_q_nips",
-            jac=objective_grad,
-            bounds=bounds,
-            constraints=constraint,
-            options=DEFAULT_OPTIONS,
-        )
-        if result.success:
-            constraint_value = result.x[0] ** 2 + result.x[1] ** 2
-            np.testing.assert_allclose(constraint_value, 4.0, rtol=1e-3, atol=1e-3)
-            np.testing.assert_allclose(result.fun, 4.0, rtol=1e-2, atol=1e-2)
-    except NotImplementedError as e:
-        pytest.skip(f"Nonlinear constraints not yet fully implemented: {e}")
+    result = minimize(
+        objective,
+        x0,
+        method="optpp_q_nips",
+        jac=objective_grad,
+        bounds=bounds,
+        constraints=constraint,
+        options=DEFAULT_OPTIONS,
+    )
+    assert result.success
+
+    constraint_value = result.x[0] ** 2 + result.x[1] ** 2
+    np.testing.assert_allclose(constraint_value, 4.0, rtol=1e-3, atol=1e-3)
+    # Optimal point on circle x^2 + y^2 = 4 closest to (2,2) is (sqrt(2), sqrt(2))
+    # Objective value: f(sqrt(2), sqrt(2)) = 2*(sqrt(2) - 2)^2 ≈ 0.686
+    np.testing.assert_allclose(result.fun, 0.686, rtol=1e-2, atol=1e-2)
 
 
 @pytest.mark.xfail(reason="Not implemented yet")
@@ -73,25 +73,23 @@ def test_nonlinear_inequality_constraint():
     constraint = NonlinearConstraint(
         nonlinear_constraint, 0.0, np.inf, jac=nonlinear_constraint_jac
     )
-    try:
-        result = minimize(
-            objective,
-            x0,
-            method="optpp_q_nips",
-            jac=objective_grad,
-            bounds=bounds,
-            constraints=constraint,
-            options=DEFAULT_OPTIONS,
-        )
-        if result.success:
-            constraint_value = result.x[0] ** 2 + result.x[1] ** 2
-            assert constraint_value <= 1.0 + 1e-4
-            expected_direction = np.array([2.0, 2.0]) / np.linalg.norm([2.0, 2.0])
-            np.testing.assert_allclose(
-                result.x / np.linalg.norm(result.x),
-                expected_direction,
-                rtol=1e-1,
-                atol=1e-1,
-            )
-    except NotImplementedError as e:
-        pytest.skip(f"Nonlinear constraints not yet fully implemented: {e}")
+    result = minimize(
+        objective,
+        x0,
+        method="optpp_q_nips",
+        jac=objective_grad,
+        bounds=bounds,
+        constraints=constraint,
+        options=DEFAULT_OPTIONS,
+    )
+    assert result.success
+
+    constraint_value = result.x[0] ** 2 + result.x[1] ** 2
+    assert constraint_value <= 1.0 + 1e-4
+    expected_direction = np.array([2.0, 2.0]) / np.linalg.norm([2.0, 2.0])
+    np.testing.assert_allclose(
+        result.x / np.linalg.norm(result.x),
+        expected_direction,
+        rtol=1e-1,
+        atol=1e-1,
+    )
