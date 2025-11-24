@@ -1,20 +1,83 @@
 import numpy as np
-import numpy.typing as npt
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from everest_optimizers import pyoptpp
 
 
-def _convert_nonlinear_constraint(
-    scipy_constraint: NonlinearConstraint, x0: npt.NDArray[np.float64]
+def _create_constraint_nlf1(
+    constraint_func, constraint_jac, x0_ref, constraint_index, is_negated=False
 ):
+    # Create callback functions for constraint evaluation
+    def eval_cf(x):
+        x_np = np.array(x.to_numpy(), copy=True)
+        try:
+            c_values = np.atleast_1d(constraint_func(x_np))
+            result = c_values[constraint_index]
+
+            if is_negated:
+                result = -result
+
+            return np.array([result])
+        except Exception as e:
+            raise RuntimeError(f"Error evaluating nonlinear constraint: {e}") from e
+
+    def eval_cg(x):
+        x_np = np.array(x.to_numpy(), copy=True)
+        try:
+            if constraint_jac is not None:
+                jac = constraint_jac(x_np)
+                jac = np.atleast_2d(jac)
+
+                grad_row = jac[constraint_index, :]
+            else:
+                grad_row = _finite_difference_constraint_gradient(
+                    x_np, constraint_func, constraint_index
+                )
+
+            if is_negated:
+                grad_row = -grad_row
+
+            return grad_row.reshape(len(x0_ref), 1)
+        except Exception as e:
+            raise RuntimeError(
+                f"Error evaluating nonlinear constraint gradient: {e}"
+            ) from e
+
+    x0_vector = pyoptpp.SerialDenseVector(x0_ref)
+    nlf1_base = pyoptpp.NLF1.create_constrained(
+        len(x0_ref), eval_cf, eval_cg, x0_vector
+    )
+    return nlf1_base
+
+
+def _finite_difference_constraint_gradient(x, constraint_func, constraint_index):
+    """Compute constraint gradient using finite differences (standalone helper)."""
+    eps = 1e-8
+    n = len(x)
+    grad = np.zeros(n)
+
+    for i in range(n):
+        x_plus = x.copy()
+        x_plus[i] += eps
+        x_minus = x.copy()
+        x_minus[i] -= eps
+
+        c_plus = np.atleast_1d(constraint_func(x_plus))
+        c_minus = np.atleast_1d(constraint_func(x_minus))
+
+        c_plus_val = c_plus[constraint_index]
+        c_minus_val = c_minus[constraint_index]
+
+        grad[i] = (c_plus_val - c_minus_val) / (2 * eps)
+
+    return grad
+
+
+def convert_nonlinear_constraint(scipy_constraint: NonlinearConstraint, x0):
     """
     Convert a scipy.optimize.NonlinearConstraint to OPTPP NonLinearEquation/NonLinearInequality objects.
 
-    Following the OPTPP pattern from hockfcns.C examples:
-    1. Create NLF1 objects with proper C++ constraint function signatures
-    2. Wrap in NLP handles
-    3. Create NonLinearEquation/NonLinearInequality from NLP handles
+    Following the OPTPP pattern from hockfcns.C examples
 
     Parameters:
     -----------
@@ -42,133 +105,6 @@ def _convert_nonlinear_constraint(
     constraint_values = np.atleast_1d(constraint_values)
     num_constraints = len(constraint_values)
 
-    # Create constraint NLF1 objects following OPTPP patterns from hockfcns.C
-    # Pattern: NLP* constraint_nlp = new NLP(new NLF1(n, 1, constraint_func, init_func))
-    def create_constraint_nlf1(
-        constraint_func, constraint_jac, x0_ref, constraint_index, is_negated=False
-    ):
-        """Create an NLF1 object for a specific constraint following OPTPP hockfcns.C patterns."""
-
-        class ConstraintNLF1(pyoptpp.NLF1):
-            def __init__(self, n_vars):
-                # Follow OPTPP NLF1 constructor pattern from hockfcns.C
-                super().__init__(n_vars)
-                self.n_vars = n_vars
-                self.constraint_func = constraint_func
-                self.constraint_jac = constraint_jac
-                self.constraint_index = constraint_index
-                self.x0_ref = x0_ref
-                self.is_negated = is_negated
-
-                # Set initial point following OPTPP pattern
-                init_vector = pyoptpp.SerialDenseVector(x0_ref)
-                self.setX(init_vector)
-                self.setIsExpensive(True)
-
-            def evalF(self, x):
-                """Main objective function - not used in constraint NLF1 (similar to hockfcns.C)."""
-                return 0.0
-
-            def evalG(self, x):
-                """Main objective gradient - not used in constraint NLF1 (similar to hockfcns.C)."""
-                return np.zeros(self.n_vars)
-
-            def evalCF(self, x):
-                """Evaluate constraint function(s) - OPTPP calls this for constraints (like eqn_hs6 in hockfcns.C)."""
-                x_np = np.array(x.to_numpy(), copy=True)
-                try:
-                    # Evaluate the scipy constraint function
-                    c_values = self.constraint_func(x_np)
-                    c_values = np.atleast_1d(c_values)
-
-                    # For single constraint, return only the relevant constraint
-                    if self.constraint_index < len(c_values):
-                        result = c_values[self.constraint_index]
-                    else:
-                        result = c_values[0]  # fallback
-
-                    # Apply negation if needed (for upper bound inequalities)
-                    if self.is_negated:
-                        result = -result
-
-                    # Return as numpy array - let pybind11 handle the conversion
-                    return np.array([result])
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Error evaluating nonlinear constraint: {e}"
-                    ) from e
-
-            def evalCG(self, x):
-                """Evaluate constraint gradient (like eqn_hs6 gradient in hockfcns.C)."""
-                x_np = np.array(x.to_numpy(), copy=True)
-                try:
-                    if self.constraint_jac is not None:
-                        # Use provided Jacobian
-                        jac = self.constraint_jac(x_np)
-                        jac = np.atleast_2d(jac)
-
-                        # For single constraint, get the relevant row
-                        if self.constraint_index < jac.shape[0]:
-                            grad_row = jac[self.constraint_index, :]
-                        else:
-                            grad_row = jac[0, :]  # fallback
-                    else:
-                        # Use finite differences
-                        grad_row = self._finite_difference_constraint_gradient(x_np)
-
-                    # Apply negation if needed
-                    if self.is_negated:
-                        grad_row = -grad_row
-
-                    # Return as 2D numpy array - let pybind11 handle the conversion
-                    return grad_row.reshape(self.n_vars, 1)
-
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Error evaluating nonlinear constraint gradient: {e}"
-                    ) from e
-
-            def _finite_difference_constraint_gradient(self, x):
-                """Compute constraint gradient using finite differences."""
-                eps = 1e-8
-                n = len(x)
-                grad = np.zeros(n)
-
-                # Evaluate at base point
-                c0 = self.constraint_func(x)
-                c0 = np.atleast_1d(c0)
-
-                # Get the relevant constraint value
-                if self.constraint_index < len(c0):
-                    c0_val = c0[self.constraint_index]
-                else:
-                    c0_val = c0[0]
-
-                # Finite difference for each variable
-                for i in range(n):
-                    x_plus = x.copy()
-                    x_plus[i] += eps
-                    x_minus = x.copy()
-                    x_minus[i] -= eps
-
-                    c_plus = np.atleast_1d(self.constraint_func(x_plus))
-                    c_minus = np.atleast_1d(self.constraint_func(x_minus))
-
-                    # Get relevant constraint values
-                    if self.constraint_index < len(c_plus):
-                        c_plus_val = c_plus[self.constraint_index]
-                        c_minus_val = c_minus[self.constraint_index]
-                    else:
-                        c_plus_val = c_plus[0]
-                        c_minus_val = c_minus[0]
-
-                    grad[i] = (c_plus_val - c_minus_val) / (2 * eps)
-
-                return grad
-
-        return ConstraintNLF1(len(x0_ref))
-
-    # Process each constraint
     for i in range(num_constraints):
         if not np.isfinite(lb[i]) and not np.isfinite(ub[i]):
             # Both bounds are infinite - this is not a real constraint
@@ -176,7 +112,7 @@ def _convert_nonlinear_constraint(
 
         if np.isclose(lb[i] - ub[i], 0, atol=1e-12):
             # Equality constraint: lb == ub, so c(x) = lb
-            constraint_nlf1 = create_constraint_nlf1(
+            constraint_nlf1 = _create_constraint_nlf1(
                 scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=False
             )
             nlp_wrapper = pyoptpp.NLP.create(constraint_nlf1)
@@ -186,27 +122,27 @@ def _convert_nonlinear_constraint(
             continue
 
         if np.isfinite(lb[i]):
-            constraint_nlf1 = create_constraint_nlf1(
+            constraint_nlf1 = _create_constraint_nlf1(
                 scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=False
             )
-            nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
+            nlp_wrapper = pyoptpp.NLP.create(constraint_nlf1)
             rhs = pyoptpp.SerialDenseVector(np.array(lb[i]))
-            constraint = pyoptpp.NonLinearInequality(nlp_wrapper, rhs, 1)
+            constraint = pyoptpp.NonLinearInequality.create(nlp_wrapper, rhs, 1)
             optpp_constraints.append(constraint)
 
         if np.isfinite(ub[i]):
-            constraint_nlf1 = create_constraint_nlf1(
+            constraint_nlf1 = _create_constraint_nlf1(
                 scipy_constraint.fun, scipy_constraint.jac, x0, i, is_negated=True
             )
-            nlp_wrapper = pyoptpp.NLP(constraint_nlf1)
+            nlp_wrapper = pyoptpp.NLP.create(constraint_nlf1)
             rhs = pyoptpp.SerialDenseVector(np.array(-ub[i]))
-            constraint = pyoptpp.NonLinearInequality(nlp_wrapper, rhs, 1)
+            constraint = pyoptpp.NonLinearInequality.create(nlp_wrapper, rhs, 1)
             optpp_constraints.append(constraint)
 
     return optpp_constraints
 
 
-def _convert_linear_constraint(scipy_constraint: LinearConstraint):
+def convert_linear_constraint(scipy_constraint: LinearConstraint):
     """
     Convert a scipy.optimize.LinearConstraint to OPTPP LinearEquation/LinearInequality objects.
 
@@ -225,8 +161,8 @@ def _convert_linear_constraint(scipy_constraint: LinearConstraint):
     # Get constraint matrix and bounds
     A = np.asarray(scipy_constraint.A, dtype=float)
     A = np.atleast_2d(A)
-    num_constraints = A.shape[0]
 
+    num_constraints = A.shape[0]
     for i in range(num_constraints):
         A_row = A[i : i + 1, :]  # Keep as 2D for consistency
         lb = scipy_constraint.lb[i]
@@ -240,20 +176,22 @@ def _convert_linear_constraint(scipy_constraint: LinearConstraint):
             # Equality constraint: lb == ub
             A_matrix = pyoptpp.SerialDenseMatrix(A_row)
             rhs = pyoptpp.SerialDenseVector(np.array([lb]))
-            constraint = pyoptpp.LinearEquation(A_matrix, rhs)
+            constraint = pyoptpp.LinearEquation.create(A_matrix, rhs)
             optpp_constraints.append(constraint)
             continue
 
+        # Lower bound: Ax >= lb  =>  Ax >= lb (OPTPP standard form)
         if np.isfinite(lb):
             A_matrix = pyoptpp.SerialDenseMatrix(A_row)
             rhs = pyoptpp.SerialDenseVector(np.array([lb]))
-            constraint = pyoptpp.LinearInequality(A_matrix, rhs)
+            constraint = pyoptpp.LinearInequality.create(A_matrix, rhs)
             optpp_constraints.append(constraint)
 
+        # Upper bound: Ax <= ub  =>  -Ax >= -ub (OPTPP standard form)
         if np.isfinite(ub):
             A_neg_matrix = pyoptpp.SerialDenseMatrix(-A_row)
             rhs = pyoptpp.SerialDenseVector(np.array([-ub]))
-            constraint = pyoptpp.LinearInequality(A_neg_matrix, rhs)
+            constraint = pyoptpp.LinearInequality.create(A_neg_matrix, rhs)
             optpp_constraints.append(constraint)
 
     return optpp_constraints

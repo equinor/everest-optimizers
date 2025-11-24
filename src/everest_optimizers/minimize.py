@@ -159,6 +159,7 @@ def minimize(
                 jac=jac,
                 bounds=bounds,
                 constraints=constraints,
+                callback=callback,
                 options=options,
             )
         case "conmin_mfd":
@@ -178,6 +179,7 @@ def minimize(
                 jac=jac,
                 bounds=bounds,
                 constraints=constraints,
+                callback=callback,
                 options=options,
             )
         case "optpp_q_nips":

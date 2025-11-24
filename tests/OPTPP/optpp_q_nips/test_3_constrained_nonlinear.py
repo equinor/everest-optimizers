@@ -7,7 +7,6 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from scipy.optimize import Bounds, NonlinearConstraint
 
 from everest_optimizers import minimize
@@ -29,7 +28,6 @@ def objective_grad(x):
     return np.array([2 * (x[0] - 2), 2 * (x[1] - 2)])
 
 
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_nonlinear_equality_constraint():
     def nonlinear_constraint(x):
         return np.array([x[0] ** 2 + x[1] ** 2 - 4.0])
@@ -60,7 +58,6 @@ def test_nonlinear_equality_constraint():
     np.testing.assert_allclose(result.fun, 0.686, rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_nonlinear_inequality_constraint():
     def nonlinear_constraint(x):
         return np.array([1.0 - x[0] ** 2 - x[1] ** 2])

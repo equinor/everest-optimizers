@@ -6,6 +6,7 @@
 #include "BoundConstraint.h"
 #include "CompoundConstraint.h"
 #include "Constraint.h"
+#include "ConstraintBase.h"
 #include "LinearEquation.h"
 #include "LinearInequality.h"
 #include "NLF.h"
@@ -32,35 +33,33 @@ using T_SerialDenseMatrix = Teuchos::SerialDenseMatrix<int, double>;
 // Dummy C++ function for the default case
 void default_update_model(int, int, T_SerialDenseVector) {}
 
-// Trampoline class for NonLinearInequality - enables Python-defined constraint
-// functions
-class PyNonLinearInequality : public NonLinearInequality {
+// C++ NLF1 class that holds Python callbacks - fully C++-managed
+// This avoids Python/C++ ownership conflicts
+class CallbackNLF1 : public NLF1 {
+private:
+  py::function py_eval_f;
+  py::function py_eval_g;
+  py::function py_eval_cf;
+  py::function py_eval_cg;
+  bool has_cf;
+  bool has_cg;
+
 public:
-  using NonLinearInequality::NonLinearInequality;
-};
+  // Constructor for objective function (no constraint callbacks)
+  CallbackNLF1(int ndim, py::function eval_f, py::function eval_g)
+      : NLF1(ndim), py_eval_f(eval_f), py_eval_g(eval_g), py_eval_cf(), py_eval_cg(), has_cf(false),
+        has_cg(false) {}
 
-// Trampoline class for NLF1
-class PyNLF1 : public NLF1 {
-public:
-  // Inherit constructors
-  using NLF1::NLF1;
+  // Constructor for constraint function (with constraint callbacks)
+  CallbackNLF1(
+      int ndim, py::function eval_f, py::function eval_g, py::function eval_cf, py::function eval_cg
+  )
+      : NLF1(ndim), py_eval_f(eval_f), py_eval_g(eval_g), py_eval_cf(eval_cf), py_eval_cg(eval_cg),
+        has_cf(true), has_cg(true) {}
 
-  // Override virtual functions
-  void initFcn() override {
-    py::gil_scoped_acquire gil;
-    py::function override = py::get_override(static_cast<const NLF1*>(this), "initFcn");
-    if (override) {
-      override();
-    }
-    // If no override is provided in Python, we do nothing.
-    // The base NLF1::initFcn() is flawed for our use case as it calls a null
-    // function pointer.
-  }
+  void initFcn() override {}
 
-  // This eval() hides the non-virtual NLF1::eval() in the base class.
-  // The optimizer calls this method. We then call the virtual methods
-  // which are correctly routed to the Python overrides.
-  void eval() {
+  void eval() override {
     this->fvalue = this->evalF(this->mem_xc);
     this->mem_grad = this->evalG(this->mem_xc);
     this->nfevals++;
@@ -69,22 +68,21 @@ public:
 
   real evalF(const T_SerialDenseVector& x) override {
     py::gil_scoped_acquire gil;
-    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalF");
-    if (override) {
-      return override(x).cast<real>();
+    try {
+      return py_eval_f(x).cast<real>();
+    } catch (const std::exception& e) {
+      throw std::runtime_error(std::string("Error in evalF callback: ") + e.what());
     }
-    // If no override, return 0.0. The base class method is flawed.
-    return 0.0;
   }
 
   T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
     py::gil_scoped_acquire gil;
-    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalG");
-    if (override) {
-      py::object result = override(x);
+    try {
+      py::object result = py_eval_g(x);
       py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
           result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
       py::buffer_info buf = result_array.request();
+
       if (buf.ndim != 1 || buf.shape[0] != this->getDim()) {
         throw std::runtime_error("evalG: Returned numpy array has wrong dimensions!");
       }
@@ -95,31 +93,15 @@ public:
       }
       std::memcpy(mem_grad.values(), buf.ptr, this->getDim() * sizeof(double));
       return mem_grad;
+    } catch (const std::exception& e) {
+      throw std::runtime_error(std::string("Error in evalG callback: ") + e.what());
     }
-    // If no override, return an empty vector of the correct size.
-    // The base class method is flawed.
-    return T_SerialDenseVector(this->getDim());
   }
 
-  T_SerialDenseVector evalG() override {
-    // This override is crucial. The base NLF1::evalG() calls evalG(mem_xc),
-    // but if the virtual method override has the wrong signature (e.g. const),
-    // the base implementation of evalG(x) gets called, which crashes.
-    // By overriding this, we ensure our safe evalG(x) is always called.
-    return this->evalG(this->getXc());
-  }
+  T_SerialDenseVector evalG() override { return this->evalG(this->getXc()); }
 
   T_SerialSymDenseMatrix evalH(T_SerialDenseVector& x) override {
-    py::gil_scoped_acquire gil;
-    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalH");
-    if (override) {
-      py::print(
-          "Warning: evalH Python override is not fully implemented in "
-          "the wrapper."
-      );
-    }
-    // If no override, return an empty matrix of the correct size.
-    // If no Python override, return the identity matrix
+    // Return identity matrix - Hessian not implemented for callbacks
     int dim = this->getDim();
     T_SerialSymDenseMatrix H(dim);
     for (int i = 0; i < dim; ++i) {
@@ -129,41 +111,51 @@ public:
   }
 
   T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
+    if (!has_cf) {
+      return T_SerialDenseVector(1);
+    }
+
     py::gil_scoped_acquire gil;
-    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalC");
-    if (override) {
-      py::object result = override(x);
+    try {
+      py::object result = py_eval_cf(x);
       py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
           result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
       py::buffer_info buf = result_array.request();
+
       if (buf.ndim != 1) {
-        throw std::runtime_error("evalC: Returned numpy array must be 1-D!");
+        throw std::runtime_error("evalCF: Returned numpy array must be 1-D!");
       }
+
       T_SerialDenseVector constraints(buf.shape[0]);
       std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
       return constraints;
+    } catch (const std::exception& e) {
+      throw std::runtime_error(std::string("Error in evalCF callback: ") + e.what());
     }
-    // If no override, return an empty vector
-    return T_SerialDenseVector(1);
   }
 
   T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
+    if (!has_cg) {
+      return T_SerialDenseMatrix(1, this->getDim());
+    }
+
     py::gil_scoped_acquire gil;
-    py::function override = py::get_override(static_cast<const NLF1*>(this), "evalCG");
-    if (override) {
-      py::object result = override(x);
+    try {
+      py::object result = py_eval_cg(x);
       py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
           result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
       py::buffer_info buf = result_array.request();
+
       if (buf.ndim != 2) {
-        throw std::runtime_error("evalCG: Returned numpy array must be 2-D (gradient matrix)!");
+        throw std::runtime_error("evalCG: Returned numpy array must be 2-D!");
       }
-      T_SerialDenseMatrix constraint_grad(buf.shape[0], buf.shape[1]);
-      std::memcpy(constraint_grad.values(), buf.ptr, buf.size * sizeof(double));
-      return constraint_grad;
+
+      T_SerialDenseMatrix grad(buf.shape[0], buf.shape[1]);
+      std::memcpy(grad.values(), buf.ptr, buf.shape[0] * buf.shape[1] * sizeof(double));
+      return grad;
+    } catch (const std::exception& e) {
+      throw std::runtime_error(std::string("Error in evalCG callback: ") + e.what());
     }
-    // If no override, return an empty matrix
-    return T_SerialDenseMatrix(this->getDim(), 1);
   }
 };
 
@@ -256,7 +248,6 @@ PYBIND11_MODULE(pyoptpp, m) {
 
   // Bind CompoundConstraint
   py::class_<CompoundConstraint>(m, "CompoundConstraint")
-      .def(py::init<const OptppArray<Constraint>&>())
       .def("getNumOfCons", &CompoundConstraint::getNumOfCons)
       .def("getNumOfVars", &CompoundConstraint::getNumOfVars)
       .def("evalResidual", &CompoundConstraint::evalResidual, py::arg("x"))
@@ -273,7 +264,10 @@ PYBIND11_MODULE(pyoptpp, m) {
 
   // Bind NLP class (handle for NLPBase)
   py::class_<NLP>(m, "NLP")
-      .def(py::init<NLPBase*>(), py::arg("nlpbase"), py::keep_alive<1, 2>())
+      .def_static(
+          "create", [](NLPBase* nlp) { return new NLP(nlp); }, py::return_value_policy::reference,
+          py::arg("nlp")
+      )
       .def("initFcn", &NLP::initFcn)
       .def("evalF", static_cast<double (NLP::*)()>(&NLP::evalF))
       .def("evalCF", &NLP::evalCF, py::arg("x"))
@@ -283,32 +277,44 @@ PYBIND11_MODULE(pyoptpp, m) {
       .def("getDim", &NLP::getDim)
       .def("setX", static_cast<void (NLP::*)(const T_SerialDenseVector&)>(&NLP::setX));
 
-  // Bind NLF1 using the trampoline class - simplified inheritance
-  py::class_<NLF1, PyNLF1>(m, "NLF1")
-      .def(py::init<int>(), py::arg("ndim"))
-      .def("initFcn", &NLF1::initFcn)
-      .def(
-          "evalF", static_cast<real (NLF1::*)(const T_SerialDenseVector&)>(&NLF1::evalF),
-          py::arg("x")
+  // Bind NLF1 - only expose methods needed by optimizers
+  py::class_<NLF1, NLPBase>(m, "NLF1")
+      .def_static(
+          "create",
+          [](int ndim, py::function eval_f, py::function eval_g,
+             const T_SerialDenseVector& x0) -> NLF1* {
+            // Create the C++ object - fully managed by C++
+            CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_f, eval_g);
+            nlf1->setX(x0);
+            nlf1->setIsExpensive(true);
+
+            return static_cast<NLF1*>(nlf1);
+          },
+          py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_f"), py::arg("eval_g"),
+          py::arg("x0"), "Create an objective NLF1 object with Python callbacks (C++-managed)"
       )
-      .def(
-          "evalG",
-          static_cast<T_SerialDenseVector (NLF1::*)(const T_SerialDenseVector&)>(&NLF1::evalG),
-          py::arg("x")
+      .def_static(
+          "create_constrained",
+          [](int ndim, py::function eval_cf, py::function eval_cg, const T_SerialDenseVector& x0) {
+            // Create a CallbackNLF1 with dummy objective (not used for constraints)
+            auto dummy_f = py::cpp_function([](const T_SerialDenseVector& x) { return 0.0; });
+            auto dummy_g = py::cpp_function([ndim](const T_SerialDenseVector& x) {
+              return py::array_t<double>(ndim);
+            });
+
+            CallbackNLF1* nlf1 = new CallbackNLF1(ndim, dummy_f, dummy_g, eval_cf, eval_cg);
+            nlf1->setX(x0);
+            nlf1->setIsExpensive(true);
+
+            return static_cast<NLPBase*>(nlf1);
+          },
+          py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_cf"),
+          py::arg("eval_cg"), py::arg("x0"),
+          "Create a constraint NLF1 object with Python callbacks (C++-managed)"
       )
-      .def(
-          "evalH",
-          static_cast<T_SerialSymDenseMatrix (NLF1::*)(T_SerialDenseVector&)>(&NLF1::evalH),
-          py::arg("x")
-      )
-      .def("evalCF", &NLF1::evalCF, py::arg("x"))
-      .def("evalCG", &NLF1::evalCG, py::arg("x"))
-      .def("evalC", &NLF1::evalC, py::arg("x"))
       .def("getXc", &NLF1::getXc)
       .def("getF", &NLF1::getF)
       .def("getDim", &NLF1::getDim)
-      .def("setX", static_cast<void (NLF1::*)(const T_SerialDenseVector&)>(&NLF1::setX))
-      .def("setIsExpensive", &NLF1::setIsExpensive, py::arg("is_expensive"))
       .def(
           "setConstraints", [](NLF1& self, CompoundConstraint* cc) { self.setConstraints(cc); },
           py::arg("compound_constraint")
@@ -350,32 +356,40 @@ PYBIND11_MODULE(pyoptpp, m) {
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
 
   // Bind ConstraintBase so we can establish the inheritance hierarchy
-  py::class_<ConstraintBase>(m, "ConstraintBase");
+  py::class_<ConstraintBase>(m, "ConstraintBase")
+      .def_static("delete", [](ConstraintBase* constraint) { delete constraint; });
 
   // Bind LinearConstraint as it's a base for Equation and Inequality
   py::class_<LinearConstraint, ConstraintBase>(m, "LinearConstraint");
 
   // Bind LinearEquation
   py::class_<LinearEquation, LinearConstraint>(m, "LinearEquation")
-      .def(
-          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(), py::arg("A"),
-          py::arg("rhs")
-      )
-      .def("getB", &LinearEquation::getB)
-      .def("evalAx", &LinearEquation::evalAx, py::arg("x"));
+      .def_static(
+          "create",
+          [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& rhs) {
+            return new LinearEquation(A, rhs);
+          },
+          py::return_value_policy::reference, py::arg("A"), py::arg("rhs")
+      );
 
   // Bind LinearInequality
   py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
-      .def(
-          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(), py::arg("A"),
-          py::arg("rhs")
+      .def_static(
+          "create",
+          [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& rhs) {
+            return new LinearInequality(A, rhs);
+          },
+          py::return_value_policy::reference, py::arg("A"), py::arg("rhs")
       );
 
   // Bind BoundConstraint
   py::class_<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
-      .def(
-          py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(), py::arg("nvar"),
-          py::arg("lower"), py::arg("upper")
+      .def_static(
+          "create",
+          [](int nc, const T_SerialDenseVector& A, const T_SerialDenseVector& rhs) {
+            return new BoundConstraint(nc, A, rhs);
+          },
+          py::return_value_policy::reference, py::arg("nc"), py::arg("A"), py::arg("rhs")
       );
 
   // Helper to create CompoundConstraint from bound constraints only
@@ -399,12 +413,20 @@ PYBIND11_MODULE(pyoptpp, m) {
       py::return_value_policy::reference, py::arg("lower"), py::arg("upper")
   );
 
+  // Helper to create a Constraint object from a variety of constraint types
+  m.def(
+      "create_constraint",
+      [](ConstraintBase* constraint_obj) { return new Constraint(constraint_obj); },
+      py::return_value_policy::reference
+  );
+
+  // Helper to create CompoundConstraint from a list of constraints
   m.def(
       "create_compound_constraint",
       [](std::vector<ConstraintBase*> constraints) {
         OptppArray<Constraint> constraint_array{};
         constraint_array.reserve(constraints.size());
-        for (auto c : constraints) {
+        for (auto& c : constraints) {
           constraint_array.append(Constraint(c));
         }
         return new CompoundConstraint(constraint_array);
@@ -417,32 +439,48 @@ PYBIND11_MODULE(pyoptpp, m) {
 
   // Bind NonLinearInequality
   py::class_<NonLinearInequality, NonLinearConstraint>(m, "NonLinearInequality")
-      .def(py::init<NLP*, int>(), py::arg("nlp"), py::arg("numconstraints") = 1)
-      .def(
-          py::init<NLP*, const T_SerialDenseVector&, int>(), py::arg("nlp"), py::arg("rhs"),
+      .def_static(
+          "create",
+          [](NLP* nlprob, const T_SerialDenseVector& rhs, int numconstraints) {
+            return new NonLinearInequality(nlprob, rhs, numconstraints);
+          },
+          py::return_value_policy::reference, py::arg("nlprob"), py::arg("rhs"),
           py::arg("numconstraints") = 1
       )
-      .def(
-          py::init<NLP*, const bool, int>(), py::arg("nlp"), py::arg("flag"),
+      .def_static(
+          "create",
+          [](NLP* nlprob, const T_SerialDenseVector& lower, const T_SerialDenseVector& upper,
+             int numconstraints) {
+            return new NonLinearInequality(nlprob, lower, upper, numconstraints);
+          },
+          py::return_value_policy::reference, py::arg("nlprob"), py::arg("lower"), py::arg("upper"),
           py::arg("numconstraints") = 1
       )
-      .def(
-          py::init<NLP*, const T_SerialDenseVector&, const T_SerialDenseVector&, int>(),
-          py::arg("nlp"), py::arg("lower"), py::arg("upper"), py::arg("numconstraints") = 1
+      .def_static(
+          "create",
+          [](NLP* nlprob, int numconstraints) {
+            return new NonLinearInequality(nlprob, numconstraints);
+          },
+          py::return_value_policy::reference, py::arg("nlprob"), py::arg("numconstraints") = 1
       );
 
   // Bind NonLinearEquation
   py::class_<NonLinearEquation, NonLinearConstraint>(m, "NonLinearEquation")
-      .def(py::init<NLP*, int>(), py::arg("nlp"), py::arg("numconstraints") = 1)
-      .def(
-          py::init<NLP*, const T_SerialDenseVector&, int>(), py::arg("nlp"), py::arg("rhs"),
+      .def_static(
+          "create",
+          [](NLP* nlprob, const T_SerialDenseVector& rhs, int numconstraints) {
+            return new NonLinearEquation(nlprob, rhs, numconstraints);
+          },
+          py::return_value_policy::reference, py::arg("nlprob"), py::arg("rhs"),
           py::arg("numconstraints") = 1
+      )
+      .def_static(
+          "create",
+          [](NLP* nlprob, int numconstraints) {
+            return new NonLinearEquation(nlprob, numconstraints);
+          },
+          py::return_value_policy::reference, py::arg("nlprob"), py::arg("numconstraints") = 1
       );
-
-  // Note: Nonlinear constraints are not yet implemented
-  // The proper implementation requires following OPTPP patterns from examples
-  // like hockfcns.C with C++ constraint functions that have USERNLNCON1
-  // signature
 
   // Bind OptConstrQNewton (constrained Quasi-Newton)
   py::class_<OptConstrQNewton>(m, "OptConstrQNewton")
