@@ -71,23 +71,14 @@ def _finite_difference_constraint_gradient(x, constraint_func, constraint_index)
     return grad
 
 
-def convert_nonlinear_constraint(scipy_constraint: NonlinearConstraint, x0):
+def convert_nonlinear_constraint(
+    scipy_constraint: NonlinearConstraint, x0: npt.NDArray
+) -> list[pyoptpp.NonLinearEquation | pyoptpp.NonLinearInequality]:
     """
-    Convert a scipy.optimize.NonlinearConstraint to OPTPP NonLinearEquation/NonLinearInequality objects.
+    Convert a scipy.optimize.NonlinearConstraint to
+    OPTPP NonLinearEquation/NonLinearInequality objects.
 
     Following the OPTPP pattern from hockfcns.C examples
-
-    Parameters:
-    -----------
-    scipy_constraint : scipy.optimize.NonlinearConstraint
-        The scipy constraint to convert
-    x0 : np.ndarray
-        Initial point (needed for constraint function evaluation)
-
-    Returns:
-    --------
-    list
-        List of OPTPP nonlinear constraint objects
     """
     optpp_constraints = []
 
@@ -140,19 +131,12 @@ def convert_nonlinear_constraint(scipy_constraint: NonlinearConstraint, x0):
     return optpp_constraints
 
 
-def convert_linear_constraint(scipy_constraint: LinearConstraint):
+def convert_linear_constraint(
+    scipy_constraint: LinearConstraint,
+) -> list[pyoptpp.LinearEquation | pyoptpp.LinearInequality]:
     """
-    Convert a scipy.optimize.LinearConstraint to OPTPP LinearEquation/LinearInequality objects.
-
-    Parameters:
-    -----------
-    scipy_constraint : scipy.optimize.LinearConstraint
-        The scipy constraint to convert
-
-    Returns:
-    --------
-    list
-        List of OPTPP constraint objects (LinearEquation and/or LinearInequality)
+    Convert a scipy.optimize.LinearConstraint to
+    OPTPP LinearEquation/LinearInequality objects.
     """
     optpp_constraints = []
 
