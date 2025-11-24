@@ -413,13 +413,6 @@ PYBIND11_MODULE(pyoptpp, m) {
       py::return_value_policy::reference, py::arg("lower"), py::arg("upper")
   );
 
-  // Helper to create a Constraint object from a variety of constraint types
-  m.def(
-      "create_constraint",
-      [](ConstraintBase* constraint_obj) { return new Constraint(constraint_obj); },
-      py::return_value_policy::reference
-  );
-
   // Helper to create CompoundConstraint from a list of constraints
   m.def(
       "create_compound_constraint",
@@ -434,7 +427,13 @@ PYBIND11_MODULE(pyoptpp, m) {
       py::return_value_policy::reference, py::arg("constraints")
   );
 
-  // Bind NonLinearConstraint as base class
+  // Helper to create a Constraint object from a variety of constraint types
+  m.def(
+      "create_constraint",
+      [](ConstraintBase* constraint_obj) { return new Constraint(constraint_obj); },
+      py::return_value_policy::reference
+  );
+
   py::class_<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint");
 
   // Bind NonLinearInequality
