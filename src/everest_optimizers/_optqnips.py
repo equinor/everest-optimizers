@@ -24,6 +24,8 @@ def minimize_optqnips(
     """
     This implementation supports all the parameters documented in the Dakota
     quasi-Newton methods documentation.
+
+    options only supports max_step
     """
     x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
