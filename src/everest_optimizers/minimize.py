@@ -4,7 +4,8 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-from scipy.optimize import OptimizeResult
+import numpy.typing as npt
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers._conminmfd import minimize_conmin_mfd
 from everest_optimizers._optqnewton import (
@@ -16,12 +17,12 @@ from everest_optimizers._optqnips import minimize_optqnips
 
 def minimize(
     fun: Callable,
-    x0: np.ndarray | list,
-    args: tuple = (),
+    x0: npt.NDArray[np.float64],
+    args: tuple | None = (),
     method: str = "optpp_q_newton",
-    jac: Callable | str | bool | None = None,
-    bounds: Any | None = None,
-    constraints: Any | None = None,
+    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
+    bounds: Bounds | None = None,
+    constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     callback: Callable | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
@@ -58,7 +59,7 @@ def minimize(
 
         More optimizers may be added in the future.
 
-    jac : {callable, str, bool}, optional
+    jac : callable, optional
         Method for computing the gradient vector. If it is a callable, it should
         be a function that returns the gradient vector:
 
@@ -66,20 +67,11 @@ def minimize(
 
         If None, gradients will be estimated using finite differences.
 
-    hess : {callable, str}, optional
-        Method for computing the Hessian matrix. Not used by optpp_q_newton.
-
-    hessp : callable, optional
-        Hessian times vector product. Not used by optpp_q_newton.
-
     bounds : sequence, optional
         Bounds on variables. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
 
     constraints : dict or list, optional
         Constraints definition. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
-
-    tol : float, optional
-        Tolerance for termination.
 
     callback : callable, optional
         Callback function. Not implemented for optpp_q_newton.

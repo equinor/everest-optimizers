@@ -2,7 +2,8 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
+import numpy.typing as npt
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
 from everest_optimizers._convert_constraints import (
@@ -15,9 +16,9 @@ def minimize_optqnips(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
-    jac: Callable | None = None,
-    bounds: Any = None,
-    constraints: Any = None,
+    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
+    bounds: Bounds | None = None,
+    constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """

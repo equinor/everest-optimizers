@@ -3,7 +3,8 @@ from collections.abc import Callable, Collection
 from typing import Any
 
 import numpy as np
-from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
+import numpy.typing as npt
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
 from everest_optimizers._convert_constraints import convert_linear_constraint
@@ -20,7 +21,7 @@ class _OptQNewtonProblem:
         fun: Callable,
         x0: np.ndarray,
         args: tuple,
-        jac: Callable | None = None,
+        jac: Callable[..., npt.NDArray[np.float64]] | None = None,
         callback: Callable | None = None,
     ):
         self.fun = fun
@@ -114,10 +115,10 @@ class _OptQNewtonProblem:
 
 def minimize_optqnewton(
     fun: Callable,
-    x0: np.ndarray,
+    x0: npt.NDArray,
     args: tuple = (),
-    jac: Callable | None = None,
-    bounds: Any | None = None,
+    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
+    bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     callback: Any | None = None,
     options: dict[str, Any] | None = None,
@@ -130,7 +131,7 @@ def minimize_optqnewton(
     fun : callable
         The objective function to be minimized.
     x0 : ndarray
-        Initial guess.
+        Initial guess. Must be 1d.
     args : tuple, optional
         Extra arguments passed to the objective function and its derivatives.
     jac : callable, optional
@@ -151,7 +152,6 @@ def minimize_optqnewton(
     OptimizeResult
         The optimization result.
     """
-    x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
         raise ValueError("x0 must be 1-dimensional")
 
@@ -231,9 +231,9 @@ def minimize_optconstrqnewton(
     fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
-    jac: Callable | None = None,
-    bounds: Any = None,
-    constraints: Any = None,
+    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
+    bounds: Bounds | None = None,
+    constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     callback: Any | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
