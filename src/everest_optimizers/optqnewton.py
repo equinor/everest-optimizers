@@ -259,8 +259,6 @@ def _minimize_optconstrqnewton(
     debug = options.get("debug", False)
     output_file = options.get("output_file", None)
 
-    problem = _OptQNewtonProblem(fun, x0, args, jac, callback)
-
     constraint_list = []
     if bounds is not None:
         lb = np.asarray(bounds.lb, dtype=float)
@@ -290,6 +288,7 @@ def _minimize_optconstrqnewton(
 
     cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
 
+    problem = _OptQNewtonProblem(fun, x0, args, jac, callback)
     problem.nlf1_problem.setConstraints(cc_ptr)
     optimizer = pyoptpp.OptConstrQNewton(problem.nlf1_problem)
 

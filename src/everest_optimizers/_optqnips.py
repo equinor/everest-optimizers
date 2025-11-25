@@ -155,8 +155,6 @@ def minimize_optqnips(
 
             return grad
 
-    problem = OptQNIPSProblem(fun, x0, args, jac)
-
     constraint_objects = []
 
     if bounds is not None:
@@ -192,8 +190,8 @@ def minimize_optqnips(
     else:
         raise ValueError("OptQNIPS requires at least bounds constraints")
 
+    problem = OptQNIPSProblem(fun, x0, args, jac)
     problem.nlf1_problem.setConstraints(cc_ptr)
-
     optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
 
     match search_method.lower():
