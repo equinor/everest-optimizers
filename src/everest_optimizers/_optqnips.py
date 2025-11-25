@@ -250,11 +250,6 @@ def minimize_optqnips(
 
         solution_vector = problem.nlf1_problem.getXc()
         x_final = solution_vector.to_numpy()
-
-        # Ensure caller sees feasible result if bounds are provided
-        if bounds is not None:
-            x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
-
         f_final = problem.nlf1_problem.getF()
 
         result = OptimizeResult(
