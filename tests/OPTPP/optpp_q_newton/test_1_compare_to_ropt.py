@@ -112,9 +112,9 @@ def test_ropt_vs_everest_unconstrained(
     ropt_config = enopt_config.copy()
     ropt_config["objectives"] = {"weights": [1.0]}
     ropt_optimizer = BasicOptimizer(ropt_config, evaluator([objective]))
-    ropt_result = ropt_optimizer.run(initial_values)
-    ropt_solution = ropt_result.variables
-    assert ropt_solution is not None
+    ropt_exit_code = ropt_optimizer.run(initial_values)
+    assert ropt_exit_code is not None
+    ropt_solution = ropt_optimizer.results.evaluations.variables
 
     # --- everest_optimizers ---
     res_everest = minimize(
