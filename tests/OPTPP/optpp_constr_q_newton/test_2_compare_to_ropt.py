@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-import sys
 from collections.abc import Callable
 from functools import partial
 from typing import Any
@@ -14,10 +12,6 @@ from ropt.plan import BasicOptimizer
 from scipy.optimize import Bounds
 
 from everest_optimizers import minimize
-
-src_path = os.path.join(os.path.dirname(__file__), "..", "..", "src")
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
 
 _Function = Callable[[NDArray[np.float64]], float]
 
