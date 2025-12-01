@@ -17,6 +17,10 @@ import sys
 
 import numpy as np
 import pytest
+
+# skip these tests if dakota_ropt is not installed.
+pytest.importorskip("dakota")
+
 from dakota import DakotaBase, DakotaInput
 from numpy import array
 

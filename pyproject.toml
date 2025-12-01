@@ -35,11 +35,10 @@ dependencies = ["scipy", "mdolab-baseclasses", "sqlitedict", "pydantic"]
 [dependency-groups]
 test = [
   "pytest",
-  "carolina",
   "numpy",
   "cmake",
   "ropt",
-  "ropt-dakota",
+  "ropt-dakota;python_version<'3.14'",
   "matplotlib",
 ]
 dev = [

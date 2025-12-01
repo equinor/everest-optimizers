@@ -14,6 +14,9 @@ from everest_optimizers import minimize
 
 _Function = Callable[[NDArray[np.float64]], float]
 
+# skip these tests if dakota_ropt is not installed.
+pytest.importorskip("ropt_dakota")
+
 
 def _function_runner(
     variables: NDArray[np.float64],
