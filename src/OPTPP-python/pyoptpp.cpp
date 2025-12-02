@@ -163,7 +163,6 @@ public:
 PYBIND11_MODULE(pyoptpp, m) {
   m.doc() = "Python bindings for OPTPP library";
 
-  // Bind Teuchos::SerialDenseVector
   py::class_<T_SerialDenseVector>(m, "SerialDenseVector", py::buffer_protocol())
       .def(py::init<int>())
       .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
@@ -207,9 +206,6 @@ PYBIND11_MODULE(pyoptpp, m) {
         std::memcpy(mat->values(), arr.data(), arr.size() * sizeof(double));
         return mat;
       }));
-
-  py::class_<Constraint>(m, "Constraint");
-  py::class_<CompoundConstraint>(m, "CompoundConstraint");
 
   py::class_<NLPBase>(m, "NLPBase");
   py::class_<NLP>(m, "NLP").def_static(
@@ -258,37 +254,8 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::arg("compound_constraint")
       );
 
-  py::enum_<SearchStrategy>(m, "SearchStrategy")
-      .value("TrustRegion", SearchStrategy::TrustRegion)
-      .value("LineSearch", SearchStrategy::LineSearch)
-      .value("TrustPDS", SearchStrategy::TrustPDS)
-      .export_values();
-
-  py::enum_<MeritFcn>(m, "MeritFcn")
-      .value("NormFmu", MeritFcn::NormFmu)
-      .value("ArgaezTapia", MeritFcn::ArgaezTapia)
-      .value("VanShanno", MeritFcn::VanShanno)
-      .export_values();
-
-  py::class_<OptQNewton>(m, "OptQNewton")
-      .def(
-          py::init([](NLF1* p) {
-            NLP1* p_base = static_cast<NLP1*>(p);
-            return new OptQNewton(p_base, &default_update_model);
-          }),
-          py::arg("p"), py::keep_alive<0, 1>()
-      )
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
-      .def("optimize", &OptQNewton::optimize)
-      .def("cleanup", &OptQNewton::cleanup)
-      .def("setSearchStrategy", &OptQNewton::setSearchStrategy, py::arg("s"))
-      .def(
-          "setOutputFile",
-          static_cast<int (OptQNewton::*)(const char*, int)>(&OptQNewton::setOutputFile),
-          py::arg("filename"), py::arg("mode") = 0
-      )
-      .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
-
+  py::class_<Constraint>(m, "Constraint");
+  py::class_<CompoundConstraint>(m, "CompoundConstraint");
   py::class_<ConstraintBase>(m, "ConstraintBase")
       .def_static("delete", [](ConstraintBase* constraint) { delete constraint; });
 
@@ -355,6 +322,37 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::return_value_policy::reference, py::arg("nlprob"), py::arg("rhs"),
           py::arg("numconstraints") = 1
       );
+
+  py::enum_<SearchStrategy>(m, "SearchStrategy")
+      .value("TrustRegion", SearchStrategy::TrustRegion)
+      .value("LineSearch", SearchStrategy::LineSearch)
+      .value("TrustPDS", SearchStrategy::TrustPDS)
+      .export_values();
+
+  py::enum_<MeritFcn>(m, "MeritFcn")
+      .value("NormFmu", MeritFcn::NormFmu)
+      .value("ArgaezTapia", MeritFcn::ArgaezTapia)
+      .value("VanShanno", MeritFcn::VanShanno)
+      .export_values();
+
+  py::class_<OptQNewton>(m, "OptQNewton")
+      .def(
+          py::init([](NLF1* p) {
+            NLP1* p_base = static_cast<NLP1*>(p);
+            return new OptQNewton(p_base, &default_update_model);
+          }),
+          py::arg("p"), py::keep_alive<0, 1>()
+      )
+      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
+      .def("optimize", &OptQNewton::optimize)
+      .def("cleanup", &OptQNewton::cleanup)
+      .def("setSearchStrategy", &OptQNewton::setSearchStrategy, py::arg("s"))
+      .def(
+          "setOutputFile",
+          static_cast<int (OptQNewton::*)(const char*, int)>(&OptQNewton::setOutputFile),
+          py::arg("filename"), py::arg("mode") = 0
+      )
+      .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
 
   py::class_<OptConstrQNewton>(m, "OptConstrQNewton")
       .def(
