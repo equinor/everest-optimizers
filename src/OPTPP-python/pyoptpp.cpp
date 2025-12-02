@@ -33,8 +33,7 @@ using T_SerialDenseMatrix = Teuchos::SerialDenseMatrix<int, double>;
 // Dummy C++ function for the default case
 void default_update_model(int, int, T_SerialDenseVector) {}
 
-// C++ NLF1 class that holds Python callbacks - fully C++-managed
-// This avoids Python/C++ ownership conflicts
+// Non-linear function that holds Python callbacks
 class CallbackNLF1 : public NLF1 {
 private:
   py::function py_eval_f;
@@ -218,7 +217,6 @@ PYBIND11_MODULE(pyoptpp, m) {
   // Bind CompoundConstraint
   py::class_<CompoundConstraint>(m, "CompoundConstraint");
 
-  // Bind NLPBase first (abstract base class)
   py::class_<NLPBase>(m, "NLPBase");
 
   py::class_<NLP>(m, "NLP").def_static(
@@ -226,13 +224,11 @@ PYBIND11_MODULE(pyoptpp, m) {
       py::arg("nlp")
   );
 
-  // Bind NLF1 - only expose methods needed by optimizers
   py::class_<NLF1, NLPBase>(m, "NLF1")
       .def_static(
           "create",
           [](int ndim, py::function eval_f, py::function eval_g,
              const T_SerialDenseVector& x0) -> NLF1* {
-            // Create the C++ object - fully managed by C++
             CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_f, eval_g);
             nlf1->setX(x0);
             nlf1->setIsExpensive(true);
@@ -268,21 +264,18 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::arg("compound_constraint")
       );
 
-  // Bind SearchStrategy enum
   py::enum_<SearchStrategy>(m, "SearchStrategy")
       .value("TrustRegion", SearchStrategy::TrustRegion)
       .value("LineSearch", SearchStrategy::LineSearch)
       .value("TrustPDS", SearchStrategy::TrustPDS)
       .export_values();
 
-  // Bind MeritFcn enum for interior-point methods
   py::enum_<MeritFcn>(m, "MeritFcn")
       .value("NormFmu", MeritFcn::NormFmu)
       .value("ArgaezTapia", MeritFcn::ArgaezTapia)
       .value("VanShanno", MeritFcn::VanShanno)
       .export_values();
 
-  // Bind OptQNewton
   py::class_<OptQNewton>(m, "OptQNewton")
       .def(
           py::init([](NLF1* p) {
@@ -302,14 +295,11 @@ PYBIND11_MODULE(pyoptpp, m) {
       )
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
 
-  // Bind ConstraintBase so we can establish the inheritance hierarchy
   py::class_<ConstraintBase>(m, "ConstraintBase")
       .def_static("delete", [](ConstraintBase* constraint) { delete constraint; });
 
-  // Bind LinearConstraint as it's a base for Equation and Inequality
   py::class_<LinearConstraint, ConstraintBase>(m, "LinearConstraint");
 
-  // Bind LinearEquation
   py::class_<LinearEquation, LinearConstraint>(m, "LinearEquation")
       .def_static(
           "create",
@@ -319,7 +309,6 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::return_value_policy::reference, py::arg("A"), py::arg("rhs")
       );
 
-  // Bind LinearInequality
   py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
       .def_static(
           "create",
@@ -335,7 +324,6 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::return_value_policy::reference, py::arg("A"), py::arg("lower"), py::arg("upper")
       );
 
-  // Bind BoundConstraint
   py::class_<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
       .def_static(
           "create",
@@ -345,7 +333,6 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::return_value_policy::reference, py::arg("nc"), py::arg("A"), py::arg("rhs")
       );
 
-  // Helper to create CompoundConstraint from a list of constraints
   m.def(
       "create_compound_constraint",
       [](std::vector<ConstraintBase*> constraints) {
@@ -361,7 +348,6 @@ PYBIND11_MODULE(pyoptpp, m) {
 
   py::class_<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint");
 
-  // Bind NonLinearInequality
   py::class_<NonLinearInequality, NonLinearConstraint>(m, "NonLinearInequality")
       .def_static(
           "create",
@@ -373,7 +359,6 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::arg("numconstraints") = 1
       );
 
-  // Bind NonLinearEquation
   py::class_<NonLinearEquation, NonLinearConstraint>(m, "NonLinearEquation")
       .def_static(
           "create",
@@ -384,7 +369,6 @@ PYBIND11_MODULE(pyoptpp, m) {
           py::arg("numconstraints") = 1
       );
 
-  // Bind OptConstrQNewton (constrained Quasi-Newton)
   py::class_<OptConstrQNewton>(m, "OptConstrQNewton")
       .def(
           py::init([](NLF1* p) {
