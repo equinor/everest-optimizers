@@ -3,6 +3,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <fmt/format.h>
+
 #include "BoundConstraint.h"
 #include "CompoundConstraint.h"
 #include "Constraint.h"
@@ -70,7 +72,7 @@ public:
     try {
       return py_eval_f(x).cast<real>();
     } catch (const std::exception& e) {
-      throw std::runtime_error(std::string("Error in evalF callback: ") + e.what());
+      throw std::runtime_error(fmt::format("Error in evalF callback: {}", e.what()));
     }
   }
 
@@ -93,7 +95,7 @@ public:
       std::memcpy(mem_grad.values(), buf.ptr, this->getDim() * sizeof(double));
       return mem_grad;
     } catch (const std::exception& e) {
-      throw std::runtime_error(std::string("Error in evalG callback: ") + e.what());
+      throw std::runtime_error(fmt::format("Error in evalG callback: {}", e.what()));
     }
   }
 
@@ -129,7 +131,7 @@ public:
       std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
       return constraints;
     } catch (const std::exception& e) {
-      throw std::runtime_error(std::string("Error in evalCF callback: ") + e.what());
+      throw std::runtime_error(fmt::format("Error in evalCF callback: {}", e.what()));
     }
   }
 
@@ -153,7 +155,7 @@ public:
       std::memcpy(grad.values(), buf.ptr, buf.shape[0] * buf.shape[1] * sizeof(double));
       return grad;
     } catch (const std::exception& e) {
-      throw std::runtime_error(std::string("Error in evalCG callback: ") + e.what());
+      throw std::runtime_error(fmt::format("Error in evalCG callback: {}", e.what()));
     }
   }
 };
