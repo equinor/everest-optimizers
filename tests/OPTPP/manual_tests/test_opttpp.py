@@ -23,7 +23,7 @@ def _rosenbrock_grad(x_np: np.ndarray) -> np.ndarray:
         xm = x_np[1:-1]
         xm_m1 = x_np[:-2]
         xm_p1 = x_np[2:]
-        grad[1:-1] = 200 * (xm - xm_m1 ** 2) - 400 * (xm_p1 - xm ** 2) * xm - 2 * (1 - xm)
+        grad[1:-1] = 200 * (xm - xm_m1**2) - 400 * (xm_p1 - xm**2) * xm - 2 * (1 - xm)
         grad[0] = -400 * x_np[0] * (x_np[1] - x_np[0] ** 2) - 2 * (1 - x_np[0])
         grad[-1] = 200 * (x_np[-1] - x_np[-2] ** 2)
     return grad
@@ -56,9 +56,7 @@ def main():
     optimizer.setOutputFile("test_opttpp.out")
     optimizer.setTRSize(100.0)
 
-    print("Running optimization...")
     optimizer.optimize()
-    optimizer.printStatus("Optimization finished.")
     optimizer.cleanup()
 
     # Check results
@@ -69,11 +67,8 @@ def main():
     print(f"Solution: {solution_np}")
     print(f"Function value: {final_value}")
 
-    # The known solution is (1, 1)
     expected_solution = np.array([1.0, 1.0])
-    assert np.allclose(solution_np, expected_solution), (
-        f"Test failed: Solution {solution_np} is not close to {expected_solution}"
-    )
+    assert np.allclose(solution_np, expected_solution)
 
     print("\n--- Test Passed! ---")
 
