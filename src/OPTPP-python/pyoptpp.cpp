@@ -35,7 +35,7 @@ using T_SerialDenseMatrix = Teuchos::SerialDenseMatrix<int, double>;
 // Dummy C++ function for the default case
 void default_update_model(int, int, T_SerialDenseVector) {}
 
-// Non-linear function that holds Python callbacks
+// Non-linear function class that holds Python callbacks
 class CallbackNLF1 : public NLF1 {
 private:
   py::function py_eval_f;
@@ -102,7 +102,7 @@ public:
   T_SerialDenseVector evalG() override { return this->evalG(this->getXc()); }
 
   T_SerialSymDenseMatrix evalH(T_SerialDenseVector& x) override {
-    // Return identity matrix - Hessian not implemented for callbacks
+    // Return identity matrix - Hessian is not used in these algorithms
     int dim = this->getDim();
     T_SerialSymDenseMatrix H(dim);
     for (int i = 0; i < dim; ++i) {
@@ -124,7 +124,7 @@ public:
       py::buffer_info buf = result_array.request();
 
       if (buf.ndim != 1) {
-        throw std::runtime_error("evalCF: Returned numpy array must be 1-D!");
+        throw std::runtime_error("evalCF: Returned numpy array must be 1D!");
       }
 
       T_SerialDenseVector constraints(buf.shape[0]);
@@ -148,7 +148,7 @@ public:
       py::buffer_info buf = result_array.request();
 
       if (buf.ndim != 2) {
-        throw std::runtime_error("evalCG: Returned numpy array must be 2-D!");
+        throw std::runtime_error("evalCG: Returned numpy array must be 2D!");
       }
 
       T_SerialDenseMatrix grad(buf.shape[0], buf.shape[1]);
@@ -206,7 +206,7 @@ PYBIND11_MODULE(pyoptpp, m) {
       .def(py::init<int, int>())
       .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
         if (arr.ndim() != 2) {
-          throw std::runtime_error("Numpy array must be 2-D");
+          throw std::runtime_error("Numpy array must be 2D");
         }
         auto mat = new T_SerialDenseMatrix(arr.shape(0), arr.shape(1));
         std::memcpy(mat->values(), arr.data(), arr.size() * sizeof(double));
