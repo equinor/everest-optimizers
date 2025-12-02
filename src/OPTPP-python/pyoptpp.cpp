@@ -240,7 +240,8 @@ PYBIND11_MODULE(pyoptpp, m) {
       )
       .def_static(
           "create_constrained",
-          [](int ndim, py::function eval_cf, py::function eval_cg, const T_SerialDenseVector& x0) {
+          [](int ndim, py::function eval_cf, py::function eval_cg,
+             const T_SerialDenseVector& x0) -> NLF1* {
             // Create a CallbackNLF1 with dummy objective (not used for constraints)
             auto dummy_f = py::cpp_function([](const T_SerialDenseVector& x) { return 0.0; });
             auto dummy_g = py::cpp_function([ndim](const T_SerialDenseVector& x) {
@@ -251,7 +252,7 @@ PYBIND11_MODULE(pyoptpp, m) {
             nlf1->setX(x0);
             nlf1->setIsExpensive(true);
 
-            return static_cast<NLPBase*>(nlf1);
+            return static_cast<NLF1*>(nlf1);
           },
           py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_cf"),
           py::arg("eval_cg"), py::arg("x0"),
