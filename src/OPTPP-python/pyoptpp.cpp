@@ -197,13 +197,8 @@ PYBIND11_MODULE(pyoptpp, m) {
         return py::array_t<double>({(size_t)v.length()}, {sizeof(double)}, v.values(), py::cast(v));
       });
 
-  // Bind Teuchos::SerialSymDenseMatrix
-  py::class_<Teuchos::SerialSymDenseMatrix<int, double>>(m, "SerialSymDenseMatrix")
-      .def(py::init<int>());
-
-  // Bind Teuchos::SerialDenseMatrix
+  py::class_<Teuchos::SerialSymDenseMatrix<int, double>>(m, "SerialSymDenseMatrix");
   py::class_<T_SerialDenseMatrix>(m, "SerialDenseMatrix", py::buffer_protocol())
-      .def(py::init<int, int>())
       .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
         if (arr.ndim() != 2) {
           throw std::runtime_error("Numpy array must be 2D");
@@ -213,14 +208,10 @@ PYBIND11_MODULE(pyoptpp, m) {
         return mat;
       }));
 
-  // Bind Constraint so it can be used in lists
   py::class_<Constraint>(m, "Constraint");
-
-  // Bind CompoundConstraint
   py::class_<CompoundConstraint>(m, "CompoundConstraint");
 
   py::class_<NLPBase>(m, "NLPBase");
-
   py::class_<NLP>(m, "NLP").def_static(
       "create", [](NLPBase* nlp) { return new NLP(nlp); }, py::return_value_policy::reference,
       py::arg("nlp")
@@ -315,13 +306,6 @@ PYBIND11_MODULE(pyoptpp, m) {
   py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
       .def_static(
           "create",
-          [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& rhs) {
-            return new LinearInequality(A, rhs);
-          },
-          py::return_value_policy::reference, py::arg("A"), py::arg("rhs")
-      )
-      .def_static(
-          "create",
           [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& lower,
              const T_SerialDenseVector& upper) { return new LinearInequality(A, lower, upper); },
           py::return_value_policy::reference, py::arg("A"), py::arg("lower"), py::arg("upper")
@@ -393,7 +377,6 @@ PYBIND11_MODULE(pyoptpp, m) {
       )
       .def("setTRSize", &OptConstrQNewton::setTRSize, py::arg("size"));
 
-  // Bind OptQNIPS (Quasi-Newton Interior-Point Solver)
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(
           py::init([](NLF1* p) {
