@@ -14,8 +14,6 @@ optpp_inf = 1.0e30
 
 
 class _OptQNewtonProblem:
-    """Problem definition for OptQNewton optimizer."""
-
     def __init__(
         self,
         fun: Callable,
@@ -36,7 +34,6 @@ class _OptQNewtonProblem:
         self.current_f = None
         self.current_g = None
 
-        # Create the NLF1 problem
         self.nlf1_problem = self._create_nlf1_problem()
 
     def _create_nlf1_problem(self):
@@ -44,7 +41,6 @@ class _OptQNewtonProblem:
 
         # Create callback functions for objective evaluation
         def eval_f(x):
-            """Evaluate objective function - called by C++."""
             x_np = np.array(x.to_numpy(), copy=True)
             self.current_x = x_np
 
@@ -53,12 +49,10 @@ class _OptQNewtonProblem:
                 self.current_f = float(f_val)
                 self.nfev += 1
 
-                # Call callback if provided
                 if self.callback is not None:
                     try:
                         self.callback(x_np)
                     except Exception as cb_err:
-                        # Log but don't fail optimization if callback fails
                         warnings.warn(
                             f"Callback function raised exception: {cb_err}",
                             RuntimeWarning,
@@ -70,7 +64,6 @@ class _OptQNewtonProblem:
                 raise RuntimeError(f"Error evaluating objective function: {e}") from e
 
         def eval_g(x):
-            """Evaluate gradient - called by C++."""
             x_np = np.array(x.to_numpy(), copy=True)
 
             if self.jac is not None:
@@ -83,12 +76,11 @@ class _OptQNewtonProblem:
                 except Exception as e:
                     raise RuntimeError(f"Error evaluating gradient: {e}") from e
             else:
-                # Use finite differences for gradient
+                # Use finite differences for gradient if no jacobian is supplied
                 grad = self._finite_difference_gradient(x_np)
                 self.current_g = grad
                 return grad
 
-        # Use C++ factory to create NLF1 - fully C++-managed, no ownership conflicts
         x0_vector = pyoptpp.SerialDenseVector(self.x0)
         nlf1 = pyoptpp.NLF1.create(len(self.x0), eval_f, eval_g, x0_vector)
         return nlf1
