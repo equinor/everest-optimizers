@@ -164,9 +164,6 @@ def minimize_optqnips(
         constraint_objects.append(convert_bound_constraint(bounds, len(x0)))
 
     if constraints is not None:
-        if not isinstance(constraints, (list, tuple)):
-            constraints = [constraints]
-
         for constraint in constraints:
             if isinstance(constraint, LinearConstraint):
                 optpp_constraints = convert_linear_constraint(constraint)

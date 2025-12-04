@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from typing import Any
 
 import numpy as np
@@ -22,7 +22,10 @@ def minimize(
     method: str = "optpp_q_newton",
     jac: Callable[..., npt.NDArray[np.float64]] | None = None,
     bounds: Bounds | None = None,
-    constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
+    constraints: list[LinearConstraint | NonlinearConstraint]
+    | LinearConstraint
+    | NonlinearConstraint
+    | None = None,
     callback: Callable | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
@@ -138,6 +141,9 @@ def minimize(
 
     if not isinstance(args, tuple):
         args = (args,)
+
+    if constraints is not None and not isinstance(constraints, Collection):
+        constraints = [constraints]
 
     match method.lower():
         case "optpp_q_newton":
