@@ -1,5 +1,5 @@
 import warnings
-from collections.abc import Callable, Collection
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -263,9 +263,6 @@ def minimize_optconstrqnewton(
         constraint_list.append(bound_constraint)
 
     if constraints is not None:
-        if not isinstance(constraints, Collection):
-            constraints = [constraints]
-
         for constraint in constraints:
             if np.isfinite(constraint.lb) + np.isfinite(constraint.ub) != 1:
                 raise NotImplementedError(
@@ -274,9 +271,6 @@ def minimize_optconstrqnewton(
                 )
             optpp_constraint = convert_linear_constraint(constraint)
             constraint_list.extend(optpp_constraint)
-
-    if not constraint_list:
-        raise ValueError("No valid constraints were processed.")
 
     cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
 
