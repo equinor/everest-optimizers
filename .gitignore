@@ -10,9 +10,12 @@ venv/
 
 # C/C++ and CMake build artifacts
 build/
+out/
+.cache/
 *.o
 *.so
 *.out
+compile_commands.json
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
