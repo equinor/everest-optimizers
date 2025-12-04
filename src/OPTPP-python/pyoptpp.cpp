@@ -160,7 +160,7 @@ public:
   }
 };
 
-PYBIND11_MODULE(pyoptpp, m) {
+PYBIND11_MODULE(_pyoptpp, m) {
   m.doc() = "Python bindings for OPTPP library";
 
   py::class_<T_SerialDenseVector>(m, "SerialDenseVector", py::buffer_protocol())
