@@ -7,10 +7,10 @@ import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
-from everest_optimizers._convert_constraints import convert_linear_constraint
-
-# OPTPP uses a large number for infinity
-optpp_inf = 1.0e30
+from everest_optimizers._convert_constraints import (
+    convert_bound_constraint,
+    convert_linear_constraint,
+)
 
 
 class _OptQNewtonProblem:
@@ -253,14 +253,7 @@ def minimize_optconstrqnewton(
 
     constraint_list = []
     if bounds is not None:
-        lb = np.asarray(bounds.lb, dtype=float)
-        ub = np.asarray(bounds.ub, dtype=float)
-        lb[np.isneginf(lb)] = -optpp_inf
-        ub[np.isposinf(ub)] = optpp_inf
-        bound_constraint = pyoptpp.BoundConstraint.create(
-            len(x0), pyoptpp.SerialDenseVector(lb), pyoptpp.SerialDenseVector(ub)
-        )
-        constraint_list.append(bound_constraint)
+        constraint_list.append(convert_bound_constraint(bounds, len(x0)))
 
     if constraints is not None:
         for constraint in constraints:

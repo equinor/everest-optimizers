@@ -7,6 +7,7 @@ from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, Optimi
 
 from everest_optimizers import pyoptpp
 from everest_optimizers._convert_constraints import (
+    convert_bound_constraint,
     convert_linear_constraint,
     convert_nonlinear_constraint,
 )
@@ -160,18 +161,7 @@ def minimize_optqnips(
     constraint_objects = []
 
     if bounds is not None:
-        lb = np.asarray(bounds.lb, dtype=float)
-        ub = np.asarray(bounds.ub, dtype=float)
-        # OPTPP uses a large number for infinity
-        inf = 1.0e30
-        lb[np.isneginf(lb)] = -inf
-        ub[np.isposinf(ub)] = inf
-
-        # Create BoundConstraint
-        lb_vec = pyoptpp.SerialDenseVector(lb)
-        ub_vec = pyoptpp.SerialDenseVector(ub)
-        bound_constraint = pyoptpp.BoundConstraint.create(len(x0), lb_vec, ub_vec)
-        constraint_objects.append(bound_constraint)
+        constraint_objects.append(convert_bound_constraint(bounds, len(x0)))
 
     if constraints is not None:
         if not isinstance(constraints, (list, tuple)):
