@@ -41,11 +41,7 @@ jobs:
       - name: Configure compiler vars [macos]
         if: ${{ contains(runner.os, 'macos') }}
         run: |
-          echo "CC=gcc-14" >> $GITHUB_ENV
-          echo "CXX=g++-14" >> $GITHUB_ENV
-          echo "LD=ld" >> $GITHUB_ENV
-          echo "AR=gcc-ar-14" >> $GITHUB_ENV
-          echo "RANLIB=gcc-ranlib-14" >> $GITHUB_ENV
+          echo "FC=gfortran-14" >> $GITHUB_ENV
           echo "MACOSX_DEPLOYMENT_TARGET=15.0" >> $GITHUB_ENV
 
       - name: Install cibuildwheel
