@@ -1,10 +1,11 @@
 
 [build-system]
 requires = [
-  "numpy",
-  "scikit-build-core",
   "meson",
+  "numpy",
   "pybind11",
+  "scikit-build-core",
+  "setuptools_scm",
   "swig; sys_platform == 'darwin'",
 ]
 build-backend = "scikit_build_core.build"
@@ -12,7 +13,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "everest-optimizers"
 description = "Everest optimization algorithms for Python"
-version = "0.2.0"
+dynamic = ["version"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
@@ -45,6 +46,7 @@ test = [
 dev = [
   "meson",
   "scikit-build-core",
+  "setuptools_scm",
   "swig; sys_platform == 'darwin'",
   { include-group = "test" },
 ]
@@ -55,6 +57,12 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = ["error"]
 testpaths = ["tests/CONMIN", "tests/OPTPP"]
+
+[tool.setuptools_scm]
+
+[tool.scikit-build]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/pybind_module/_version.py"]
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
