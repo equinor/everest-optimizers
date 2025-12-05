@@ -66,6 +66,7 @@ manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 manylinux-pypy_x86_64-image = "manylinux_2_28"
 manylinux-pypy_aarch64-image = "manylinux_2_28"
+before-all = "dnf update -y && dnf install -y lapack lapack-devel"
 
 [tool.ruff]
 target-version = "py311"
