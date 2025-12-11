@@ -7,10 +7,6 @@ import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
-from everest_optimizers._convert_constraints import (
-    convert_bound_constraint,
-    convert_linear_constraint,
-)
 
 
 class _OptQNewtonProblem:
@@ -201,109 +197,6 @@ def minimize_optqnewton(
             jac=problem.current_g if problem.current_g is not None else None,
         )
 
-        optimizer.cleanup()
-        return result
-
-    except Exception as e:
-        optimizer.cleanup()
-        return OptimizeResult(
-            x=x0,
-            fun=None,
-            nfev=problem.nfev,
-            njev=problem.njev,
-            nit=0,
-            success=False,
-            status=1,
-            message=f"Optimization failed: {e!s}",
-            jac=None,
-        )
-
-
-def minimize_optconstrqnewton(
-    fun: Callable,
-    x0: np.ndarray,
-    args: tuple = (),
-    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
-    bounds: Bounds | None = None,
-    constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
-    callback: Any | None = None,
-    options: dict[str, Any] | None = None,
-) -> OptimizeResult:
-    """
-    Minimize a scalar function with constraints using OptConstrQNewton.
-    """
-    x0 = np.asarray(x0, dtype=float)
-    if x0.ndim != 1:
-        raise ValueError("x0 must be 1-dimensional")
-
-    if bounds is None and constraints is None:
-        raise ValueError(
-            "Either bounds or constraints must be provided for constrained optimization"
-        )
-
-    if options is None:
-        options = {}
-
-    search_strategy = options.get("search_strategy", "TrustRegion")
-    tr_size = options.get("tr_size", 100.0)
-    debug = options.get("debug", False)
-    output_file = options.get("output_file", None)
-
-    problem = _OptQNewtonProblem(fun, x0, args, jac, callback)
-
-    constraint_list = []
-    if bounds is not None:
-        constraint_list.append(convert_bound_constraint(bounds, len(x0)))
-
-    if constraints is not None:
-        for constraint in constraints:
-            if np.isfinite(constraint.lb) + np.isfinite(constraint.ub) != 1:
-                raise NotImplementedError(
-                    "Only linear equality constraints (lb == ub) and one-sided inequalities "
-                    "(Ax >= lb with infinite upper bounds) are currently supported."
-                )
-            optpp_constraint = convert_linear_constraint(constraint)
-            constraint_list.extend(optpp_constraint)
-
-    cc_ptr = pyoptpp.create_compound_constraint(constraint_list)
-
-    problem.nlf1_problem.setConstraints(cc_ptr)
-    optimizer = pyoptpp.OptConstrQNewton(problem.nlf1_problem)
-
-    if search_strategy == "TrustRegion":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
-    elif search_strategy == "LineSearch":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
-    elif search_strategy == "TrustPDS":
-        optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
-    else:
-        raise ValueError(f"Unknown search strategy: {search_strategy}")
-
-    optimizer.setTRSize(tr_size)
-    if debug:
-        optimizer.setDebug()
-    if output_file:
-        optimizer.setOutputFile(output_file, 0)
-
-    try:
-        optimizer.optimize()
-        solution_vector = problem.nlf1_problem.getXc()
-        x_final = solution_vector.to_numpy()
-        # Ensure caller sees feasible result if bounds are provided
-        if bounds is not None:
-            x_final = np.minimum(np.maximum(x_final, bounds.lb), bounds.ub)
-        f_final = problem.nlf1_problem.getF()
-        result = OptimizeResult(
-            x=x_final,
-            fun=f_final,
-            nfev=problem.nfev,
-            njev=problem.njev,
-            nit=0,
-            success=True,
-            status=0,
-            message="Optimization terminated successfully",
-            jac=problem.current_g if problem.current_g is not None else None,
-        )
         optimizer.cleanup()
         return result
 
