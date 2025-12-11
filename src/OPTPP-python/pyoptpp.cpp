@@ -18,7 +18,6 @@
 #include "NonLinearEquation.h"
 #include "NonLinearInequality.h"
 #include "Opt.h"
-#include "OptConstrQNewton.h"
 #include "OptQNIPS.h"
 #include "OptQNewton.h"
 #include "Teuchos_SerialDenseMatrix.hpp"
@@ -353,27 +352,6 @@ PYBIND11_MODULE(_pyoptpp, m) {
           py::arg("filename"), py::arg("mode") = 0
       )
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
-
-  py::class_<OptConstrQNewton>(m, "OptConstrQNewton")
-      .def(
-          py::init([](NLF1* p) {
-            NLP1* p_base = static_cast<NLP1*>(p);
-            return new OptConstrQNewton(p_base, &default_update_model);
-          }),
-          py::arg("p"), py::keep_alive<0, 1>()
-      )
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug)
-      .def("optimize", &OptConstrQNewton::optimize)
-      .def("cleanup", &OptConstrQNewton::cleanup)
-      .def("setSearchStrategy", &OptConstrQNewton::setSearchStrategy, py::arg("s"))
-      .def(
-          "setOutputFile",
-          static_cast<int (OptConstrQNewton::*)(const char*, int)>(
-              &OptConstrQNewton::setOutputFile
-          ),
-          py::arg("filename"), py::arg("mode") = 0
-      )
-      .def("setTRSize", &OptConstrQNewton::setTRSize, py::arg("size"));
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(

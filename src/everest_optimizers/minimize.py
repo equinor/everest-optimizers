@@ -8,10 +8,7 @@ import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers._conminmfd import minimize_conmin_mfd
-from everest_optimizers._optqnewton import (
-    minimize_optconstrqnewton,
-    minimize_optqnewton,
-)
+from everest_optimizers._optqnewton import minimize_optqnewton
 from everest_optimizers._optqnips import minimize_optqnips
 
 
@@ -56,7 +53,6 @@ def minimize(
     method : str, optional
         Type of solver. Currently supported:
         - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
-        - 'optpp_constr_q_newton': constrained quasi-Newton optimizer from OPTPP
         - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
         - 'conmin_mfd': CONMIN solver
 
@@ -71,10 +67,10 @@ def minimize(
         If None, gradients will be estimated using finite differences.
 
     bounds : sequence, optional
-        Bounds on variables. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
+        Bounds on variables. Supported by 'optpp_q_nips'.
 
     constraints : dict or list, optional
-        Constraints definition. Supported by 'optpp_constr_q_newton' and 'optpp_q_nips'.
+        Constraints definition. Supported by 'optpp_q_nips'.
 
     callback : callable, optional
         Callback function. Not implemented for optpp_q_newton.
@@ -166,17 +162,6 @@ def minimize(
                 constraints=constraints,
                 options=options,
             )
-        case "optpp_constr_q_newton":
-            return minimize_optconstrqnewton(
-                fun=fun,
-                x0=x0,
-                args=args,
-                jac=jac,
-                bounds=bounds,
-                constraints=constraints,
-                callback=callback,
-                options=options,
-            )
         case "optpp_q_nips":
             return minimize_optqnips(
                 fun=fun,
@@ -189,5 +174,5 @@ def minimize(
             )
         case other:
             raise ValueError(
-                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_constr_q_newton', 'optpp_q_nips', 'conmin_mfd'"
+                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_q_nips', 'conmin_mfd'"
             )
