@@ -11,6 +11,15 @@ from everest_optimizers._convert_constraints import (
     convert_linear_constraint,
     convert_nonlinear_constraint,
 )
+from everest_optimizers.pyoptpp import (
+    BoundConstraint,
+    LinearEquation,
+    LinearInequality,
+    NonLinearEquation,
+    NonLinearInequality,
+)
+
+from ._problem import NLF1Problem
 
 
 def minimize_optqnips(
@@ -73,92 +82,19 @@ def minimize_optqnips(
     constraint_tolerance = options.get("constraint_tolerance", 1e-6)
     max_step = options.get("max_step", 1000.0)
 
-    # Speculative gradients (not implemented but recognized)
-    speculative = options.get("speculative", False)
-
     # Legacy parameters for backward compatibility
     mu = options.get("mu", 0.1)
     tr_size = options.get("tr_size", max_step)
     gradient_multiplier = options.get("gradient_multiplier", 0.1)
     search_pattern_size = options.get("search_pattern_size", 64)
 
-    class OptQNIPSProblem:
-        def __init__(self, fun, x0, args, jac):
-            self.fun = fun
-            self.x0 = np.asarray(x0, dtype=float)
-            self.args = args
-            self.jac = jac
-
-            self.nfev = 0
-            self.njev = 0
-            self.current_x = None
-            self.current_f = None
-            self.current_g = None
-
-            self.nlf1_problem = self._create_nlf1_problem()
-
-        def _create_nlf1_problem(self):
-            """Create the NLF1 problem for OPTPP using C++ CallbackNLF1."""
-
-            # Create callback functions for objective evaluation
-            def eval_f(x):
-                """Evaluate objective function - called by C++."""
-                x_np = np.array(x.to_numpy(), copy=True)
-                self.current_x = x_np
-
-                try:
-                    f_val = self.fun(x_np, *self.args)
-                    self.current_f = float(f_val)
-                    self.nfev += 1
-                    return self.current_f
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Error evaluating objective function: {e}"
-                    ) from e
-
-            def eval_g(x):
-                """Evaluate gradient - called by C++."""
-                x_np = np.array(x.to_numpy(), copy=True)
-
-                if self.jac is not None:
-                    try:
-                        grad = self.jac(x_np, *self.args)
-                        grad_np = np.asarray(grad, dtype=float)
-                        self.current_g = grad_np
-                        self.njev += 1
-                        return grad_np
-                    except Exception as e:
-                        raise RuntimeError(f"Error evaluating gradient: {e}") from e
-                else:
-                    grad = self._finite_difference_gradient(x_np)
-                    self.current_g = grad
-                    return grad
-
-            # Use C++ factory to create NLF1 - fully C++-managed, no ownership conflicts
-            x0_vector = pyoptpp.SerialDenseVector(self.x0)
-            nlf1 = pyoptpp.NLF1.create(len(self.x0), eval_f, eval_g, x0_vector)
-            return nlf1
-
-        def _finite_difference_gradient(self, x):
-            """Compute gradient using finite differences."""
-            eps = 1e-8
-            grad = np.zeros_like(x)
-
-            for i in range(len(x)):
-                x_plus = x.copy()
-                x_plus[i] += eps
-                x_minus = x.copy()
-                x_minus[i] -= eps
-
-                f_plus = self.fun(x_plus, *self.args)
-                f_minus = self.fun(x_minus, *self.args)
-
-                grad[i] = (f_plus - f_minus) / (2 * eps)
-                self.nfev += 2
-
-            return grad
-
-    constraint_objects = []
+    constraint_objects: list[
+        BoundConstraint
+        | NonLinearEquation
+        | NonLinearInequality
+        | LinearEquation
+        | LinearInequality
+    ] = []
 
     if bounds is not None:
         constraint_objects.append(convert_bound_constraint(bounds, len(x0)))
@@ -166,11 +102,11 @@ def minimize_optqnips(
     if constraints is not None:
         for constraint in constraints:
             if isinstance(constraint, LinearConstraint):
-                optpp_constraints = convert_linear_constraint(constraint)
-                constraint_objects.extend(optpp_constraints)
+                linear_constraints = convert_linear_constraint(constraint)
+                constraint_objects.extend(linear_constraints)
             elif isinstance(constraint, NonlinearConstraint):
-                optpp_constraints = convert_nonlinear_constraint(constraint, x0)
-                constraint_objects.extend(optpp_constraints)
+                nonlinear_constraints = convert_nonlinear_constraint(constraint, x0)
+                constraint_objects.extend(nonlinear_constraints)
             else:
                 raise ValueError(f"Unsupported constraint type: {type(constraint)}")
 
@@ -179,7 +115,7 @@ def minimize_optqnips(
     else:
         raise ValueError("OptQNIPS requires at least bounds constraints")
 
-    problem = OptQNIPSProblem(fun, x0, args, jac)
+    problem = NLF1Problem(fun, x0, args, jac)
     problem.nlf1_problem.setConstraints(cc_ptr)
     optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
 
@@ -240,7 +176,7 @@ def minimize_optqnips(
         x_final = solution_vector.to_numpy()
         f_final = problem.nlf1_problem.getF()
 
-        result = OptimizeResult(
+        result = OptimizeResult(  # type: ignore[call-arg]
             x=x_final,
             fun=f_final,
             nfev=problem.nfev,
@@ -257,7 +193,7 @@ def minimize_optqnips(
 
     except Exception as e:
         optimizer.cleanup()
-        return OptimizeResult(
+        return OptimizeResult(  # type: ignore[call-arg]
             x=x0,
             fun=None,
             nfev=problem.nfev,

@@ -40,7 +40,7 @@ def test_merit_function_options(merit_function: str):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -59,7 +59,7 @@ def test_search_strategy_options(search_strategy: str):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -76,7 +76,7 @@ def test_convergence_tolerance_options(tolerance: float):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -92,7 +92,7 @@ def test_high_convergence_tolerance_inaccurate():
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -122,7 +122,7 @@ def test_gradient_tolerance_options(tolerance: float):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -139,7 +139,7 @@ def test_max_iterations_option(max_iterations: int):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -155,7 +155,7 @@ def test_too_low_max_iterations():
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -174,7 +174,7 @@ def test_debug_option(debug_flag: bool):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,
+        bounds=BOUNDS,  # type: ignore[arg-type]
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -183,4 +183,3 @@ def test_debug_option(debug_flag: bool):
 
 
 # TODO: Implement tests for the params found at: https://snl-dakota.github.io/docs/6.22.0/users/usingdakota/reference/method-optpp_q_newton.html
-

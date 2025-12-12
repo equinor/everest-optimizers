@@ -17,6 +17,8 @@ from scipy.optimize import Bounds, LinearConstraint
 
 from everest_optimizers import minimize
 
+# type: ignore[arg-type]
+
 DEFAULT_OPTIONS = {
     "debug": False,
     "max_iterations": 200,
@@ -176,12 +178,12 @@ def test_start_feasible_and_infeasible_scipy_comparison(x0: NDArray[np.float64])
         x0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=bounds,
+        bounds=bounds,  # type: ignore[arg-type]
         options=DEFAULT_OPTIONS,
     )
     assert res_everest.success
 
-    res_scipy = sp_optimize.minimize(
+    res_scipy = sp_optimize.minimize(  # type: ignore[call-overload]
         objective, x0, method="L-BFGS-B", jac=objective_grad, bounds=bounds
     )
     assert res_scipy.success
@@ -224,18 +226,18 @@ def test_complex_problem_parameterized_start(x0: NDArray[np.float64]):
         x0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=bounds,
+        bounds=bounds,  # type: ignore[arg-type]
         constraints=constraints,
         options=DEFAULT_OPTIONS,
     )
     assert res_everest.success
 
-    res_scipy = sp_optimize.minimize(
+    res_scipy = sp_optimize.minimize(  # type: ignore[call-overload]
         objective,
         x0,
         method="SLSQP",
         jac=objective_grad,
-        bounds=bounds,
+        bounds=bounds,  # type: ignore[arg-type]
         constraints=constraints,
     )
     assert res_scipy.success

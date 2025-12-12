@@ -1,7 +1,10 @@
 import numpy as np
 from scipy.optimize import OptimizeResult
 
-from everest_optimizers.pyoptsparse import CONMIN, Optimization
+from everest_optimizers.pyoptsparse import (  # type: ignore[import-untyped]
+    CONMIN,
+    Optimization,
+)
 
 
 def minimize_conmin_mfd(fun, x0, args=(), bounds=None, constraints=None, options=None):

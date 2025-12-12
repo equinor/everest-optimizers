@@ -21,7 +21,7 @@ import pytest
 # skip these tests if dakota_ropt is not installed.
 pytest.importorskip("dakota")
 
-from dakota import DakotaBase, DakotaInput
+from dakota import DakotaBase, DakotaInput  # type: ignore[import-untyped]
 from numpy import array
 
 from everest_optimizers.minimize import minimize
@@ -48,7 +48,7 @@ class TestDriver(DakotaBase):
             ],
             constraints=[],
         )
-        super(TestDriver, self).__init__(dakota_input)
+        super().__init__(dakota_input)
 
         self.force_exception = force_exception
 

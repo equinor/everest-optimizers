@@ -173,7 +173,7 @@ def test_start_feasible_and_infeasible(x0: NDArray[np.float64]):
         x0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=bounds,
+        bounds=bounds,  # type: ignore[arg-type]
         options=DEFAULT_OPTIONS,
     )
     assert result.success

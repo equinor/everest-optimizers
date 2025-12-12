@@ -124,6 +124,7 @@ def test_ropt_vs_everest_bounds(
     ropt_optimizer = BasicOptimizer(ropt_config, evaluator([objective]))
     ropt_exit_code = ropt_optimizer.run(initial_values)
     assert ropt_exit_code is not None
+    assert ropt_optimizer.results is not None
     ropt_solution = ropt_optimizer.results.evaluations.variables
 
     # --- everest_optimizers ---

@@ -73,7 +73,9 @@ def convert_nonlinear_constraint(
 
     Following the OPTPP pattern from hockfcns.C examples
     """
-    optpp_constraints = []
+    optpp_constraints: list[
+        pyoptpp.NonLinearEquation | pyoptpp.NonLinearInequality
+    ] = []
 
     # Get constraint bounds
     lb = np.asarray(scipy_constraint.lb, dtype=float)
@@ -84,7 +86,7 @@ def convert_nonlinear_constraint(
 
     # Evaluate constraint at initial point to determine number of constraints
     constraint_values = scipy_constraint.fun(x0)
-    constraint_values = np.atleast_1d(constraint_values)
+    constraint_values = np.atleast_1d(np.asarray(constraint_values))
     num_constraints = len(constraint_values)
 
     for i in range(num_constraints):
@@ -120,7 +122,7 @@ def convert_linear_constraint(
     Convert a scipy.optimize.LinearConstraint to
     OPTPP LinearEquation/LinearInequality objects.
     """
-    optpp_constraints = []
+    optpp_constraints: list[pyoptpp.LinearEquation | pyoptpp.LinearInequality] = []
 
     # Get constraint matrix and bounds
     A = np.asarray(scipy_constraint.A, dtype=float)
@@ -140,14 +142,14 @@ def convert_linear_constraint(
         if np.isclose(lb - ub, 0, atol=1e-12):
             # Equality constraint: lb == ub
             rhs = pyoptpp.SerialDenseVector(lb)
-            constraint = pyoptpp.LinearEquation.create(A_matrix, rhs)
-            optpp_constraints.append(constraint)
+            linear_constraint = pyoptpp.LinearEquation.create(A_matrix, rhs)
+            optpp_constraints.append(linear_constraint)
             continue
 
         lower = pyoptpp.SerialDenseVector(lb)
         upper = pyoptpp.SerialDenseVector(ub)
-        constraint = pyoptpp.LinearInequality.create(A_matrix, lower, upper)
-        optpp_constraints.append(constraint)
+        nonlinear_constraint = pyoptpp.LinearInequality.create(A_matrix, lower, upper)
+        optpp_constraints.append(nonlinear_constraint)
 
     return optpp_constraints
 

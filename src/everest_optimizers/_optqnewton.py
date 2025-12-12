@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -8,97 +7,7 @@ from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, Optimi
 
 from everest_optimizers import pyoptpp
 
-
-class _OptQNewtonProblem:
-    def __init__(
-        self,
-        fun: Callable,
-        x0: np.ndarray,
-        args: tuple,
-        jac: Callable[..., npt.NDArray[np.float64]] | None = None,
-        callback: Callable | None = None,
-    ):
-        self.fun = fun
-        self.x0 = np.asarray(x0, dtype=float)
-        self.args = args
-        self.jac = jac
-        self.callback = callback
-
-        self.nfev = 0
-        self.njev = 0
-        self.current_x = None
-        self.current_f = None
-        self.current_g = None
-
-        self.nlf1_problem = self._create_nlf1_problem()
-
-    def _create_nlf1_problem(self):
-        """Create the NLF1 problem for OPTPP using C++ CallbackNLF1."""
-
-        # Create callback functions for objective evaluation
-        def eval_f(x):
-            x_np = np.array(x.to_numpy(), copy=True)
-            self.current_x = x_np
-
-            try:
-                f_val = self.fun(x_np, *self.args)
-                self.current_f = float(f_val)
-                self.nfev += 1
-
-                if self.callback is not None:
-                    try:
-                        self.callback(x_np)
-                    except Exception as cb_err:
-                        warnings.warn(
-                            f"Callback function raised exception: {cb_err}",
-                            RuntimeWarning,
-                            stacklevel=2,
-                        )
-
-                return self.current_f
-            except Exception as e:
-                raise RuntimeError(f"Error evaluating objective function: {e}") from e
-
-        def eval_g(x):
-            x_np = np.array(x.to_numpy(), copy=True)
-
-            if self.jac is not None:
-                try:
-                    grad = self.jac(x_np, *self.args)
-                    grad_np = np.asarray(grad, dtype=float)
-                    self.current_g = grad_np
-                    self.njev += 1
-                    return grad_np
-                except Exception as e:
-                    raise RuntimeError(f"Error evaluating gradient: {e}") from e
-            else:
-                # Use finite differences for gradient if no jacobian is supplied
-                grad = self._finite_difference_gradient(x_np)
-                self.current_g = grad
-                return grad
-
-        x0_vector = pyoptpp.SerialDenseVector(self.x0)
-        nlf1 = pyoptpp.NLF1.create(len(self.x0), eval_f, eval_g, x0_vector)
-        return nlf1
-
-    def _finite_difference_gradient(self, x):
-        """Compute gradient using finite differences."""
-        eps = 1e-8
-        grad = np.zeros_like(x)
-
-        for i in range(len(x)):
-            x_plus = x.copy()
-            x_plus[i] += eps
-            x_minus = x.copy()
-            x_minus[i] -= eps
-
-            f_plus = self.fun(x_plus, *self.args)
-            f_minus = self.fun(x_minus, *self.args)
-
-            grad[i] = (f_plus - f_minus) / (2 * eps)
-            self.nfev += 2
-
-        return grad
+from ._problem import NLF1Problem
 
 
 def minimize_optqnewton(
@@ -157,7 +66,7 @@ def minimize_optqnewton(
     debug = options.get("debug", False)
     output_file = options.get("output_file", None)
 
-    problem = _OptQNewtonProblem(fun, x0, args, jac, callback)
+    problem = NLF1Problem(fun, x0, args, jac, callback)
     optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
 
     match search_strategy:
@@ -185,7 +94,7 @@ def minimize_optqnewton(
         x_final = solution_vector.to_numpy()
         f_final = problem.nlf1_problem.getF()
 
-        result = OptimizeResult(
+        result = OptimizeResult(  # type: ignore[call-arg]
             x=x_final,
             fun=f_final,
             nfev=problem.nfev,
@@ -202,7 +111,7 @@ def minimize_optqnewton(
 
     except Exception as e:
         optimizer.cleanup()
-        return OptimizeResult(
+        return OptimizeResult(  # type: ignore[call-arg]
             x=x0,
             fun=None,
             nfev=problem.nfev,
