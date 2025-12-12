@@ -18,6 +18,7 @@
 #include "NonLinearEquation.h"
 #include "NonLinearInequality.h"
 #include "Opt.h"
+#include "OptBCQNewton.h"
 #include "OptQNIPS.h"
 #include "OptQNewton.h"
 #include "Teuchos_SerialDenseMatrix.hpp"
@@ -352,6 +353,31 @@ PYBIND11_MODULE(_pyoptpp, m) {
           py::arg("filename"), py::arg("mode") = 0
       )
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
+
+  py::class_<OptBCQNewton>(m, "OptBCQNewton")
+      .def(
+          py::init([](NLF1* p) {
+            NLP1* p_base = static_cast<NLP1*>(p);
+            return new OptBCQNewton(p_base, &default_update_model);
+          }),
+          py::arg("p"), py::keep_alive<0, 1>()
+      )
+      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
+      .def("optimize", &OptBCQNewton::optimize)
+      .def("cleanup", &OptBCQNewton::cleanup)
+      .def("setSearchStrategy", &OptBCQNewton::setSearchStrategy, py::arg("s"))
+      .def(
+          "setOutputFile",
+          static_cast<int (OptBCQNewton::*)(const char*, int)>(&OptBCQNewton::setOutputFile),
+          py::arg("filename"), py::arg("mode") = 0
+      )
+      .def("setTRSize", &OptBCQNewton::setTRSize, py::arg("size"))
+      .def("setMaxIter", &OptBCQNewton::setMaxIter, py::arg("max_iterations"))
+      .def("setMaxFeval", &OptBCQNewton::setMaxFeval, py::arg("max_function_evaluations"))
+      .def("setFcnTol", &OptBCQNewton::setFcnTol, py::arg("convergence_tolerance"))
+      .def("setGradTol", &OptBCQNewton::setGradTol, py::arg("gradient_tolerance"))
+      .def("setGradMult", &OptBCQNewton::setGradMult, py::arg("gradient_multiplier"))
+      .def("setSearchSize", &OptBCQNewton::setSearchSize, py::arg("search_pattern_size"));
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(

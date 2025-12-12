@@ -155,13 +155,6 @@ def convert_linear_constraint(
 
 
 def convert_bound_constraint(bounds: Bounds, x0_length: int) -> pyoptpp.BoundConstraint:
-    # OPTPP uses a large number for infinity
-    optpp_inf = 1.0e30
-
-    lb = np.asarray(bounds.lb, dtype=float)
-    ub = np.asarray(bounds.ub, dtype=float)
-    lb[np.isneginf(lb)] = -optpp_inf
-    ub[np.isposinf(ub)] = optpp_inf
-    lb_vec = pyoptpp.SerialDenseVector(lb)
-    ub_vec = pyoptpp.SerialDenseVector(ub)
+    lb_vec = pyoptpp.SerialDenseVector(np.asarray(bounds.lb, dtype=float))
+    ub_vec = pyoptpp.SerialDenseVector(np.asarray(bounds.ub, dtype=float))
     return pyoptpp.BoundConstraint.create(x0_length, lb_vec, ub_vec)
