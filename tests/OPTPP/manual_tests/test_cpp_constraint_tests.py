@@ -24,7 +24,7 @@ class _TestCppConstraintTests:
         """Test simple 2D quadratic with linear equality constraint."""
         result = pyoptpp.run_linear_eq_test1()
 
-        print(f"Linear Equality Test 1:")
+        print("Linear Equality Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -39,7 +39,7 @@ class _TestCppConstraintTests:
         """Test 3D quadratic with multiple linear equality constraints."""
         result = pyoptpp.run_linear_eq_test2()
 
-        print(f"Linear Equality Test 2:")
+        print("Linear Equality Test 2:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -53,7 +53,7 @@ class _TestCppConstraintTests:
         """Test 2D quadratic with linear inequality constraint."""
         result = pyoptpp.run_linear_ineq_test1()
 
-        print(f"Linear Inequality Test 1:")
+        print("Linear Inequality Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -68,7 +68,7 @@ class _TestCppConstraintTests:
         """Test 3D quadratic with multiple linear inequality constraints."""
         result = pyoptpp.run_linear_ineq_test2()
 
-        print(f"Linear Inequality Test 2:")
+        print("Linear Inequality Test 2:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -82,7 +82,7 @@ class _TestCppConstraintTests:
         """Test simple bounds constraint where optimum is at boundary."""
         result = pyoptpp.run_bounds_test1()
 
-        print(f"Bounds Test 1:")
+        print("Bounds Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -96,7 +96,7 @@ class _TestCppConstraintTests:
         """Test asymmetric bounds where optimum is within bounds."""
         result = pyoptpp.run_bounds_test2()
 
-        print(f"Bounds Test 2:")
+        print("Bounds Test 2:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -110,7 +110,7 @@ class _TestCppConstraintTests:
         """Test mixed linear constraints (bounds + equality + inequality)."""
         result = pyoptpp.run_mixed_linear_test1()
 
-        print(f"Mixed Linear Test 1:")
+        print("Mixed Linear Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -124,7 +124,7 @@ class _TestCppConstraintTests:
         """Test nonlinear equality constraint x^2 + y^2 = 4."""
         result = pyoptpp.run_nonlinear_eq_test1()
 
-        print(f"Nonlinear Equality Test 1:")
+        print("Nonlinear Equality Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Constraint violation: {result.constraint_violation}")
@@ -140,7 +140,7 @@ class _TestCppConstraintTests:
         """Test nonlinear inequality constraint x^2 + y^2 <= 1."""
         result = pyoptpp.run_nonlinear_ineq_test1()
 
-        print(f"Nonlinear Inequality Test 1:")
+        print("Nonlinear Inequality Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Constraint violation: {result.constraint_violation}")
@@ -157,7 +157,7 @@ class _TestCppConstraintTests:
         """Test mixed nonlinear constraints with equality, inequality, and bounds."""
         result = pyoptpp.run_mixed_nonlinear_test1()
 
-        print(f"Mixed Nonlinear Test 1:")
+        print("Mixed Nonlinear Test 1:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Constraint violation: {result.constraint_violation}")
@@ -177,7 +177,7 @@ class _TestCppConstraintTests:
         """Test same constraints as failing test but with single constraint matrix."""
         result = pyoptpp.run_diagnostic_single_matrix()
 
-        print(f"Diagnostic Single Matrix:")
+        print("Diagnostic Single Matrix:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -192,7 +192,7 @@ class _TestCppConstraintTests:
         """Test same constraints as failing test but with separate CompoundConstraints."""
         result = pyoptpp.run_diagnostic_separate_compounds()
 
-        print(f"Diagnostic Separate Compounds:")
+        print("Diagnostic Separate Compounds:")
         print(f"  Success: {result.success}")
         print(f"  Message: {result.message}")
 
@@ -204,7 +204,7 @@ class _TestCppConstraintTests:
         """Test only first two constraints from failing test."""
         result = pyoptpp.run_diagnostic_two_constraints()
 
-        print(f"Diagnostic Two Constraints:")
+        print("Diagnostic Two Constraints:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -218,7 +218,7 @@ class _TestCppConstraintTests:
         """Test only first constraint from failing test."""
         result = pyoptpp.run_diagnostic_one_constraint()
 
-        print(f"Diagnostic One Constraint:")
+        print("Diagnostic One Constraint:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -233,7 +233,7 @@ class _TestCppConstraintTests:
         """Test same constraints as failing test but with different starting point."""
         result = pyoptpp.run_diagnostic_different_start()
 
-        print(f"Diagnostic Different Start:")
+        print("Diagnostic Different Start:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -247,7 +247,7 @@ class _TestCppConstraintTests:
         """Test skip first constraint from failing test."""
         result = pyoptpp.run_diagnostic_skip_first()
 
-        print(f"Diagnostic Skip First:")
+        print("Diagnostic Skip First:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -261,7 +261,7 @@ class _TestCppConstraintTests:
         """Test simple individual bounds as inequalities."""
         result = pyoptpp.run_diagnostic_simple_bounds()
 
-        print(f"Diagnostic Simple Bounds:")
+        print("Diagnostic Simple Bounds:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -275,7 +275,7 @@ class _TestCppConstraintTests:
         """Test detailed constraint evaluation behavior."""
         result = pyoptpp.run_diagnostic_detailed_eval()
 
-        print(f"Diagnostic Detailed Eval:")
+        print("Diagnostic Detailed Eval:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -289,7 +289,7 @@ class _TestCppConstraintTests:
         """Test manual constraint evaluation at specific points."""
         result = pyoptpp.run_diagnostic_manual_evaluation()
 
-        print(f"Diagnostic Manual Evaluation:")
+        print("Diagnostic Manual Evaluation:")
         print(f"  Success: {result.success}")
         print(f"  Final objective: {result.final_objective}")
         print(f"  Final point: {np.array(result.final_point.to_numpy())}")
@@ -309,7 +309,7 @@ class _TestCppConstraintTests:
         # Run all tests via C++
         all_results = pyoptpp.run_all_constraint_tests()
 
-        print(f"\nTest Summary:")
+        print("\nTest Summary:")
         print(f"Total tests: {all_results.total_tests()}")
         print(f"Passed tests: {all_results.passed_tests()}")
         print(f"Success rate: {all_results.passed_tests()}/{all_results.total_tests()}")
@@ -395,7 +395,7 @@ def _test_run_all_constraint_tests_standalone():
         # Run the comprehensive test suite
         all_results = pyoptpp.run_all_constraint_tests()
 
-        print(f"\nFinal Summary:")
+        print("\nFinal Summary:")
         print(f"Total tests: {all_results.total_tests()}")
         print(f"Passed tests: {all_results.passed_tests()}")
 
@@ -413,4 +413,4 @@ def _test_run_all_constraint_tests_standalone():
 if __name__ == "__main__":
     # Allow running this module directly for debugging
     print("Running C++ constraint tests directly...")
-    test_run_all_constraint_tests_standalone()
+    _test_run_all_constraint_tests_standalone()

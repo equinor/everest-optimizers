@@ -111,7 +111,7 @@ def run_optimization(strategy, start_point):
     iterations = -1
     func_evals = -1
     try:
-        with open(log_filename, "r") as f:
+        with open(log_filename) as f:
             lines = f.readlines()
             # The final summary line appears after 'checkConvg'
             for i, line in enumerate(reversed(lines)):
@@ -152,7 +152,7 @@ def run_optimization(strategy, start_point):
                                             pass  # Ignore lines that don't parse correctly
                                 func_evals = total_fcn_evals
                     break
-    except (IOError, IndexError, ValueError) as e:
+    except (OSError, IndexError, ValueError) as e:
         logging.warning(f"Could not parse log file {log_filename}: {e}")
 
     os.remove(log_filename)
@@ -181,7 +181,7 @@ def compare_strategies():
         }
     )
 
-    all_strategy_names = list(strategies.keys()) + ["SciPy BFGS"]
+    all_strategy_names = [*list(strategies.keys()), "SciPy BFGS"]
 
     results = {name: [] for name in all_strategy_names}
 
