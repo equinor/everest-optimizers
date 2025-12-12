@@ -8,6 +8,7 @@ import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers._conminmfd import minimize_conmin_mfd
+from everest_optimizers._optbcqnewton import minimize_optbcqnewton
 from everest_optimizers._optqnewton import minimize_optqnewton
 from everest_optimizers._optqnips import minimize_optqnips
 
@@ -29,8 +30,9 @@ def minimize(
     """
     Minimization of scalar function of one or more variables.
 
-    This function is intended to be a drop-in replacement for scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton optimization
-    algorithm from the OPTPP library.
+    This function is intended to be a drop-in replacement for
+    scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton
+    optimization algorithm from the OPTPP library.
 
     Parameters (parameter structure is based on scipy.optimize.minimize)
     ----------
@@ -153,6 +155,17 @@ def minimize(
                 callback=callback,
                 options=options,
             )
+        case "optpp_bcq_newton":
+            return minimize_optbcqnewton(
+                fun=fun,
+                x0=x0,
+                args=args,
+                jac=jac,
+                bounds=bounds,
+                constraints=constraints,
+                callback=callback,
+                options=options,
+            )
         case "conmin_mfd":
             return minimize_conmin_mfd(
                 fun=fun,
@@ -174,5 +187,5 @@ def minimize(
             )
         case other:
             raise ValueError(
-                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_q_nips', 'conmin_mfd'"
+                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_bcq_newton', 'optpp_q_nips', 'conmin_mfd'"
             )
