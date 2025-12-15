@@ -6,11 +6,10 @@ import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers import pyoptpp
-from everest_optimizers._convert_constraints import (
-    convert_bound_constraint,
-)
+from everest_optimizers._convert_constraints import convert_bound_constraint
 
 from ._problem import NLF1Problem
+from ._utils import run_newton, set_basic_newton_options
 
 
 def minimize_optbcqnewton(
@@ -24,7 +23,7 @@ def minimize_optbcqnewton(
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
-    Minimize a scalar function using optpp_bcq_newton optimizer.
+    Minimize a scalar function using the OPT++ OptBCQNewton optimizer.
 
     Parameters
     ----------
@@ -42,7 +41,7 @@ def minimize_optbcqnewton(
         Constraints definition (not supported by optpp_bcq_newton).
     options : dict, optional
         Solver options including:
-        - 'search_strategy': 'TrustRegion', 'LineSearch', or 'TrustPDS'
+        - 'search_method': 'TrustRegion', 'LineSearch', or 'TrustPDS'
         - 'tr_size': Trust region size
         - 'debug': Enable debug output
         - 'output_file': Output file for debugging
@@ -59,30 +58,11 @@ def minimize_optbcqnewton(
     if bounds is None:
         raise ValueError("OptBCQNewton requires bound constraints")
 
-    if constraints is not None:
+    if constraints:
         raise NotImplementedError("optpp_bcq_newton does not support constraints")
-
-    if options is None:
-        options = {}
 
     # Make sure to start with a feasible estimate:
     x0 = np.minimum(np.maximum(x0, bounds.lb), bounds.ub)
-
-    search_strategy = options.get("search_strategy", "LineSearch")
-    debug = options.get("debug", False)
-    output_file = options.get("output_file", None)
-
-    # Standard optimization control parameters
-    max_iterations = options.get("max_iterations", 100)
-    max_function_evaluations = options.get("max_function_evaluations", 1000)
-    convergence_tolerance = options.get("convergence_tolerance", 1e-4)
-    gradient_tolerance = options.get("gradient_tolerance", 1e-4)
-    max_step = options.get("max_step", 1000.0)
-
-    # Legacy parameters for backward compatibility
-    tr_size = options.get("tr_size", max_step)
-    gradient_multiplier = options.get("gradient_multiplier", 0.1)
-    search_pattern_size = options.get("search_pattern_size", 64)
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
     cc_ptr = pyoptpp.create_compound_constraint(
@@ -90,53 +70,5 @@ def minimize_optbcqnewton(
     )
     problem.nlf1_problem.setConstraints(cc_ptr)
     optimizer = pyoptpp.OptBCQNewton(problem.nlf1_problem)
-
-    match search_strategy:
-        case "TrustRegion":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
-        case "LineSearch":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
-        case "TrustPDS":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
-        case other:
-            raise ValueError(
-                f"Unknown search strategy: {other}. Valid options: TrustRegion, LineSearch, TrustPDS"
-            )
-
-    optimizer.setTRSize(tr_size)
-    optimizer.setGradMult(gradient_multiplier)
-    optimizer.setSearchSize(search_pattern_size)
-
-    # Set optimization control parameters
-    optimizer.setMaxIter(max_iterations)
-    optimizer.setMaxFeval(max_function_evaluations)
-    optimizer.setFcnTol(convergence_tolerance)
-    optimizer.setGradTol(gradient_tolerance)
-
-    if "max_step" in options:
-        optimizer.setTRSize(max_step)
-    if debug:
-        optimizer.setDebug()
-    if output_file:
-        optimizer.setOutputFile(output_file, 0)
-
-    optimizer.optimize()
-
-    solution_vector = problem.nlf1_problem.getXc()
-    x_final = solution_vector.to_numpy()
-    f_final = problem.nlf1_problem.getF()
-
-    result = OptimizeResult(  # type: ignore[call-arg]
-        x=x_final,
-        fun=f_final,
-        nfev=problem.nfev,
-        njev=problem.njev,
-        nit=0,  # optpp_bcq_newton doesn't provide iteration count
-        success=True,
-        status=0,
-        message="Optimization terminated successfully",
-        jac=problem.current_g if problem.current_g is not None else None,
-    )
-
-    optimizer.cleanup()
-    return result
+    set_basic_newton_options(optimizer, options)
+    return run_newton(optimizer, problem, x0)

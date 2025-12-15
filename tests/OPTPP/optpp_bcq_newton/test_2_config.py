@@ -30,12 +30,10 @@ EXPECTED_SOLUTION = np.array([2.0, -1.0])
 # --- Tests for different options ---
 
 
-@pytest.mark.parametrize(
-    "search_strategy", ["trust_region", "line_search", "trust_pds"]
-)
-def test_search_strategy_options(search_strategy: str):
+@pytest.mark.parametrize("search_method", ["line_search", "trust_pds"])
+def test_search_strategy_options(search_method: str):
     """Test that the optimizer runs with different search strategy settings."""
-    options = {"search_method": search_strategy}
+    options = {"search_method": search_method}
     result = minimize(
         objective,
         X0,
@@ -46,6 +44,23 @@ def test_search_strategy_options(search_strategy: str):
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
+
+
+def test_search_strategy_options_trust_region():
+    """Test that the trust-region method is not supported."""
+    options = {"search_method": "trust_region"}
+    with pytest.raises(
+        ValueError,
+        match="OptBCQNewton does not support the 'trust_region' search method",
+    ):
+        minimize(
+            objective,
+            X0,
+            method="optpp_bcq_newton",
+            jac=objective_grad,
+            bounds=BOUNDS,  # type: ignore[arg-type]
+            options=options,
+        )
 
 
 @pytest.mark.parametrize("tolerance", [1e-4, 1e-6, 1e-8])

@@ -8,6 +8,7 @@ from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, Optimi
 from everest_optimizers import pyoptpp
 
 from ._problem import NLF1Problem
+from ._utils import run_newton, set_basic_newton_options
 
 
 def minimize_optqnewton(
@@ -21,7 +22,7 @@ def minimize_optqnewton(
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """
-    Minimize a scalar function using optpp_q_newton optimizer.
+    Minimize a scalar function using the OPT++ OptQNewton optimizer.
 
     Parameters
     ----------
@@ -39,7 +40,7 @@ def minimize_optqnewton(
         Constraints definition (not supported by optpp_q_newton).
     options : dict, optional
         Solver options including:
-        - 'search_strategy': 'TrustRegion', 'LineSearch', or 'TrustPDS'
+        - 'search_method': 'TrustRegion', 'LineSearch', or 'TrustPDS'
         - 'tr_size': Trust region size
         - 'debug': Enable debug output
         - 'output_file': Output file for debugging
@@ -49,61 +50,17 @@ def minimize_optqnewton(
     OptimizeResult
         The optimization result.
     """
+    x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
         raise ValueError("x0 must be 1-dimensional")
 
     if bounds is not None:
         raise NotImplementedError("optpp_q_newton does not support bounds")
 
-    if constraints is not None:
+    if constraints:
         raise NotImplementedError("optpp_q_newton does not support constraints")
-
-    if options is None:
-        options = {}
-
-    search_strategy = options.get("search_strategy", "TrustRegion")
-    tr_size = options.get("tr_size", 100.0)
-    debug = options.get("debug", False)
-    output_file = options.get("output_file", None)
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
     optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
-
-    match search_strategy:
-        case "TrustRegion":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
-        case "LineSearch":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
-        case "TrustPDS":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
-        case other:
-            raise ValueError(
-                f"Unknown search strategy: {other}. Valid options: TrustRegion, LineSearch, TrustPDS"
-            )
-
-    optimizer.setTRSize(tr_size)
-    if debug:
-        optimizer.setDebug()
-    if output_file:
-        optimizer.setOutputFile(output_file, 0)
-
-    optimizer.optimize()
-
-    solution_vector = problem.nlf1_problem.getXc()
-    x_final = solution_vector.to_numpy()
-    f_final = problem.nlf1_problem.getF()
-
-    result = OptimizeResult(  # type: ignore[call-arg]
-        x=x_final,
-        fun=f_final,
-        nfev=problem.nfev,
-        njev=problem.njev,
-        nit=0,  # optpp_q_newton doesn't provide iteration count
-        success=True,
-        status=0,
-        message="Optimization terminated successfully",
-        jac=problem.current_g if problem.current_g is not None else None,
-    )
-
-    optimizer.cleanup()
-    return result
+    set_basic_newton_options(optimizer, options)
+    return run_newton(optimizer, problem, x0)

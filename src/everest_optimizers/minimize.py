@@ -80,7 +80,7 @@ def minimize(
     options : dict, optional
         A dictionary of solver options. For optpp_q_newton, supported options are:
 
-        - 'search_strategy' : str
+        - 'search_method' : str
             Search strategy: 'TrustRegion' (default), 'LineSearch', or 'TrustPDS'
         - 'tr_size' : float
             Trust region size (default: 100.0)

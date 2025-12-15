@@ -343,41 +343,47 @@ PYBIND11_MODULE(_pyoptpp, m) {
           }),
           py::arg("p"), py::keep_alive<0, 1>()
       )
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
-      .def("optimize", &OptQNewton::optimize)
       .def("cleanup", &OptQNewton::cleanup)
-      .def("setSearchStrategy", &OptQNewton::setSearchStrategy, py::arg("s"))
+      .def("optimize", &OptQNewton::optimize)
+      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
       .def(
           "setOutputFile",
           static_cast<int (OptQNewton::*)(const char*, int)>(&OptQNewton::setOutputFile),
           py::arg("filename"), py::arg("mode") = 0
       )
-      .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"));
+      .def("setSearchStrategy", &OptQNewton::setSearchStrategy, py::arg("s"))
+      .def("setSearchSize", &OptQNewton::setSearchSize, py::arg("search_pattern_size"))
+      .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"))
+      .def("setGradMult", &OptQNewton::setGradMult, py::arg("gradient_multiplier"))
+      .def("setMaxIter", &OptQNewton::setMaxIter, py::arg("max_iterations"))
+      .def("setMaxFeval", &OptQNewton::setMaxFeval, py::arg("max_function_evaluations"))
+      .def("setFcnTol", &OptQNewton::setFcnTol, py::arg("convergence_tolerance"))
+      .def("setGradTol", &OptQNewton::setGradTol, py::arg("gradient_tolerance"));
 
-  py::class_<OptBCQNewton>(m, "OptBCQNewton")
+      py::class_<OptBCQNewton>(m, "OptBCQNewton")
       .def(
-          py::init([](NLF1* p) {
+        py::init([](NLF1* p) {
             NLP1* p_base = static_cast<NLP1*>(p);
             return new OptBCQNewton(p_base, &default_update_model);
           }),
           py::arg("p"), py::keep_alive<0, 1>()
       )
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
-      .def("optimize", &OptBCQNewton::optimize)
       .def("cleanup", &OptBCQNewton::cleanup)
-      .def("setSearchStrategy", &OptBCQNewton::setSearchStrategy, py::arg("s"))
+      .def("optimize", &OptBCQNewton::optimize)
+      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
       .def(
-          "setOutputFile",
-          static_cast<int (OptBCQNewton::*)(const char*, int)>(&OptBCQNewton::setOutputFile),
-          py::arg("filename"), py::arg("mode") = 0
+        "setOutputFile",
+        static_cast<int (OptBCQNewton::*)(const char*, int)>(&OptBCQNewton::setOutputFile),
+        py::arg("filename"), py::arg("mode") = 0
       )
+      .def("setSearchStrategy", &OptBCQNewton::setSearchStrategy, py::arg("s"))
+      .def("setSearchSize", &OptBCQNewton::setSearchSize, py::arg("search_pattern_size"))
       .def("setTRSize", &OptBCQNewton::setTRSize, py::arg("size"))
+      .def("setGradMult", &OptBCQNewton::setGradMult, py::arg("gradient_multiplier"))
       .def("setMaxIter", &OptBCQNewton::setMaxIter, py::arg("max_iterations"))
       .def("setMaxFeval", &OptBCQNewton::setMaxFeval, py::arg("max_function_evaluations"))
       .def("setFcnTol", &OptBCQNewton::setFcnTol, py::arg("convergence_tolerance"))
-      .def("setGradTol", &OptBCQNewton::setGradTol, py::arg("gradient_tolerance"))
-      .def("setGradMult", &OptBCQNewton::setGradMult, py::arg("gradient_multiplier"))
-      .def("setSearchSize", &OptBCQNewton::setSearchSize, py::arg("search_pattern_size"));
+      .def("setGradTol", &OptBCQNewton::setGradTol, py::arg("gradient_tolerance"));
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(
@@ -387,25 +393,25 @@ PYBIND11_MODULE(_pyoptpp, m) {
           }),
           py::arg("p"), py::keep_alive<0, 1>()
       )
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug)
-      .def("optimize", &OptQNIPS::optimize)
       .def("cleanup", &OptQNIPS::cleanup)
-      .def("setSearchStrategy", &OptQNIPS::setSearchStrategy, py::arg("s"))
+      .def("optimize", &OptQNIPS::optimize)
+      .def("setDebug", &OPTPP::OptimizeClass::setDebug)
       .def(
-          "setOutputFile",
-          static_cast<int (OptQNIPS::*)(const char*, int)>(&OptQNIPS::setOutputFile),
-          py::arg("filename"), py::arg("mode") = 0
+        "setOutputFile",
+        static_cast<int (OptQNIPS::*)(const char*, int)>(&OptQNIPS::setOutputFile),
+        py::arg("filename"), py::arg("mode") = 0
       )
+      .def("setSearchStrategy", &OptQNIPS::setSearchStrategy, py::arg("s"))
+      .def("setSearchSize", &OptQNIPS::setSearchSize, py::arg("search_pattern_size"))
       .def("setTRSize", &OptQNIPS::setTRSize, py::arg("size"))
-      .def("setMu", &OptQNIPS::setMu, py::arg("mu"))
-      .def("setCenteringParameter", &OptQNIPS::setCenteringParameter, py::arg("sigma"))
-      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"))
-      .def("setMeritFcn", &OptQNIPS::setMeritFcn, py::arg("merit_function"))
+      .def("setGradMult", &OptQNIPS::setGradMult, py::arg("gradient_multiplier"))
       .def("setMaxIter", &OptQNIPS::setMaxIter, py::arg("max_iterations"))
       .def("setMaxFeval", &OptQNIPS::setMaxFeval, py::arg("max_function_evaluations"))
       .def("setFcnTol", &OptQNIPS::setFcnTol, py::arg("convergence_tolerance"))
       .def("setGradTol", &OptQNIPS::setGradTol, py::arg("gradient_tolerance"))
       .def("setConTol", &OptQNIPS::setConTol, py::arg("constraint_tolerance"))
-      .def("setGradMult", &OptQNIPS::setGradMult, py::arg("gradient_multiplier"))
-      .def("setSearchSize", &OptQNIPS::setSearchSize, py::arg("search_pattern_size"));
+      .def("setMeritFcn", &OptQNIPS::setMeritFcn, py::arg("merit_function"))
+      .def("setCenteringParameter", &OptQNIPS::setCenteringParameter, py::arg("sigma"))
+      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"))
+      .def("setMu", &OptQNIPS::setMu, py::arg("mu"));
 }
