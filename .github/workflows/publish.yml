@@ -53,7 +53,7 @@ jobs:
       - name: Check metadata
         run: twine check wheelhouse/*
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
         with:
           name: cibw-${{ env.CIBW_BUILD }}
