@@ -169,38 +169,23 @@ def minimize_optqnips(
     if output_file:
         optimizer.setOutputFile(output_file, 0)
 
-    try:
-        optimizer.optimize()
+    optimizer.optimize()
 
-        solution_vector = problem.nlf1_problem.getXc()
-        x_final = solution_vector.to_numpy()
-        f_final = problem.nlf1_problem.getF()
+    solution_vector = problem.nlf1_problem.getXc()
+    x_final = solution_vector.to_numpy()
+    f_final = problem.nlf1_problem.getF()
 
-        result = OptimizeResult(  # type: ignore[call-arg]
-            x=x_final,
-            fun=f_final,
-            nfev=problem.nfev,
-            njev=problem.njev,
-            nit=0,  # OptQNIPS doesn't provide iteration count directly
-            success=True,
-            status=0,
-            message="OptQNIPS optimization terminated successfully",
-            jac=problem.current_g if problem.current_g is not None else None,
-        )
+    result = OptimizeResult(  # type: ignore[call-arg]
+        x=x_final,
+        fun=f_final,
+        nfev=problem.nfev,
+        njev=problem.njev,
+        nit=0,  # OptQNIPS doesn't provide iteration count directly
+        success=True,
+        status=0,
+        message="OptQNIPS optimization terminated successfully",
+        jac=problem.current_g if problem.current_g is not None else None,
+    )
 
-        optimizer.cleanup()
-        return result
-
-    except Exception as e:
-        optimizer.cleanup()
-        return OptimizeResult(  # type: ignore[call-arg]
-            x=x0,
-            fun=None,
-            nfev=problem.nfev,
-            njev=problem.njev,
-            nit=0,
-            success=False,
-            status=1,
-            message=f"OptQNIPS optimization failed: {e!s}",
-            jac=None,
-        )
+    optimizer.cleanup()
+    return result
