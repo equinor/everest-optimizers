@@ -71,7 +71,7 @@ public:
     py::gil_scoped_acquire gil;
     try {
       return py_eval_f(x).cast<real>();
-    } catch (py::error_already_set &e) {
+    } catch (py::error_already_set& e) {
       throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalF callback: {}", e.what()));
@@ -96,7 +96,7 @@ public:
       }
       std::memcpy(mem_grad.values(), buf.ptr, this->getDim() * sizeof(double));
       return mem_grad;
-    } catch (py::error_already_set &e) {
+    } catch (py::error_already_set& e) {
       throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalG callback: {}", e.what()));
@@ -134,7 +134,7 @@ public:
       T_SerialDenseVector constraints(buf.shape[0]);
       std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
       return constraints;
-    } catch (py::error_already_set &e) {
+    } catch (py::error_already_set& e) {
       throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalCF callback: {}", e.what()));
@@ -160,7 +160,7 @@ public:
       T_SerialDenseMatrix grad(buf.shape[0], buf.shape[1]);
       std::memcpy(grad.values(), buf.ptr, buf.shape[0] * buf.shape[1] * sizeof(double));
       return grad;
-    } catch (py::error_already_set &e) {
+    } catch (py::error_already_set& e) {
       throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalCG callback: {}", e.what()));
@@ -368,9 +368,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
       .def("setFcnTol", &OptQNewton::setFcnTol, py::arg("convergence_tolerance"))
       .def("setGradTol", &OptQNewton::setGradTol, py::arg("gradient_tolerance"));
 
-      py::class_<OptBCQNewton>(m, "OptBCQNewton")
+  py::class_<OptBCQNewton>(m, "OptBCQNewton")
       .def(
-        py::init([](NLF1* p) {
+          py::init([](NLF1* p) {
             NLP1* p_base = static_cast<NLP1*>(p);
             return new OptBCQNewton(p_base, &default_update_model);
           }),
@@ -380,9 +380,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
       .def("optimize", &OptBCQNewton::optimize)
       .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
       .def(
-        "setOutputFile",
-        static_cast<int (OptBCQNewton::*)(const char*, int)>(&OptBCQNewton::setOutputFile),
-        py::arg("filename"), py::arg("mode") = 0
+          "setOutputFile",
+          static_cast<int (OptBCQNewton::*)(const char*, int)>(&OptBCQNewton::setOutputFile),
+          py::arg("filename"), py::arg("mode") = 0
       )
       .def("setSearchStrategy", &OptBCQNewton::setSearchStrategy, py::arg("s"))
       .def("setSearchSize", &OptBCQNewton::setSearchSize, py::arg("search_pattern_size"))
@@ -405,9 +405,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
       .def("optimize", &OptQNIPS::optimize)
       .def("setDebug", &OPTPP::OptimizeClass::setDebug)
       .def(
-        "setOutputFile",
-        static_cast<int (OptQNIPS::*)(const char*, int)>(&OptQNIPS::setOutputFile),
-        py::arg("filename"), py::arg("mode") = 0
+          "setOutputFile",
+          static_cast<int (OptQNIPS::*)(const char*, int)>(&OptQNIPS::setOutputFile),
+          py::arg("filename"), py::arg("mode") = 0
       )
       .def("setSearchStrategy", &OptQNIPS::setSearchStrategy, py::arg("s"))
       .def("setSearchSize", &OptQNIPS::setSearchSize, py::arg("search_pattern_size"))
