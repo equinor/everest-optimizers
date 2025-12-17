@@ -221,7 +221,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
       py::arg("nlp")
   );
 
-  py::class_<NLF1, NLPBase>(m, "NLF1")
+  py::class_<NLP0, NLPBase>(m, "NLP0");
+  py::class_<NLP1, NLP0>(m, "NLP1");
+  py::class_<NLF1, NLP1>(m, "NLF1")
       .def_static(
           "create",
           [](int ndim, py::function eval_f, py::function eval_g,
@@ -230,7 +232,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
             nlf1->setX(x0);
             nlf1->setIsExpensive(true);
 
-            return static_cast<NLF1*>(nlf1);
+            return nlf1;
           },
           py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_f"), py::arg("eval_g"),
           py::arg("x0"), "Create an objective NLF1 object with Python callbacks (C++-managed)"
@@ -249,7 +251,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
             nlf1->setX(x0);
             nlf1->setIsExpensive(true);
 
-            return static_cast<NLF1*>(nlf1);
+            return nlf1;
           },
           py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_cf"),
           py::arg("eval_cg"), py::arg("x0"),
@@ -345,11 +347,8 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptQNewton>(m, "OptQNewton")
       .def(
-          py::init([](NLF1* p) {
-            NLP1* p_base = static_cast<NLP1*>(p);
-            return new OptQNewton(p_base, &default_update_model);
-          }),
-          py::arg("p"), py::keep_alive<0, 1>()
+          py::init([](NLF1* p) { return new OptQNewton(p, &default_update_model); }), py::arg("p"),
+          py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptQNewton::cleanup)
       .def("optimize", &OptQNewton::optimize)
@@ -370,10 +369,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptBCQNewton>(m, "OptBCQNewton")
       .def(
-          py::init([](NLF1* p) {
-            NLP1* p_base = static_cast<NLP1*>(p);
-            return new OptBCQNewton(p_base, &default_update_model);
-          }),
+          py::init([](NLF1* p) { return new OptBCQNewton(p, &default_update_model); }),
           py::arg("p"), py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptBCQNewton::cleanup)
@@ -395,11 +391,8 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(
-          py::init([](NLF1* p) {
-            NLP1* p_base = static_cast<NLP1*>(p);
-            return new OptQNIPS(p_base, &default_update_model);
-          }),
-          py::arg("p"), py::keep_alive<0, 1>()
+          py::init([](NLF1* p) { return new OptQNIPS(p, &default_update_model); }), py::arg("p"),
+          py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptQNIPS::cleanup)
       .def("optimize", &OptQNIPS::optimize)
