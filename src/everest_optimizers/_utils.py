@@ -1,7 +1,4 @@
-from collections.abc import Generator
-from contextlib import contextmanager
 from os import devnull
-from pathlib import Path
 from typing import Any
 
 from numpy.typing import NDArray
@@ -103,21 +100,3 @@ def run_newton(
 
     optimizer.cleanup()
     return result
-
-
-@contextmanager
-def remove_default_output(
-    options: dict[str, Any] | None = None,
-) -> Generator[Any, Any, Any]:
-    # This context manager is a hack to resolve the issue that OPT++ always
-    # creates a file "OPT_DEFAULT.out" by default. Unless "output_file" is set,
-    # no file should be created, hence we remove it.
-    output_file = None if options is None else options.get("output_file")
-    default_name = "OPT_DEFAULT.out"
-    default_out_path = Path(default_name)
-    default_out_exists = default_out_path.exists()
-    try:
-        yield
-    finally:
-        if not default_out_exists and output_file != default_name:
-            default_out_path.unlink(missing_ok=True)
