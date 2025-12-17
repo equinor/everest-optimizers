@@ -8,7 +8,7 @@ from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, Optimi
 from everest_optimizers import pyoptpp
 
 from ._problem import NLF1Problem
-from ._utils import run_newton, set_basic_newton_options
+from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 
 def minimize_optqnewton(
@@ -61,6 +61,7 @@ def minimize_optqnewton(
         raise NotImplementedError("optpp_q_newton does not support constraints")
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
-    optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
+    with remove_default_output(options):
+        optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
     set_basic_newton_options(optimizer, options)
     return run_newton(optimizer, problem, x0)

@@ -20,7 +20,7 @@ from everest_optimizers.pyoptpp import (
 )
 
 from ._problem import NLF1Problem
-from ._utils import run_newton, set_basic_newton_options
+from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 
 def minimize_optqnips(
@@ -73,9 +73,10 @@ def minimize_optqnips(
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
     problem.nlf1_problem.setConstraints(cc_ptr)
-    optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
+    with remove_default_output(options):
+        optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
 
-    # Set OptQNIPS-specific options:
+    # Set and remove OptQNIPS-specific options:
     if options is not None:
         merit_function = options.pop("merit_function", "argaez_tapia")
         match merit_function.lower():
