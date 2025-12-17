@@ -9,7 +9,7 @@ from everest_optimizers import pyoptpp
 from everest_optimizers._convert_constraints import convert_bound_constraint
 
 from ._problem import NLF1Problem
-from ._utils import run_newton, set_basic_newton_options
+from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 
 def minimize_optbcqnewton(
@@ -69,6 +69,7 @@ def minimize_optbcqnewton(
         [convert_bound_constraint(bounds, len(x0))]
     )
     problem.nlf1_problem.setConstraints(cc_ptr)
-    optimizer = pyoptpp.OptBCQNewton(problem.nlf1_problem)
+    with remove_default_output(options):
+        optimizer = pyoptpp.OptBCQNewton(problem.nlf1_problem)
     set_basic_newton_options(optimizer, options)
     return run_newton(optimizer, problem, x0)
