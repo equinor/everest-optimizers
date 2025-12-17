@@ -38,37 +38,31 @@ class NLF1Problem:
             x_np = np.array(x.to_numpy(), copy=True)
             self.current_x = x_np
 
-            try:
-                f_val = self.fun(x_np, *self.args)
-                self.current_f = float(f_val)
-                self.nfev += 1
+            f_val = self.fun(x_np, *self.args)
+            self.current_f = float(f_val)
+            self.nfev += 1
 
-                if self.callback is not None:
-                    try:
-                        self.callback(x_np)
-                    except Exception as cb_err:
-                        warnings.warn(
-                            f"Callback function raised exception: {cb_err}",
-                            RuntimeWarning,
-                            stacklevel=2,
-                        )
+            if self.callback is not None:
+                try:
+                    self.callback(x_np)
+                except Exception as cb_err:
+                    warnings.warn(
+                        f"Callback function raised exception: {cb_err}",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
 
-                return self.current_f
-            except Exception as e:
-                raise RuntimeError(f"Error evaluating objective function: {e}") from e
+            return self.current_f
 
         def eval_g(x):
             x_np = np.array(x.to_numpy(), copy=True)
 
             if self.jac is not None:
-                try:
-                    grad = self.jac(x_np, *self.args)
-                    grad_np = np.asarray(grad, dtype=float)
-                    self.current_g = grad_np
-                    self.njev += 1
-                    return grad_np
-                except Exception as e:
-                    raise RuntimeError(f"Error evaluating gradient: {e}") from e
+                grad = self.jac(x_np, *self.args)
+                grad_np = np.asarray(grad, dtype=float)
+                self.current_g = grad_np
+                self.njev += 1
+                return grad_np
             else:
                 # Use finite differences for gradient if no jacobian is supplied
                 grad = self._finite_difference_gradient(x_np)

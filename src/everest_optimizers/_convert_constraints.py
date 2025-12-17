@@ -9,32 +9,21 @@ def _create_constraint(constraint_func, constraint_jac, x0, constraint_index):
     # Create callback functions for constraint evaluation
     def eval_cf(x):
         x_np = np.array(x.to_numpy(), copy=True)
-        try:
-            c_values = np.atleast_1d(constraint_func(x_np))
-            result = c_values[constraint_index]
-
-            return np.array([result])
-        except Exception as e:
-            raise RuntimeError(f"Error evaluating nonlinear constraint: {e}") from e
+        c_values = np.atleast_1d(constraint_func(x_np))
+        result = c_values[constraint_index]
+        return np.array([result])
 
     def eval_cg(x):
         x_np = np.array(x.to_numpy(), copy=True)
-        try:
-            if constraint_jac is not None:
-                jac = constraint_jac(x_np)
-                jac = np.atleast_2d(jac)
-
-                grad_row = jac[constraint_index, :]
-            else:
-                grad_row = _finite_difference_constraint_gradient(
-                    x_np, constraint_func, constraint_index
-                )
-
-            return grad_row.reshape(len(x0), 1)
-        except Exception as e:
-            raise RuntimeError(
-                f"Error evaluating nonlinear constraint gradient: {e}"
-            ) from e
+        if constraint_jac is not None:
+            jac = constraint_jac(x_np)
+            jac = np.atleast_2d(jac)
+            grad_row = jac[constraint_index, :]
+        else:
+            grad_row = _finite_difference_constraint_gradient(
+                x_np, constraint_func, constraint_index
+            )
+        return grad_row.reshape(len(x0), 1)
 
     x0_vector = pyoptpp.SerialDenseVector(x0)
     nlf1 = pyoptpp.NLF1.create_constrained(len(x0), eval_cf, eval_cg, x0_vector)

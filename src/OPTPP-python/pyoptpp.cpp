@@ -71,6 +71,8 @@ public:
     py::gil_scoped_acquire gil;
     try {
       return py_eval_f(x).cast<real>();
+    } catch (py::error_already_set &e) {
+      throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalF callback: {}", e.what()));
     }
@@ -94,6 +96,8 @@ public:
       }
       std::memcpy(mem_grad.values(), buf.ptr, this->getDim() * sizeof(double));
       return mem_grad;
+    } catch (py::error_already_set &e) {
+      throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalG callback: {}", e.what()));
     }
@@ -130,6 +134,8 @@ public:
       T_SerialDenseVector constraints(buf.shape[0]);
       std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
       return constraints;
+    } catch (py::error_already_set &e) {
+      throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalCF callback: {}", e.what()));
     }
@@ -154,6 +160,8 @@ public:
       T_SerialDenseMatrix grad(buf.shape[0], buf.shape[1]);
       std::memcpy(grad.values(), buf.ptr, buf.shape[0] * buf.shape[1] * sizeof(double));
       return grad;
+    } catch (py::error_already_set &e) {
+      throw;
     } catch (const std::exception& e) {
       throw std::runtime_error(fmt::format("Error in evalCG callback: {}", e.what()));
     }
