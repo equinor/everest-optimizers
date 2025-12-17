@@ -70,7 +70,7 @@ class NLF1Problem:
                 return grad
 
         x0_vector = pyoptpp.SerialDenseVector(self.x0)
-        nlf1 = pyoptpp.NLF1.create(len(self.x0), eval_f, eval_g, x0_vector)
+        nlf1 = pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
         return nlf1
 
     def _finite_difference_gradient(self, x):

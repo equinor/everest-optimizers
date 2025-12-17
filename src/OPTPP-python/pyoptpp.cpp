@@ -201,7 +201,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
           }
       )
       .def("to_numpy", [](T_SerialDenseVector& v) {
-        return py::array_t<double>({(size_t)v.length()}, {sizeof(double)}, v.values(), py::cast(v));
+        return py::array_t<double>(
+            {static_cast<size_t>(v.length())}, {sizeof(double)}, v.values(), py::cast(v)
+        );
       });
 
   py::class_<T_SerialSymDenseMatrix>(m, "SerialSymDenseMatrix");
@@ -215,27 +217,30 @@ PYBIND11_MODULE(_pyoptpp, m) {
         return mat;
       }));
 
-  py::class_<NLPBase>(m, "NLPBase");
-  py::class_<NLP>(m, "NLP").def_static(
-      "create", [](NLPBase* nlp) { return new NLP(nlp); }, py::return_value_policy::reference,
-      py::arg("nlp")
-  );
+  py::classh<NLPBase>(m, "NLPBase");
+  py::classh<NLP>(m, "NLP") // Use regular py::class_ instead of py::classh
+      .def(
+          py::init([](std::unique_ptr<NLPBase> p) { return new NLP(p.release()); }),
+          py::arg("base"), "Create NLP from NLPBase pointer (transfers ownership to NLP's SmartPtr)"
+      );
 
-  py::class_<NLP0, NLPBase>(m, "NLP0");
-  py::class_<NLP1, NLP0>(m, "NLP1");
-  py::class_<NLF1, NLP1>(m, "NLF1")
-      .def_static(
-          "create",
-          [](int ndim, py::function eval_f, py::function eval_g,
-             const T_SerialDenseVector& x0) -> NLF1* {
-            CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_f, eval_g);
-            nlf1->setX(x0);
-            nlf1->setIsExpensive(true);
+  py::classh<NLP0, NLPBase>(m, "NLP0");
+  py::classh<NLP1, NLP0>(m, "NLP1");
+  py::classh<NLF1, NLP1>(m, "NLF1")
+      .def(
+          py::init(
+              [](int ndim, py::function eval_f, py::function eval_g,
+                 const T_SerialDenseVector& x0) -> NLF1* {
+                CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_f, eval_g);
+                nlf1->setX(x0);
+                nlf1->setIsExpensive(true);
 
-            return nlf1;
-          },
-          py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_f"), py::arg("eval_g"),
-          py::arg("x0"), "Create an objective NLF1 object with Python callbacks (C++-managed)"
+                return nlf1;
+              }
+          ),
+          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::keep_alive<0, 4>(), py::arg("ndim"),
+          py::arg("eval_f"), py::arg("eval_g"), py::arg("x0"),
+          "Create an objective NLF1 object with Python callbacks (C++-managed)"
       )
       .def_static(
           "create_constrained",
@@ -253,84 +258,72 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
             return nlf1;
           },
-          py::return_value_policy::reference, py::arg("ndim"), py::arg("eval_cf"),
-          py::arg("eval_cg"), py::arg("x0"),
+          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::keep_alive<0, 4>(), py::arg("ndim"),
+          py::arg("eval_cf"), py::arg("eval_cg"), py::arg("x0"),
           "Create a constraint NLF1 object with Python callbacks (C++-managed)"
       )
       .def("getXc", &NLF1::getXc)
       .def("getF", &NLF1::getF)
       .def(
           "setConstraints", [](NLF1& self, CompoundConstraint* cc) { self.setConstraints(cc); },
-          py::arg("compound_constraint")
+          py::keep_alive<1, 2>(), py::arg("compound_constraint")
       );
 
-  py::class_<Constraint>(m, "Constraint");
-  py::class_<CompoundConstraint>(m, "CompoundConstraint");
-  py::class_<ConstraintBase>(m, "ConstraintBase")
-      .def_static("delete", [](ConstraintBase* constraint) { delete constraint; });
+  py::classh<Constraint>(m, "Constraint");
+  py::classh<CompoundConstraint>(m, "CompoundConstraint");
+  py::classh<ConstraintBase>(m, "ConstraintBase");
 
-  py::class_<LinearConstraint, ConstraintBase>(m, "LinearConstraint");
-
-  py::class_<LinearEquation, LinearConstraint>(m, "LinearEquation")
-      .def_static(
-          "create",
-          [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& rhs) {
-            return new LinearEquation(A, rhs);
-          },
-          py::return_value_policy::reference, py::arg("A"), py::arg("rhs")
-      );
-
-  py::class_<LinearInequality, LinearConstraint>(m, "LinearInequality")
-      .def_static(
-          "create",
-          [](const T_SerialDenseMatrix& A, const T_SerialDenseVector& lower,
-             const T_SerialDenseVector& upper) { return new LinearInequality(A, lower, upper); },
-          py::return_value_policy::reference, py::arg("A"), py::arg("lower"), py::arg("upper")
-      );
-
-  py::class_<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
-      .def_static(
-          "create",
-          [](int nc, const T_SerialDenseVector& A, const T_SerialDenseVector& rhs) {
-            return new BoundConstraint(nc, A, rhs);
-          },
-          py::return_value_policy::reference, py::arg("nc"), py::arg("A"), py::arg("rhs")
+  py::classh<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
+      .def(
+          py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
+          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::arg("nc"), py::arg("A"),
+          py::arg("rhs")
       );
 
   m.def(
       "create_compound_constraint",
-      [](std::vector<ConstraintBase*> constraints) {
+      [](std::vector<std::unique_ptr<ConstraintBase>> constraints) {
         OptppArray<Constraint> constraint_array{};
         constraint_array.reserve(constraints.size());
         for (auto& c : constraints) {
-          constraint_array.append(Constraint(c));
+          constraint_array.append(Constraint(c.release()));
         }
         return new CompoundConstraint(constraint_array);
       },
-      py::return_value_policy::reference, py::arg("constraints")
+      py::arg("constraints")
   );
 
-  py::class_<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint");
-
-  py::class_<NonLinearInequality, NonLinearConstraint>(m, "NonLinearInequality")
-      .def_static(
-          "create",
-          [](NLP* nlprob, const T_SerialDenseVector& lower, const T_SerialDenseVector& upper,
-             int numconstraints) {
-            return new NonLinearInequality(nlprob, lower, upper, numconstraints);
-          },
-          py::return_value_policy::reference, py::arg("nlprob"), py::arg("lower"), py::arg("upper"),
-          py::arg("numconstraints") = 1
+  py::classh<LinearConstraint, ConstraintBase>(m, "LinearConstraint");
+  py::classh<LinearEquation, LinearConstraint>(m, "LinearEquation")
+      .def(
+          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(),
+          py::keep_alive<0, 1>(), py::keep_alive<0, 2>(), py::arg("A"), py::arg("rhs")
+      );
+  py::classh<LinearInequality, LinearConstraint>(m, "LinearInequality")
+      .def(
+          py::init<
+              const T_SerialDenseMatrix&, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
+          py::keep_alive<0, 1>(), py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::arg("A"),
+          py::arg("lower"), py::arg("upper")
       );
 
-  py::class_<NonLinearEquation, NonLinearConstraint>(m, "NonLinearEquation")
-      .def_static(
-          "create",
-          [](NLP* nlprob, const T_SerialDenseVector& rhs, int numconstraints) {
-            return new NonLinearEquation(nlprob, rhs, numconstraints);
-          },
-          py::return_value_policy::reference, py::arg("nlprob"), py::arg("rhs"),
+  py::classh<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint");
+  py::classh<NonLinearInequality, NonLinearConstraint>(m, "NonLinearInequality")
+      .def(
+          py::init([](std::unique_ptr<NLP> nlprob, const T_SerialDenseVector& lower,
+                      const T_SerialDenseVector& upper, int numconstraints) {
+            return new NonLinearInequality(nlprob.release(), lower, upper, numconstraints);
+          }),
+          py::keep_alive<0, 2>(), py::arg("nlprob"), py::arg("lower"), py::arg("upper"),
           py::arg("numconstraints") = 1
+      );
+  py::classh<NonLinearEquation, NonLinearConstraint>(m, "NonLinearEquation")
+      .def(
+          py::init([](std::unique_ptr<NLP> nlprob, const T_SerialDenseVector& rhs,
+                      int numconstraints) {
+            return new NonLinearEquation(nlprob.release(), rhs, numconstraints);
+          }),
+          py::keep_alive<0, 2>(), py::arg("nlprob"), py::arg("rhs"), py::arg("numconstraints") = 1
       );
 
   py::enum_<SearchStrategy>(m, "SearchStrategy")

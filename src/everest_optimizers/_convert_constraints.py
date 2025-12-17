@@ -89,17 +89,17 @@ def convert_nonlinear_constraint(
 
         if np.isclose(lb[i] - ub[i], 0, atol=1e-12):
             # Equality constraint: lb == ub, so c(x) = lb
-            nlp_wrapper = pyoptpp.NLP.create(constraint)
+            nlp_wrapper = pyoptpp.NLP(constraint)
             rhs = pyoptpp.SerialDenseVector(lb[i])
-            constraint = pyoptpp.NonLinearEquation.create(nlp_wrapper, rhs)
-            optpp_constraints.append(constraint)
+            optpp_constraint = pyoptpp.NonLinearEquation(nlp_wrapper, rhs)
+            optpp_constraints.append(optpp_constraint)
             continue
 
-        nlp_wrapper = pyoptpp.NLP.create(constraint)
+        nlp_wrapper = pyoptpp.NLP(constraint)
         lower = pyoptpp.SerialDenseVector(lb[i])
         upper = pyoptpp.SerialDenseVector(ub[i])
-        constraint = pyoptpp.NonLinearInequality.create(nlp_wrapper, lower, upper)
-        optpp_constraints.append(constraint)
+        optpp_constraint = pyoptpp.NonLinearInequality(nlp_wrapper, lower, upper)
+        optpp_constraints.append(optpp_constraint)
 
     return optpp_constraints
 
@@ -131,13 +131,13 @@ def convert_linear_constraint(
         if np.isclose(lb - ub, 0, atol=1e-12):
             # Equality constraint: lb == ub
             rhs = pyoptpp.SerialDenseVector(lb)
-            linear_constraint = pyoptpp.LinearEquation.create(A_matrix, rhs)
+            linear_constraint = pyoptpp.LinearEquation(A_matrix, rhs)
             optpp_constraints.append(linear_constraint)
             continue
 
         lower = pyoptpp.SerialDenseVector(lb)
         upper = pyoptpp.SerialDenseVector(ub)
-        nonlinear_constraint = pyoptpp.LinearInequality.create(A_matrix, lower, upper)
+        nonlinear_constraint = pyoptpp.LinearInequality(A_matrix, lower, upper)
         optpp_constraints.append(nonlinear_constraint)
 
     return optpp_constraints
@@ -146,4 +146,4 @@ def convert_linear_constraint(
 def convert_bound_constraint(bounds: Bounds, x0_length: int) -> pyoptpp.BoundConstraint:
     lb_vec = pyoptpp.SerialDenseVector(np.asarray(bounds.lb, dtype=float))
     ub_vec = pyoptpp.SerialDenseVector(np.asarray(bounds.ub, dtype=float))
-    return pyoptpp.BoundConstraint.create(x0_length, lb_vec, ub_vec)
+    return pyoptpp.BoundConstraint(x0_length, lb_vec, ub_vec)
