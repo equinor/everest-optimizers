@@ -204,7 +204,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
         return py::array_t<double>({(size_t)v.length()}, {sizeof(double)}, v.values(), py::cast(v));
       });
 
-  py::class_<Teuchos::SerialSymDenseMatrix<int, double>>(m, "SerialSymDenseMatrix");
+  py::class_<T_SerialSymDenseMatrix>(m, "SerialSymDenseMatrix");
   py::class_<T_SerialDenseMatrix>(m, "SerialDenseMatrix", py::buffer_protocol())
       .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
         if (arr.ndim() != 2) {
