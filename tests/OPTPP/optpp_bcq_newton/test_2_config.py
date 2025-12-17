@@ -6,6 +6,9 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pytest
 from numpy.typing import NDArray
@@ -152,3 +155,31 @@ def test_debug_option(debug_flag: bool):
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
+
+
+def test_output_file_no_default_file(tmp_path: Path, monkeypatch: Any) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert not Path("OPT_DEFAULT.out").exists()
+    minimize(
+        objective,
+        X0,
+        bounds=BOUNDS,  # type: ignore[arg-type]
+        method="optpp_bcq_newton",
+        jac=objective_grad,
+    )
+    assert not Path("OPT_DEFAULT.out").exists()
+
+
+def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert not Path("foo.out").exists()
+    minimize(
+        objective,
+        X0,
+        bounds=BOUNDS,  # type: ignore[arg-type]
+        method="optpp_bcq_newton",
+        jac=objective_grad,
+        options={"output_file": "foo.out"},
+    )
+    assert Path("foo.out").exists()
+    assert not Path("OPT_DEFAULT.out").exists()
