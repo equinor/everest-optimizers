@@ -84,9 +84,39 @@ target-version = "py311"
 
 [tool.ruff.lint]
 extend-select = [
+  "A",
+  "AIR",
+  "ASYNC",
   "B",   # flake8-bugbear
+  "DJ",
+  "DTZ",
+  "F",
+  "FA",
+  "FAST",
+  "FLY",
+  "FURB",
   "I",   # isort
+  "INT",
+  "ISC",
+  "NPY",
+  "PD",
+  "PERF",
   "PGH", # pygrep-hooks
+  "PIE",
+  "PLC",
+  "PLE",
+  "PLW",
+  "PT",
+  "PYI",
+  "Q",
+  "RSE",
   "RUF", # Ruff-specific
+  "SIM",
+  "SLF",
+  "SLOT",
+  "TID",
   "UP",  # pyupgrade
+  "W",
+  "YTT",
 ]
+preview = true
