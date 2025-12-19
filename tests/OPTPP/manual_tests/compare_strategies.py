@@ -97,7 +97,7 @@ def run_optimization(strategy, start_point):
 
     # Create a temporary file to capture the output
     with tempfile.NamedTemporaryFile(
-        mode="w+", delete=False, suffix=".log"
+        mode="w+", delete=False, suffix=".log", encoding="utf-8"
     ) as tmp_file:
         log_filename = tmp_file.name
 
@@ -111,7 +111,7 @@ def run_optimization(strategy, start_point):
     iterations = -1
     func_evals = -1
     try:
-        with open(log_filename) as f:
+        with open(log_filename, encoding="utf-8") as f:
             lines = f.readlines()
             # The final summary line appears after 'checkConvg'
             for i, line in enumerate(reversed(lines)):
