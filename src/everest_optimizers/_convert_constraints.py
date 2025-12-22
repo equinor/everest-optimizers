@@ -26,7 +26,7 @@ def _create_constraint(constraint_func, constraint_jac, x0, constraint_index):
         return grad_row.reshape(len(x0), 1)
 
     x0_vector = pyoptpp.SerialDenseVector(x0)
-    nlf1 = pyoptpp.NLF1.create_constrained(len(x0), eval_cf, eval_cg, x0_vector)
+    nlf1 = pyoptpp.NLF1(len(x0), eval_cf, eval_cg, x0_vector, True)
     return nlf1
 
 

@@ -38,25 +38,14 @@ void default_update_model(int, int, T_SerialDenseVector) {}
 // Non-linear function class that holds Python callbacks
 class CallbackNLF1 : public NLF1 {
 private:
-  py::function py_eval_f;
-  py::function py_eval_g;
-  py::function py_eval_cf;
-  py::function py_eval_cg;
-  bool has_cf;
-  bool has_cg;
+  py::function py_eval_func;
+  py::function py_eval_grad;
+  bool is_constraint;
 
 public:
-  // Constructor for objective function (no constraint callbacks)
-  CallbackNLF1(int ndim, py::function eval_f, py::function eval_g)
-      : NLF1(ndim), py_eval_f(eval_f), py_eval_g(eval_g), py_eval_cf(), py_eval_cg(), has_cf(false),
-        has_cg(false) {}
-
-  // Constructor for constraint function (with constraint callbacks)
-  CallbackNLF1(
-      int ndim, py::function eval_f, py::function eval_g, py::function eval_cf, py::function eval_cg
-  )
-      : NLF1(ndim), py_eval_f(eval_f), py_eval_g(eval_g), py_eval_cf(eval_cf), py_eval_cg(eval_cg),
-        has_cf(true), has_cg(true) {}
+  // Unified constructor - use is_constraint flag to determine behavior
+  CallbackNLF1(int ndim, py::function eval_func, py::function eval_grad, bool is_constraint = false)
+      : NLF1(ndim), py_eval_func(eval_func), py_eval_grad(eval_grad), is_constraint(is_constraint) {}
 
   void initFcn() override {}
 
@@ -68,9 +57,12 @@ public:
   }
 
   real evalF(const T_SerialDenseVector& x) override {
+    if (is_constraint) {
+      return 0.0;  // Dummy value for constraint-only NLF1
+    }
     py::gil_scoped_acquire gil;
     try {
-      return py_eval_f(x).cast<real>();
+      return py_eval_func(x).cast<real>();
     } catch (py::error_already_set& e) {
       throw;
     } catch (const std::exception& e) {
@@ -79,9 +71,19 @@ public:
   }
 
   T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
+    if (is_constraint) {
+      // Return zero gradient for constraint-only NLF1
+      if (mem_grad.length() != this->getDim()) {
+        mem_grad.resize(this->getDim());
+      }
+      for (int i = 0; i < this->getDim(); ++i) {
+        mem_grad(i) = 0.0;
+      }
+      return mem_grad;
+    }
     py::gil_scoped_acquire gil;
     try {
-      py::object result = py_eval_g(x);
+      py::object result = py_eval_grad(x);
       py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
           result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
       py::buffer_info buf = result_array.request();
@@ -116,13 +118,13 @@ public:
   }
 
   T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
-    if (!has_cf) {
+    if (!is_constraint) {
       return T_SerialDenseVector(1);
     }
 
     py::gil_scoped_acquire gil;
     try {
-      py::object result = py_eval_cf(x);
+      py::object result = py_eval_func(x);
       py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
           result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
       py::buffer_info buf = result_array.request();
@@ -142,13 +144,13 @@ public:
   }
 
   T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
-    if (!has_cg) {
+    if (!is_constraint) {
       return T_SerialDenseMatrix(1, this->getDim());
     }
 
     py::gil_scoped_acquire gil;
     try {
-      py::object result = py_eval_cg(x);
+      py::object result = py_eval_grad(x);
       py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
           result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
       py::buffer_info buf = result_array.request();
@@ -229,9 +231,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
   py::classh<NLF1, NLP1>(m, "NLF1")
       .def(
           py::init(
-              [](int ndim, py::function eval_f, py::function eval_g,
-                 const T_SerialDenseVector& x0) -> NLF1* {
-                CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_f, eval_g);
+              [](int ndim, py::function eval_func, py::function eval_grad,
+                 const T_SerialDenseVector& x0, bool is_constraint) -> NLF1* {
+                CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_func, eval_grad, is_constraint);
                 nlf1->setX(x0);
                 nlf1->setIsExpensive(true);
 
@@ -239,28 +241,9 @@ PYBIND11_MODULE(_pyoptpp, m) {
               }
           ),
           py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::keep_alive<0, 4>(), py::arg("ndim"),
-          py::arg("eval_f"), py::arg("eval_g"), py::arg("x0"),
-          "Create an objective NLF1 object with Python callbacks (C++-managed)"
-      )
-      .def_static(
-          "create_constrained",
-          [](int ndim, py::function eval_cf, py::function eval_cg,
-             const T_SerialDenseVector& x0) -> NLF1* {
-            // Create a CallbackNLF1 with dummy objective (not used for constraints)
-            auto dummy_f = py::cpp_function([](const T_SerialDenseVector& x) { return 0.0; });
-            auto dummy_g = py::cpp_function([ndim](const T_SerialDenseVector& x) {
-              return py::array_t<double>(ndim);
-            });
-
-            CallbackNLF1* nlf1 = new CallbackNLF1(ndim, dummy_f, dummy_g, eval_cf, eval_cg);
-            nlf1->setX(x0);
-            nlf1->setIsExpensive(true);
-
-            return nlf1;
-          },
-          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::keep_alive<0, 4>(), py::arg("ndim"),
-          py::arg("eval_cf"), py::arg("eval_cg"), py::arg("x0"),
-          "Create a constraint NLF1 object with Python callbacks (C++-managed)"
+          py::arg("eval_func"), py::arg("eval_grad"), py::arg("x0"),
+          py::arg("is_constraint") = false,
+          "Create an NLF1 object with Python callbacks (objective or constraint)"
       )
       .def("getXc", &NLF1::getXc)
       .def("getF", &NLF1::getF)
