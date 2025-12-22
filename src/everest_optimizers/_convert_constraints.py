@@ -1,56 +1,40 @@
 import numpy as np
 import numpy.typing as npt
-from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, approx_fprime
 
 from everest_optimizers import pyoptpp
 
 
 def _create_constraint(constraint_func, constraint_jac, x0, constraint_index):
-    # Create callback functions for constraint evaluation
-    def eval_cf(x):
+    def evaluate_constraint_function(x):
         x_np = np.array(x.to_numpy(), copy=True)
         c_values = np.atleast_1d(constraint_func(x_np))
         result = c_values[constraint_index]
         return np.array([result])
 
-    def eval_cg(x):
+    def evaluate_constraint_gradient(x):
         x_np = np.array(x.to_numpy(), copy=True)
         if constraint_jac is not None:
             jac = constraint_jac(x_np)
             jac = np.atleast_2d(jac)
             grad_row = jac[constraint_index, :]
         else:
-            grad_row = _finite_difference_constraint_gradient(
-                x_np, constraint_func, constraint_index
+            grad_row = approx_fprime(
+                x_np,
+                lambda x_arr: np.atleast_1d(constraint_func(x_arr))[constraint_index],
+                epsilon=1e-8,
             )
         return grad_row.reshape(len(x0), 1)
 
     x0_vector = pyoptpp.SerialDenseVector(x0)
-    nlf1 = pyoptpp.NLF1(len(x0), eval_cf, eval_cg, x0_vector, True)
+    nlf1 = pyoptpp.NLF1(
+        len(x0),
+        evaluate_constraint_function,
+        evaluate_constraint_gradient,
+        x0_vector,
+        True,
+    )
     return nlf1
-
-
-def _finite_difference_constraint_gradient(x, constraint_func, constraint_index):
-    """Compute constraint gradient using finite differences (standalone helper)."""
-    eps = 1e-8
-    n = len(x)
-    grad = np.zeros(n)
-
-    for i in range(n):
-        x_plus = x.copy()
-        x_plus[i] += eps
-        x_minus = x.copy()
-        x_minus[i] -= eps
-
-        c_plus = np.atleast_1d(constraint_func(x_plus))
-        c_minus = np.atleast_1d(constraint_func(x_minus))
-
-        c_plus_val = c_plus[constraint_index]
-        c_minus_val = c_minus[constraint_index]
-
-        grad[i] = (c_plus_val - c_minus_val) / (2 * eps)
-
-    return grad
 
 
 def convert_nonlinear_constraint(
