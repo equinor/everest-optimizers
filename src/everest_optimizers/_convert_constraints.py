@@ -51,8 +51,8 @@ def convert_nonlinear_constraint(
     ] = []
 
     # Get constraint bounds
-    lb = np.atleast_1d(scipy_constraint.lb).astype(float)
-    ub = np.atleast_1d(scipy_constraint.ub).astype(float)
+    lower_bounds = np.atleast_1d(scipy_constraint.lb).astype(float)
+    upper_bounds = np.atleast_1d(scipy_constraint.ub).astype(float)
 
     # Evaluate constraint at initial point to determine number of constraints
     constraint_values = np.atleast_1d(scipy_constraint.fun(x0))
@@ -63,22 +63,22 @@ def convert_nonlinear_constraint(
             scipy_constraint.fun, scipy_constraint.jac, x0, i
         )
 
-        if not np.isfinite(lb[i]) and not np.isfinite(ub[i]):
+        if not np.isfinite(lower_bounds[i]) and not np.isfinite(upper_bounds[i]):
             # Not a real constraint as both bounds are infinite
             continue
 
-        elif np.isclose(lb[i] - ub[i], 0, atol=1e-12):
+        elif np.isclose(lower_bounds[i] - upper_bounds[i], 0, atol=1e-12):
             # Equality constraint: lb == ub
-            nlp_wrapper = pyoptpp.NLP(constraint)
-            rhs = pyoptpp.SerialDenseVector(lb[i])
-            optpp_constraint = pyoptpp.NonLinearEquation(nlp_wrapper, rhs)
+            nlp = pyoptpp.NLP(constraint)
+            rhs = pyoptpp.SerialDenseVector(lower_bounds[i])
+            optpp_constraint = pyoptpp.NonLinearEquation(nlp, rhs)
             optpp_constraints.append(optpp_constraint)
 
         else:
-            nlp_wrapper = pyoptpp.NLP(constraint)
-            lower = pyoptpp.SerialDenseVector(lb[i])
-            upper = pyoptpp.SerialDenseVector(ub[i])
-            optpp_constraint = pyoptpp.NonLinearInequality(nlp_wrapper, lower, upper)
+            nlp = pyoptpp.NLP(constraint)
+            lower = pyoptpp.SerialDenseVector(lower_bounds[i])
+            upper = pyoptpp.SerialDenseVector(upper_bounds[i])
+            optpp_constraint = pyoptpp.NonLinearInequality(nlp, lower, upper)
             optpp_constraints.append(optpp_constraint)
 
     return optpp_constraints
