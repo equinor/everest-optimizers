@@ -51,15 +51,11 @@ def convert_nonlinear_constraint(
     ] = []
 
     # Get constraint bounds
-    lb = np.asarray(scipy_constraint.lb, dtype=float)
-    ub = np.asarray(scipy_constraint.ub, dtype=float)
-
-    lb = np.atleast_1d(lb)
-    ub = np.atleast_1d(ub)
+    lb = np.atleast_1d(scipy_constraint.lb).astype(float)
+    ub = np.atleast_1d(scipy_constraint.ub).astype(float)
 
     # Evaluate constraint at initial point to determine number of constraints
-    constraint_values = scipy_constraint.fun(x0)
-    constraint_values = np.atleast_1d(np.asarray(constraint_values))
+    constraint_values = np.atleast_1d(scipy_constraint.fun(x0))
     num_constraints = len(constraint_values)
 
     for i in range(num_constraints):
