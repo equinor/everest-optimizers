@@ -45,7 +45,8 @@ private:
 public:
   // Unified constructor - use is_constraint flag to determine behavior
   CallbackNLF1(int ndim, py::function eval_func, py::function eval_grad, bool is_constraint = false)
-      : NLF1(ndim), py_eval_func(eval_func), py_eval_grad(eval_grad), is_constraint(is_constraint) {}
+      : NLF1(ndim), py_eval_func(eval_func), py_eval_grad(eval_grad), is_constraint(is_constraint) {
+  }
 
   void initFcn() override {}
 
@@ -58,7 +59,7 @@ public:
 
   real evalF(const T_SerialDenseVector& x) override {
     if (is_constraint) {
-      return 0.0;  // Dummy value for constraint-only NLF1
+      return 0.0; // Dummy value for constraint-only NLF1
     }
     py::gil_scoped_acquire gil;
     try {
