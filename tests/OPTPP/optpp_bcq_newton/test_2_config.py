@@ -34,8 +34,9 @@ EXPECTED_SOLUTION = np.array([2.0, -1.0])
 
 
 @pytest.mark.parametrize("search_method", ["line_search", "trust_pds"])
-def test_search_strategy_options(search_method: str):
+def test_search_strategy_options(tmp_path: Path, monkeypatch: Any, search_method: str):
     """Test that the optimizer runs with different search strategy settings."""
+    monkeypatch.chdir(tmp_path)
     options = {"search_method": search_method}
     result = minimize(
         objective,
