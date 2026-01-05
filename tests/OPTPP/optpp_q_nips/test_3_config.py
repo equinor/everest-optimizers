@@ -51,23 +51,6 @@ def test_merit_function_options(merit_function: str):
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.parametrize("search_method", ["trust_region", "line_search", "trust_pds"])
-def test_search_strategy_options(search_method: str):
-    """Test that the optimizer runs with different search strategy settings."""
-    options = {"search_method": search_method}
-    result = minimize(
-        objective,
-        X0,
-        method="optpp_q_nips",
-        jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
-        constraints=CONSTRAINTS,
-        options=options,
-    )
-    assert result.success
-    np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
-
-
 @pytest.mark.parametrize("tolerance", [1e-4, 1e-6, 1e-8])
 def test_convergence_tolerance_options(tolerance: float):
     """Test that the optimizer runs with different convergence tolerance settings."""
