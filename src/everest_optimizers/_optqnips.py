@@ -83,16 +83,21 @@ def minimize_optqnips(
             case "el_bakry":
                 default_centering = 0.2
                 default_step_to_boundary = 0.8
+                optimizer.setMeritFcn(pyoptpp.MeritFcn.NormFmu)
             case "argaez_tapia":
                 default_centering = 0.2
                 default_step_to_boundary = 0.99995
+                optimizer.setMeritFcn(pyoptpp.MeritFcn.ArgaezTapia)
             case "van_shanno":
                 default_centering = 0.1
                 default_step_to_boundary = 0.95
-            case _:
-                default_centering = 0.2
-                default_step_to_boundary = 0.95
+                optimizer.setMeritFcn(pyoptpp.MeritFcn.VanShanno)
+            case merit_fn:
+                raise ValueError(
+                    f"Unknown merit function: {merit_fn}. Valid options: el_bakry, argaez_tapia, van_shanno"
+                )
 
+        optimizer.setConTol(options.pop("constraint_tolerance", 1e-6))
         optimizer.setMu(options.pop("mu", 0.1))
         optimizer.setCenteringParameter(
             options.pop("centering_parameter", default_centering)
@@ -100,18 +105,6 @@ def minimize_optqnips(
         optimizer.setStepLengthToBdry(
             options.pop("steplength_to_boundary", default_step_to_boundary)
         )
-        match merit_function.lower():
-            case "el_bakry":
-                optimizer.setMeritFcn(pyoptpp.MeritFcn.NormFmu)
-            case "argaez_tapia":
-                optimizer.setMeritFcn(pyoptpp.MeritFcn.ArgaezTapia)
-            case "van_shanno":
-                optimizer.setMeritFcn(pyoptpp.MeritFcn.VanShanno)
-            case merit_fn:
-                raise ValueError(
-                    f"Unknown merit function: {merit_fn}. Valid options: el_bakry, argaez_tapia, van_shanno"
-                )
-        optimizer.setConTol(options.pop("constraint_tolerance", 1e-6))
 
     set_basic_newton_options(optimizer, options)
     return run_newton(optimizer, problem, x0)
