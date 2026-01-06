@@ -45,7 +45,9 @@ test = [
 ]
 dev = [
   "meson",
+  "mypy",
   "scikit-build-core",
+  "scipy-stubs",
   "setuptools_scm",
   "swig; sys_platform == 'darwin'",
   { include-group = "test" },
