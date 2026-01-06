@@ -149,3 +149,25 @@ clang-format -i your_file.cpp
 ```bash
 find . -regex '.*\.\(cpp\|hpp\|cc\|c\|h\)' -exec clang-format -i {} +
 ```
+
+### Run pyoptpp tests with address sanitizer on
+Configure pyoptpp with address sanitizer
+```bash
+cmake -Bbuild -S. -DDEBUG_MEMORY=1
+```
+
+Build
+```bash
+cmake --build build
+```
+
+Copy the module to the virtual environment. so file might have a slightly different name depending on OS/python version
+```bash
+cp build/src/OPTPP-python/_pyoptpp.cpython-313-x86_64-linux-gnu.so .venv/lib/python3.13/site-packages/everest_optimizers/pyoptpp/_pyoptpp.cpython-313-x86_64-linux-gnu.so
+```
+
+Run the OPTPP tests. The preload should point to your locally installed libasan.so.
+
+```bash
+LD_PRELOAD=/usr/lib64/libasan.so.8.0.0 pytest "tests/OPTPP" -svvv --cache-clear
+```
