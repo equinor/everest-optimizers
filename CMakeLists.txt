@@ -5,6 +5,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(Python 3.11 REQUIRED COMPONENTS Interpreter NumPy)
 
+if(DEBUG_MEMORY)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=address)
+endif()
+
 # Build OPTPP. trilinos is also needed to build it.
 include(FetchContent)
 message(STATUS "Downloading dakota-packages")
