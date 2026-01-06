@@ -13,7 +13,9 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/snl-dakota/dakota-packages
     GIT_TAG e83c52d7519d2421dffdfbd2b6fc6f7e54a86727
     SOURCE_DIR
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/dakota-packages"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/dakota-packages"
+    PATCH_COMMAND
+        git apply "${CMAKE_CURRENT_SOURCE_DIR}/OPTPP-van-shanno-fix.patch"
     # exclude in case dakota-packages adds a root CMakeLists.txt file
     EXCLUDE_FROM_ALL
 )
