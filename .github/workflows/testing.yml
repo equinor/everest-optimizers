@@ -59,4 +59,4 @@ jobs:
         run: uv run pytest tests/
 
       - name: Run mypy
-        run: mypy src
+        run: uv run mypy src
