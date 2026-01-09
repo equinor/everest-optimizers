@@ -1,0 +1,9 @@
+everest-optimizers
+
+This product includes software from the dakota-packages project
+The trilinos package (BSD 3-clause)
+The OPTPP package (LGPL-2.1)
+https://github.com/snl-dakota/dakota-packages
+
+This product includes software from the pyoptsparse project (GNU LGPL-3.0)
+https://github.com/mdolab/pyoptsparse/

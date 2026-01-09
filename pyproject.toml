@@ -28,8 +28,14 @@ classifiers = [
   "Operating System :: POSIX :: Linux",
   "Operating System :: MacOS",
 ]
-license = "GPL-3.0-or-later"
-license-files = ["LICEN[CS]E"]
+license = "LGPL-3.0-or-later"
+license-files = [
+  "LICENSE",
+  "NOTICE",
+  "third-party/pyoptsparse/LICENSE",
+  "third-party/dakota-packages/OPTPP/GNU_LGPL",
+  "third-party/dakota-packages/trilinos/LICENSE",
+]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["scipy", "mdolab-baseclasses", "sqlitedict", "pydantic"]
