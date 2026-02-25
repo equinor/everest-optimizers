@@ -313,14 +313,12 @@ PYBIND11_MODULE(_pyoptpp, m) {
   py::enum_<SearchStrategy>(m, "SearchStrategy")
       .value("TrustRegion", SearchStrategy::TrustRegion)
       .value("LineSearch", SearchStrategy::LineSearch)
-      .value("TrustPDS", SearchStrategy::TrustPDS)
-      .export_values();
+      .value("TrustPDS", SearchStrategy::TrustPDS);
 
   py::enum_<MeritFcn>(m, "MeritFcn")
       .value("NormFmu", MeritFcn::NormFmu)
       .value("ArgaezTapia", MeritFcn::ArgaezTapia)
-      .value("VanShanno", MeritFcn::VanShanno)
-      .export_values();
+      .value("VanShanno", MeritFcn::VanShanno);
 
   py::class_<OptQNewton>(m, "OptQNewton")
       .def(
