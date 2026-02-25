@@ -117,3 +117,25 @@ def test_start_feasible_and_infeasible(x0: NDArray[np.float64]):
     assert result.success
     expected_solution = np.array([2.5, -1.0])
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
+
+
+def test_that_finite_difference_gradient_pushes_to_bound():
+    """
+    This is a regression test, where the finite difference
+    approximation of the gradient did not approach the bound.
+    """
+    bounds = Bounds([-1, 0, 0], [1, 1, 1])
+    x0 = np.array([0.0, 0.5, 0.5])
+
+    def objective(x):
+        return x[0] * x[1] * x[2]
+
+    result = minimize(
+        objective,
+        x0,
+        method="optpp_bcq_newton",
+        bounds=bounds,  # type: ignore[arg-type]
+        options=DEFAULT_OPTIONS,
+    )
+
+    assert result.x.tolist() == pytest.approx([-1.0, 1.0, 1.0])

@@ -56,38 +56,15 @@ class NLF1Problem:
 
         def eval_g(x):
             x_np = np.array(x.to_numpy(), copy=True)
-
-            if self.jac is not None:
-                grad = self.jac(x_np, *self.args)
-                grad_np = np.asarray(grad, dtype=float)
-                self.current_g = grad_np
-                self.njev += 1
-                return grad_np
-            else:
-                # Use finite differences for gradient if no jacobian is supplied
-                grad = self._finite_difference_gradient(x_np)
-                self.current_g = grad
-                return grad
+            assert self.jac is not None
+            grad = self.jac(x_np, *self.args)
+            grad_np = np.asarray(grad, dtype=float)
+            self.current_g = grad_np
+            self.njev += 1
+            return grad_np
 
         x0_vector = pyoptpp.SerialDenseVector(self.x0)
-        nlf1 = pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
-        return nlf1
-
-    def _finite_difference_gradient(self, x):
-        """Compute gradient using finite differences."""
-        eps = 1e-8
-        grad = np.zeros_like(x)
-
-        for i in range(len(x)):
-            x_plus = x.copy()
-            x_plus[i] += eps
-            x_minus = x.copy()
-            x_minus[i] -= eps
-
-            f_plus = self.fun(x_plus, *self.args)
-            f_minus = self.fun(x_minus, *self.args)
-
-            grad[i] = (f_plus - f_minus) / (2 * eps)
-            self.nfev += 2
-
-        return grad
+        if self.jac is not None:
+            return pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
+        else:
+            return pyoptpp.FDNLF1(len(self.x0), eval_f, x0_vector)
