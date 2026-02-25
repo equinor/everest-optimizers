@@ -344,7 +344,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptBCQNewton>(m, "OptBCQNewton")
       .def(
-          py::init([](NLF1* p) { return new OptBCQNewton(p, &default_update_model); }),
+          py::init([](NLP1* p) { return new OptBCQNewton(p, &default_update_model); }),
           py::arg("p"), py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptBCQNewton::cleanup)
@@ -366,7 +366,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(
-          py::init([](NLF1* p) { return new OptQNIPS(p, &default_update_model); }), py::arg("p"),
+          py::init([](NLP1* p) { return new OptQNIPS(p, &default_update_model); }), py::arg("p"),
           py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptQNIPS::cleanup)
