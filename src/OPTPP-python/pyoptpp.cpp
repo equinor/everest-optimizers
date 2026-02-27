@@ -36,6 +36,152 @@ using T_SerialDenseMatrix = Teuchos::SerialDenseMatrix<int, double>;
 void default_update_model(int, int, T_SerialDenseVector) {}
 
 // Non-linear function class that holds Python callbacks
+class CallbackFDNLF1 : public FDNLF1 {
+private:
+  py::function py_eval_func;
+  bool is_constraint;
+
+public:
+  // Unified constructor - use is_constraint flag to determine behavior
+  CallbackFDNLF1(int ndim, py::function eval_func, bool is_constraint = false)
+      : FDNLF1(ndim), py_eval_func(eval_func), is_constraint(is_constraint) {
+        OptppArray<Constraint> constraint_array{};
+        setConstraints(new CompoundConstraint(constraint_array));
+      }
+
+  void initFcn() override {}
+  real evalF() override {
+    int result = 0;
+    double time0 = get_wall_clock_time();
+
+    if (SpecFlag == NoSpec) {
+      if (!application.getF(mem_xc, fvalue)) {
+        fvalue = evalF(mem_xc);
+        function_time = get_wall_clock_time() - time0;
+        nfevals++;
+      }
+    } else {
+      SpecFlag = Spec1;
+      (void)evalG();
+      SpecFlag = Spec2;
+    }
+
+    function_time = get_wall_clock_time() - time0;
+    return fvalue;
+  }
+
+  real evalF(const T_SerialDenseVector& x) override {
+    if (is_constraint) {
+      return 0.0; // Dummy value for constraint-only NLF0
+    }
+    double fx;
+    double time0 = get_wall_clock_time();
+
+    if (SpecFlag == NoSpec) {
+      if (!application.getF(x, fx)) {
+        function_time = get_wall_clock_time() - time0;
+        py::gil_scoped_acquire gil;
+        try {
+          fx = py_eval_func(x).cast<real>();
+        } catch (py::error_already_set& e) {
+          throw;
+        } catch (const std::exception& e) {
+          throw std::runtime_error(fmt::format("Error in evalF callback: {}", e.what()));
+        }
+        nfevals++;
+      }
+    } else {
+      SpecFlag = Spec1;
+      (void)evalG(x);
+      fx = specF;
+      SpecFlag = Spec2;
+    }
+
+    function_time = get_wall_clock_time() - time0;
+    return fx;
+  }
+
+  T_SerialDenseVector evalG() override {
+
+    T_SerialDenseVector sx(dim);
+    sx = 1.0;
+    ngevals++;
+
+    if (finitediff == ForwardDiff)
+      mem_grad = FDGrad(sx, mem_xc, fvalue, partial_grad);
+    else if (finitediff == BackwardDiff)
+      mem_grad = BDGrad(sx, mem_xc, fvalue, partial_grad);
+    else if (finitediff == CentralDiff)
+      mem_grad = CDGrad(sx, mem_xc, fvalue, partial_grad);
+    else {
+      mem_grad = FDGrad(sx, mem_xc, fvalue, partial_grad);
+    }
+    return mem_grad;
+  }
+
+  T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
+    T_SerialDenseVector gx(dim);
+    T_SerialDenseVector sx(dim);
+    sx = 1.0;
+    ngevals++;
+
+    if (SpecFlag == NoSpec) {
+      if (!application.getF(x, specF)) {
+        specF = evalF(x);
+        nfevals++;
+      }
+    }
+
+    if (finitediff == ForwardDiff)
+      gx = FDGrad(sx, x, specF, partial_grad);
+    else if (finitediff == BackwardDiff)
+      gx = BDGrad(sx, x, specF, partial_grad);
+    else if (finitediff == CentralDiff)
+      gx = CDGrad(sx, x, specF, partial_grad);
+    else {
+      gx = FDGrad(sx, x, specF, partial_grad);
+    }
+    return gx;
+  }
+
+  T_SerialSymDenseMatrix evalH(T_SerialDenseVector& x) override {
+    // Return identity matrix - Hessian is not used in these algorithms
+    int dim = this->getDim();
+    T_SerialSymDenseMatrix H(dim);
+    for (int i = 0; i < dim; ++i) {
+      H(i, i) = 1.0;
+    }
+    return H;
+  }
+
+  T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
+    if (!is_constraint) {
+      return T_SerialDenseVector(1);
+    }
+
+    py::gil_scoped_acquire gil;
+    try {
+      py::object result = py_eval_func(x);
+      py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
+          result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
+      py::buffer_info buf = result_array.request();
+
+      if (buf.ndim != 1) {
+        throw std::runtime_error("evalCF: Returned numpy array must be 1D!");
+      }
+
+      T_SerialDenseVector constraints(buf.shape[0]);
+      std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
+      return constraints;
+    } catch (py::error_already_set& e) {
+      throw;
+    } catch (const std::exception& e) {
+      throw std::runtime_error(fmt::format("Error in evalCF callback: {}", e.what()));
+    }
+  }
+};
+
+// Non-linear function class that holds Python callbacks
 class CallbackNLF1 : public NLF1 {
 private:
   py::function py_eval_func;
@@ -229,6 +375,29 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::classh<NLP0, NLPBase>(m, "NLP0");
   py::classh<NLP1, NLP0>(m, "NLP1");
+  py::classh<FDNLF1, NLP1>(m, "FDNLF1")
+      .def(
+          py::init(
+              [](int ndim, py::function eval_func, const T_SerialDenseVector& x0,
+                 bool is_constraint) -> FDNLF1* {
+                CallbackFDNLF1* nlf1 = new CallbackFDNLF1(ndim, eval_func, is_constraint);
+                nlf1->setX(x0);
+                nlf1->setIsExpensive(true);
+
+                return nlf1;
+              }
+          ),
+          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::keep_alive<0, 4>(), py::arg("ndim"),
+          py::arg("eval_func"), py::arg("x0"), py::arg("is_constraint") = false,
+          "Create an FDNLF1 object with Python callbacks (objective or constraint)"
+      )
+      .def("getXc", &FDNLF1::getXc)
+      .def("getF", &FDNLF1::getF)
+      .def("setDebug", &FDNLF1::setDebug, "Set debug flag to true")
+      .def(
+          "setConstraints", [](FDNLF1& self, CompoundConstraint* cc) { self.setConstraints(cc); },
+          py::keep_alive<1, 2>(), py::arg("compound_constraint")
+      );
   py::classh<NLF1, NLP1>(m, "NLF1")
       .def(
           py::init(
@@ -313,18 +482,16 @@ PYBIND11_MODULE(_pyoptpp, m) {
   py::enum_<SearchStrategy>(m, "SearchStrategy")
       .value("TrustRegion", SearchStrategy::TrustRegion)
       .value("LineSearch", SearchStrategy::LineSearch)
-      .value("TrustPDS", SearchStrategy::TrustPDS)
-      .export_values();
+      .value("TrustPDS", SearchStrategy::TrustPDS);
 
   py::enum_<MeritFcn>(m, "MeritFcn")
       .value("NormFmu", MeritFcn::NormFmu)
       .value("ArgaezTapia", MeritFcn::ArgaezTapia)
-      .value("VanShanno", MeritFcn::VanShanno)
-      .export_values();
+      .value("VanShanno", MeritFcn::VanShanno);
 
   py::class_<OptQNewton>(m, "OptQNewton")
       .def(
-          py::init([](NLF1* p) { return new OptQNewton(p, &default_update_model); }), py::arg("p"),
+          py::init([](NLP1* p) { return new OptQNewton(p, &default_update_model); }), py::arg("p"),
           py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptQNewton::cleanup)
@@ -346,7 +513,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptBCQNewton>(m, "OptBCQNewton")
       .def(
-          py::init([](NLF1* p) { return new OptBCQNewton(p, &default_update_model); }),
+          py::init([](NLP1* p) { return new OptBCQNewton(p, &default_update_model); }),
           py::arg("p"), py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptBCQNewton::cleanup)
@@ -368,7 +535,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(
-          py::init([](NLF1* p) { return new OptQNIPS(p, &default_update_model); }), py::arg("p"),
+          py::init([](NLP1* p) { return new OptQNIPS(p, &default_update_model); }), py::arg("p"),
           py::keep_alive<0, 1>()
       )
       .def("cleanup", &OptQNIPS::cleanup)

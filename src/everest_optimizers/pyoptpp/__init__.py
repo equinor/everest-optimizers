@@ -1,4 +1,5 @@
 from ._pyoptpp import (
+    FDNLF1,
     NLF1,
     NLP,
     BoundConstraint,
@@ -24,6 +25,7 @@ from ._pyoptpp import (
 )
 
 __all__ = [
+    "FDNLF1",
     "NLF1",
     "NLP",
     "BoundConstraint",
