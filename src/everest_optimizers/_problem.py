@@ -1,8 +1,9 @@
 import warnings
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 
 from everest_optimizers import pyoptpp
 
@@ -10,12 +11,12 @@ from everest_optimizers import pyoptpp
 class NLF1Problem:
     def __init__(
         self,
-        fun: Callable,
-        x0: np.ndarray,
-        args: tuple,
-        jac: Callable[..., npt.NDArray[np.float64]] | None = None,
-        callback: Callable | None = None,
-    ):
+        fun: Callable[..., float],
+        x0: NDArray[np.float64],
+        args: tuple[Any, ...],
+        jac: Callable[..., NDArray[np.float64]] | None = None,
+        callback: Callable[..., None] | None = None,
+    ) -> None:
         self.fun = fun
         self.x0 = np.asarray(x0, dtype=float)
         self.args = args
@@ -24,18 +25,16 @@ class NLF1Problem:
 
         self.nfev = 0
         self.njev = 0
-        self.current_x = None
-        self.current_f = None
-        self.current_g = None
+        self.current_x: NDArray[np.float64] | None = None
+        self.current_f: float | None = None
+        self.current_g: NDArray[np.float64] | None = None
 
         self.nlf1_problem = self._create_nlf1_problem()
 
-    def _create_nlf1_problem(self):
-        """Create the NLF1 problem for OPTPP using C++ CallbackNLF1."""
-
+    def _create_nlf1_problem(self) -> pyoptpp.NLF1:
         # Create callback functions for objective evaluation
-        def eval_f(x):
-            x_np = np.array(x.to_numpy(), copy=True)
+        def eval_f(x: NDArray[np.float64]) -> float:
+            x_np = np.asarray(x, copy=True)
             self.current_x = x_np
 
             f_val = self.fun(x_np, *self.args)
@@ -45,7 +44,7 @@ class NLF1Problem:
             if self.callback is not None:
                 try:
                     self.callback(x_np)
-                except Exception as cb_err:
+                except Exception as cb_err:  # noqa: BLE001
                     warnings.warn(
                         f"Callback function raised exception: {cb_err}",
                         RuntimeWarning,
@@ -54,8 +53,8 @@ class NLF1Problem:
 
             return self.current_f
 
-        def eval_g(x):
-            x_np = np.array(x.to_numpy(), copy=True)
+        def eval_g(x: NDArray[np.float64]) -> NDArray[np.float64]:
+            x_np = np.asarray(x, copy=True)
 
             if self.jac is not None:
                 grad = self.jac(x_np, *self.args)
@@ -63,18 +62,17 @@ class NLF1Problem:
                 self.current_g = grad_np
                 self.njev += 1
                 return grad_np
-            else:
-                # Use finite differences for gradient if no jacobian is supplied
-                grad = self._finite_difference_gradient(x_np)
-                self.current_g = grad
-                return grad
+            # Use finite differences for gradient if no jacobian is supplied
+            grad = self._finite_difference_gradient(x_np)
+            self.current_g = grad
+            return grad
 
         x0_vector = pyoptpp.SerialDenseVector(self.x0)
-        nlf1 = pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
-        return nlf1
+        return pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
 
-    def _finite_difference_gradient(self, x):
-        """Compute gradient using finite differences."""
+    def _finite_difference_gradient(
+        self, x: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
         eps = 1e-8
         grad = np.zeros_like(x)
 

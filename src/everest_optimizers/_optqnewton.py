@@ -11,54 +11,28 @@ from ._problem import NLF1Problem
 from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 
-def minimize_optqnewton(
-    fun: Callable,
-    x0: npt.NDArray,
-    args: tuple = (),
+def minimize_optqnewton(  # noqa: PLR0913, PLR0917
+    fun: Callable[..., float],
+    x0: npt.NDArray[np.float64],
+    args: tuple[Any, ...] = (),
     jac: Callable[..., npt.NDArray[np.float64]] | None = None,
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
-    callback: Any | None = None,
+    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
-    """
-    Minimize a scalar function using the OPT++ OptQNewton optimizer.
-
-    Parameters
-    ----------
-    fun : callable
-        The objective function to be minimized.
-    x0 : ndarray
-        Initial guess. Must be 1d.
-    args : tuple, optional
-        Extra arguments passed to the objective function and its derivatives.
-    jac : callable, optional
-        Method for computing the gradient vector.
-    bounds : sequence, optional
-        Bounds on variables (not supported by optpp_q_newton).
-    constraints : list, optional
-        Constraints definition (not supported by optpp_q_newton).
-    options : dict, optional
-        Solver options including:
-        - 'search_method': 'TrustRegion', 'LineSearch', or 'TrustPDS'
-        - 'tr_size': Trust region size
-        - 'debug': Enable debug output
-        - 'output_file': Output file for debugging
-
-    Returns
-    -------
-    OptimizeResult
-        The optimization result.
-    """
     x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
-        raise ValueError("x0 must be 1-dimensional")
+        msg = "x0 must be 1-dimensional"
+        raise ValueError(msg)
 
     if bounds is not None:
-        raise NotImplementedError("optpp_q_newton does not support bounds")
+        msg = "optpp_q_newton does not support bounds"
+        raise NotImplementedError(msg)
 
     if constraints:
-        raise NotImplementedError("optpp_q_newton does not support constraints")
+        msg = "optpp_q_newton does not support constraints"
+        raise NotImplementedError(msg)
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
     with remove_default_output(options):

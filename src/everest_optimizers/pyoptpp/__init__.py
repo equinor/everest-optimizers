@@ -1,3 +1,5 @@
+"""A Python wrapper for the OPT++ library."""
+
 from ._pyoptpp import (
     NLF1,
     NLP,
