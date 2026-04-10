@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+"""Minimization using the OPTPP library."""
 
 from collections.abc import Callable, Collection
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
+from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from everest_optimizers._conminmfd import minimize_conmin_mfd
@@ -13,22 +13,21 @@ from everest_optimizers._optqnewton import minimize_optqnewton
 from everest_optimizers._optqnips import minimize_optqnips
 
 
-def minimize(
-    fun: Callable,
-    x0: npt.NDArray[np.float64],
-    args: tuple | None = (),
+def minimize(  # noqa: PLR0913, PLR0917
+    fun: Callable[..., float],
+    x0: NDArray[np.float64],
+    args: tuple[Any, ...] | None = (),
     method: str = "optpp_q_newton",
-    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
+    jac: Callable[..., NDArray[np.float64]] | None = None,
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint]
     | LinearConstraint
     | NonlinearConstraint
     | None = None,
-    callback: Callable | None = None,
+    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
-    """
-    Minimization of scalar function of one or more variables.
+    """Minimization of scalar function of one or more variables.
 
     This function is intended to be a drop-in replacement for
     scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton
@@ -89,6 +88,7 @@ def minimize(
         - 'output_file' : str
             Output file for debug information (default: None)
 
+
     Returns
     -------
     res : OptimizeResult
@@ -106,6 +106,10 @@ def minimize(
             Number of function evaluations
         - njev : int
             Number of jacobian evaluations
+
+    Raises
+    ------
+    ValueError: If the method is not recognized or if the input parameters are invalid.
 
     Notes
     -----
@@ -132,10 +136,12 @@ def minimize(
     >>> x0 = np.array([-1.2, 1.0])
     >>> result = minimize(rosenbrock, x0, method='optpp_q_newton', jac=rosenbrock_grad)
     >>> print(result.x)  # Should be close to [1.0, 1.0]
+
     """
     x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
-        raise ValueError("x0 must be 1-dimensional")
+        msg = "x0 must be 1-dimensional"
+        raise ValueError(msg)
 
     if not isinstance(args, tuple):
         args = (args,)
@@ -167,6 +173,8 @@ def minimize(
                 options=options,
             )
         case "conmin_mfd":
+            assert constraints is None or isinstance(constraints, dict)
+            assert bounds is None or isinstance(bounds, list)
             return minimize_conmin_mfd(
                 fun=fun,
                 x0=x0,
@@ -186,6 +194,8 @@ def minimize(
                 options=options,
             )
         case other:
-            raise ValueError(
-                f"Unknown method: {other}. Supported methods: 'optpp_q_newton', 'optpp_bcq_newton', 'optpp_q_nips', 'conmin_mfd'"
+            msg = (
+                f"Unknown method: {other}. Supported methods: "
+                "'optpp_q_newton', 'optpp_bcq_newton', 'optpp_q_nips', 'conmin_mfd'"
             )
+            raise ValueError(msg)

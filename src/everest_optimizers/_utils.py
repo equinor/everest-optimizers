@@ -4,6 +4,7 @@ from os import devnull
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import OptimizeResult
 
@@ -53,7 +54,7 @@ def set_basic_newton_options(
         case "trust_region" | "trustregion":
             if isinstance(optimizer, OptBCQNewton):
                 msg = "OptBCQNewton does not support the 'trust_region' search method"
-                raise ValueError(msg)
+                raise TypeError(msg)
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
         case "line_search" | "linesearch":
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
@@ -81,7 +82,7 @@ def set_basic_newton_options(
 
 
 def run_newton(
-    optimizer: NewtonOptimizer, problem: NLF1Problem, x0: NDArray
+    optimizer: NewtonOptimizer, problem: NLF1Problem, _: NDArray[np.float64]
 ) -> OptimizeResult:
     optimizer.optimize()
 

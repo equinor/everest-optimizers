@@ -1,3 +1,5 @@
+"""The everest-optimizers package."""
+
 from . import pyoptpp, pyoptsparse
 from .minimize import minimize
 

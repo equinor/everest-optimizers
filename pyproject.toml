@@ -62,7 +62,7 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
   "error",
-  "ignore:numpy.ndarray size changed, may indicate binary incompatibility.*:RuntimeWarning"
+  "ignore:numpy.ndarray size changed, may indicate binary incompatibility.*:RuntimeWarning",
 ]
 testpaths = ["tests/CONMIN", "tests/OPTPP"]
 
@@ -86,42 +86,21 @@ before-all = "dnf update -y && dnf install -y lapack lapack-devel"
 
 [tool.ruff]
 target-version = "py311"
+extend-exclude = ["_pyoptpp.pyi", "tests"]
 
 [tool.ruff.lint]
-extend-select = [
-  "A",
-  "AIR",
-  "ASYNC",
-  "B",   # flake8-bugbear
-  "DJ",
-  "DTZ",
-  "F",
-  "FA",
-  "FAST",
-  "FLY",
-  "FURB",
-  "I",   # isort
-  "INT",
-  "ISC",
-  "NPY",
-  "PD",
-  "PERF",
-  "PGH", # pygrep-hooks
-  "PIE",
-  "PLC",
-  "PLE",
-  "PLW",
-  "PT",
-  "PYI",
-  "Q",
-  "RSE",
-  "RUF", # Ruff-specific
-  "SIM",
-  "SLF",
-  "SLOT",
-  "TID",
-  "UP",  # pyupgrade
-  "W",
-  "YTT",
-]
 preview = true
+select = ["ALL"]
+ignore = [
+  "COM812", # missing-trailing-comma
+  "CPY",    # flake8-copyright
+  "D203",   # incorrect-blank-line-before-class
+  "D213",   # multi-line-summary-second-line
+  "E501",   # line-too-long
+  "S101",   # assert
+]
+
+[tool.mypy]
+strict = true
+files=["src"]
+exclude = "(^|/)src/everest_optimizers/pyoptpp/_pyoptpp\\.pyi$"

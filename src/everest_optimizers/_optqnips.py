@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -11,41 +11,45 @@ from everest_optimizers._convert_constraints import (
     convert_linear_constraint,
     convert_nonlinear_constraint,
 )
-from everest_optimizers.pyoptpp import (
-    BoundConstraint,
-    LinearEquation,
-    LinearInequality,
-    NonLinearEquation,
-    NonLinearInequality,
-)
 
 from ._problem import NLF1Problem
 from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
+if TYPE_CHECKING:
+    from everest_optimizers.pyoptpp import (
+        BoundConstraint,
+        LinearEquation,
+        LinearInequality,
+        NonLinearEquation,
+        NonLinearInequality,
+    )
 
-def minimize_optqnips(
-    fun: Callable,
+
+def minimize_optqnips(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+    fun: Callable[..., float],
     x0: np.ndarray,
-    args: tuple = (),
+    args: tuple[Any, ...] = (),
     jac: Callable[..., npt.NDArray[np.float64]] | None = None,
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
-    callback: Any | None = None,
+    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
-    """Minimize a scalar function using the OPT++ OptQNIPS optimizer.
+    # Minimize a scalar function using the OPT++ OptQNIPS optimizer.
+    #
+    # This implementation supports all the parameters documented in the Dakota
+    #  quasi-Newton methods documentation.
+    #
+    #  options only supports max_step
 
-    This implementation supports all the parameters documented in the Dakota
-     quasi-Newton methods documentation.
-
-     options only supports max_step
-    """
     x0 = np.asarray(x0, dtype=float)
     if x0.ndim != 1:
-        raise ValueError("x0 must be 1-dimensional")
+        msg = "x0 must be 1-dimensional"
+        raise ValueError(msg)
 
     if bounds is None and not constraints:
-        raise ValueError("Either bounds or constraints must be provided for OptQNIPS")
+        msg = "Either bounds or cponstraints must be provided for OptQNIPS"
+        raise ValueError(msg)
 
     constraint_objects: list[
         BoundConstraint
@@ -65,11 +69,13 @@ def minimize_optqnips(
                 nonlinear_constraints = convert_nonlinear_constraint(constraint, x0)
                 constraint_objects.extend(nonlinear_constraints)
             else:
-                raise ValueError(f"Unsupported constraint type: {type(constraint)}")
+                msg = f"Unsupported constraint type: {type(constraint)}"
+                raise TypeError(msg)
     if constraint_objects:
         cc_ptr = pyoptpp.create_compound_constraint(constraint_objects)
     else:
-        raise ValueError("OptQNIPS requires at least bounds constraints")
+        msg = "OptQNIPS requires at least bounds constraints"
+        raise ValueError(msg)
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
     problem.nlf1_problem.setConstraints(cc_ptr)
@@ -93,9 +99,11 @@ def minimize_optqnips(
                 default_step_to_boundary = 0.95
                 optimizer.setMeritFcn(pyoptpp.MeritFcn.VanShanno)
             case merit_fn:
-                raise ValueError(
-                    f"Unknown merit function: {merit_fn}. Valid options: el_bakry, argaez_tapia, van_shanno"
+                msg = (
+                    f"Unknown merit function: {merit_fn}. "
+                    "Valid options: el_bakry, argaez_tapia, van_shanno"
                 )
+                raise ValueError(msg)
 
         optimizer.setConTol(options.pop("constraint_tolerance", 1e-6))
         optimizer.setMu(options.pop("mu", 0.1))
