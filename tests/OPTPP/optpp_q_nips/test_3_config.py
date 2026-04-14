@@ -7,19 +7,21 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint
 
 from everest_optimizers import minimize
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
 
 # --- Fixed Problem Definition ---
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -35,7 +37,7 @@ EXPECTED_SOLUTION = np.array([2.0, -1.0])
 
 
 @pytest.mark.parametrize("merit_function", ["el_bakry", "argaez_tapia", "van_shanno"])
-def test_merit_function_options(merit_function: str):
+def test_merit_function_options(merit_function: str) -> None:
     """Test that the optimizer runs with different merit function settings."""
     options = {"merit_function": merit_function}
     result = minimize(
@@ -43,7 +45,7 @@ def test_merit_function_options(merit_function: str):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -52,7 +54,7 @@ def test_merit_function_options(merit_function: str):
 
 
 @pytest.mark.parametrize("tolerance", [1e-4, 1e-6, 1e-8])
-def test_convergence_tolerance_options(tolerance: float):
+def test_convergence_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different convergence tolerance settings."""
     options = {"convergence_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
@@ -60,7 +62,7 @@ def test_convergence_tolerance_options(tolerance: float):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -68,7 +70,7 @@ def test_convergence_tolerance_options(tolerance: float):
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
 
 
-def test_high_convergence_tolerance_inaccurate():
+def test_high_convergence_tolerance_inaccurate() -> None:
     """Test that a high convergence tolerance leads to a numerically inaccurate solution."""
     options = {"convergence_tolerance": 1.0}
     result = minimize(
@@ -76,7 +78,7 @@ def test_high_convergence_tolerance_inaccurate():
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -94,8 +96,8 @@ def test_high_convergence_tolerance_inaccurate():
         1e-8,
         1e-10,
     ],
-)  # TODO: investigate if this tolerance parameter is handled correctly
-def test_gradient_tolerance_options(tolerance: float):
+)  # TODO: investigate if this tolerance parameter is handled correctly  # noqa: FIX002, TD002, TD003
+def test_gradient_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {"gradient_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
@@ -103,7 +105,7 @@ def test_gradient_tolerance_options(tolerance: float):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -112,7 +114,7 @@ def test_gradient_tolerance_options(tolerance: float):
 
 
 @pytest.mark.parametrize("max_iterations", [10, 100, 1000])
-def test_max_iterations_option(max_iterations: int):
+def test_max_iterations_option(max_iterations: int) -> None:
     """Test that the optimizer respects the max_iterations setting."""
     options = {"max_iterations": max_iterations}
     result = minimize(
@@ -120,7 +122,7 @@ def test_max_iterations_option(max_iterations: int):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -128,7 +130,7 @@ def test_max_iterations_option(max_iterations: int):
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
 
 
-def test_too_low_max_iterations():
+def test_too_low_max_iterations() -> None:
     """Too low max_iterations should mean it numerically does not converge"""
     options = {"max_iterations": 1}
     result = minimize(
@@ -136,7 +138,7 @@ def test_too_low_max_iterations():
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -147,7 +149,7 @@ def test_too_low_max_iterations():
 
 
 @pytest.mark.parametrize("debug_flag", [True, False])
-def test_debug_option(debug_flag: bool):
+def test_debug_option(debug_flag: bool) -> None:  # noqa: FBT001
     """Test that the optimizer runs with different debug flag settings."""
     options = {"debug": debug_flag}
     result = minimize(
@@ -155,7 +157,7 @@ def test_debug_option(debug_flag: bool):
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options=options,
     )
@@ -171,7 +173,7 @@ def test_output_file_no_default_file(tmp_path: Path, monkeypatch: Any) -> None:
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
     )
     assert not Path("OPT_DEFAULT.out").exists()
@@ -185,7 +187,7 @@ def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
         X0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         constraints=CONSTRAINTS,
         options={"output_file": "foo.out"},
     )
@@ -193,4 +195,4 @@ def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
     assert not Path("OPT_DEFAULT.out").exists()
 
 
-# TODO: Implement tests for the params found at: https://snl-dakota.github.io/docs/6.22.0/users/usingdakota/reference/method-optpp_q_newton.html
+# TODO: Implement tests for the params found at: https://snl-dakota.github.io/docs/6.22.0/users/usingdakota/reference/method-optpp_q_newton.html  # noqa: FIX002, TD002

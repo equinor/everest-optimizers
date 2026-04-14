@@ -1,11 +1,12 @@
-#!/usr/bin/env python3
+# ruff: noqa: ANN001,ANN201,ANN202,ANN204,DOC201,N802,N806,INP001
+# mypy: ignore-errors
 # tests/OptQNewton/compare_strategies.py
 """
 Plot different search paths using different search strategies with method OptQNewton.
 """
 
 import logging
-import os
+import pathlib
 import tempfile
 
 import matplotlib.pyplot as plt
@@ -37,7 +38,7 @@ class Rosenbrock(pyoptpp.NLF1):
             100.0 * (x_np[1:] - x_np[:-1] ** 2.0) ** 2.0 + (1 - x_np[:-1]) ** 2.0
         )
 
-    def evalG(self, x):
+    def evalG(self, x):  # noqa: PLR6301
         """Evaluates the gradient of the Rosenbrock function."""
         x_np = np.array(x.to_numpy(), copy=True)
         grad = np.zeros_like(x_np)
@@ -87,7 +88,7 @@ def run_scipy_bfgs_optimization(start_point):
     return solution_np, iterations, func_evals, path
 
 
-def run_optimization(strategy, start_point):
+def run_optimization(strategy, start_point):  # noqa: C901, PLR0912
     """Run optimization for a given strategy and starting point."""
     ndim = len(start_point)
     rosen_problem = Rosenbrock(ndim, start_point)
@@ -110,8 +111,8 @@ def run_optimization(strategy, start_point):
     # Parse the output file for metrics
     iterations = -1
     func_evals = -1
-    try:
-        with open(log_filename, encoding="utf-8") as f:
+    try:  # noqa: PLR1702
+        with pathlib.Path(log_filename).open(encoding="utf-8") as f:
             lines = f.readlines()
             # The final summary line appears after 'checkConvg'
             for i, line in enumerate(reversed(lines)):
@@ -153,9 +154,9 @@ def run_optimization(strategy, start_point):
                                 func_evals = total_fcn_evals
                     break
     except (OSError, IndexError, ValueError) as e:
-        logging.warning(f"Could not parse log file {log_filename}: {e}")
+        logging.warning("Could not parse log file %s: %s", log_filename, e)  # noqa: LOG015
 
-    os.remove(log_filename)
+    pathlib.Path(log_filename).unlink()
 
     solution_np = rosen_problem.getXc().to_numpy()
     path = rosen_problem.path
@@ -177,7 +178,7 @@ def compare_strategies():
         {
             "LineSearch": pyoptpp.SearchStrategy.LineSearch,
             "TrustRegion": pyoptpp.SearchStrategy.TrustRegion,
-            # "TrustPDS": pyoptpp.SearchStrategy.TrustPDS,
+            # "TrustPDS": pyoptpp.SearchStrategy.TrustPDS,  # noqa: ERA001
         }
     )
 
@@ -187,7 +188,7 @@ def compare_strategies():
 
     for name in all_strategy_names:
         for start_point in start_points:
-            logging.info(f"Running {name} from {start_point}")
+            logging.info("Running %s from %s", name, start_point)  # noqa: LOG015
             try:
                 if name == "SciPy BFGS":
                     solution, iters, f_evals, path = run_scipy_bfgs_optimization(
@@ -208,11 +209,14 @@ def compare_strategies():
                         "path": path,
                     }
                 )
-                logging.info(
-                    f"  -> Solution: {solution}, Iterations: {iters}, Func Evals: {f_evals}"
+                logging.info(  # noqa: LOG015
+                    "  -> Solution: %s, Iterations: %s, Func Evals: %s",
+                    solution,
+                    iters,
+                    f_evals,
                 )
             except Exception as e:
-                logging.error(f"  -> FAILED with error: {e}")
+                logging.exception("  -> FAILED with error: %s", e)  # noqa: LOG015, TRY401
 
     # Plotting
     for i, start_point in enumerate(start_points):
@@ -235,8 +239,8 @@ def compare_strategies():
         plt.xlabel("x1")
         plt.ylabel("x2")
         plt.legend()
-        plt.grid(True)
-        # plt.savefig(f"comparison_from_start_{i}.png")
+        plt.grid(True)  # noqa: FBT003
+        # plt.savefig(f"comparison_from_start_{i}.png")  # noqa: ERA001
         plt.show()
         plt.close()
 

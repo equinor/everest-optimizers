@@ -6,11 +6,16 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 from scipy.optimize import NonlinearConstraint
 
 from everest_optimizers import minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEFAULT_OPTIONS = {
     "debug": False,
@@ -21,19 +26,19 @@ DEFAULT_OPTIONS = {
 }
 
 
-def objective(x):
-    return (x[0] - 2) ** 2 + (x[1] - 2) ** 2
+def objective(x: NDArray[np.float64]) -> float:
+    return float((x[0] - 2) ** 2 + (x[1] - 2) ** 2)
 
 
-def objective_grad(x):
+def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2), 2 * (x[1] - 2)])
 
 
-def test_nonlinear_equality_constraint():
-    def nonlinear_constraint(x):
+def test_nonlinear_equality_constraint() -> None:
+    def nonlinear_constraint(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.array([x[0] ** 2 + x[1] ** 2 - 4.0])
 
-    def nonlinear_constraint_jac(x):
+    def nonlinear_constraint_jac(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.array([[2 * x[0], 2 * x[1]]])
 
     x0 = np.array([1.5, 1.5])
@@ -54,11 +59,11 @@ def test_nonlinear_equality_constraint():
         )
 
 
-def test_nonlinear_inequality_constraint():
-    def nonlinear_constraint(x):
+def test_nonlinear_inequality_constraint() -> None:
+    def nonlinear_constraint(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.array([1.0 - x[0] ** 2 - x[1] ** 2])
 
-    def nonlinear_constraint_jac(x):
+    def nonlinear_constraint_jac(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.array([[-2 * x[0], -2 * x[1]]])
 
     x0 = np.array([0.0, 0.0])

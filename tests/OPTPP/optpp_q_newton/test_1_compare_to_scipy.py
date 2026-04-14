@@ -9,11 +9,15 @@ and compares the results. Checks for approximately equal numerical values of the
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-from numpy.typing import NDArray
 from scipy import optimize as sp_optimize
 
 from everest_optimizers import minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEFAULT_OPTIONS = {
     "debug": False,
@@ -24,14 +28,14 @@ DEFAULT_OPTIONS = {
 
 
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
 
-def test_unconstrained():
+def test_unconstrained() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,

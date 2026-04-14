@@ -1,3 +1,4 @@
+# ruff: noqa: T201
 # Copyright 2013 National Renewable Energy Laboratory (NREL)
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +15,7 @@
 #
 # ++==++==++==++==++==++==++==++==++==++==
 import sys
+from typing import Any
 
 import numpy as np
 import pytest
@@ -23,14 +25,15 @@ pytest.importorskip("dakota")
 
 from dakota import DakotaBase, DakotaInput  # type: ignore[import-untyped]
 from numpy import array
+from numpy.typing import NDArray
 
 from everest_optimizers.minimize import minimize
 
 
-class TestDriver(DakotaBase):
+class TestDriver(DakotaBase):  # type: ignore[misc]
     __test__ = False
 
-    def __init__(self, force_exception=False):
+    def __init__(self, *, force_exception: bool = False) -> None:
         dakota_input = DakotaInput(
             environment=[
                 "tabular_graphics_data",
@@ -76,10 +79,10 @@ class TestDriver(DakotaBase):
             "analytic_gradients",
             "analytic_hessians",
         ]
-        self.best_point = None
-        self.best_fun = None
+        self.best_point: NDArray[np.float64] | None = None
+        self.best_fun: float | None = None
 
-    def dakota_callback(self, **kwargs):
+    def dakota_callback(self, **kwargs: Any) -> dict[str, Any]:
         print("dakota_callback:")
         cv = kwargs["cv"]
         asv = kwargs["asv"]
@@ -93,7 +96,7 @@ class TestDriver(DakotaBase):
         c1 = x[0] + x[1] + 10
         c2 = -x[0] - x[1] + 10
 
-        retval = dict()
+        retval = {}
         try:
             if asv[0] & 1:
                 f = [100 * f0 * f0 + f1 * f1]
@@ -112,7 +115,8 @@ class TestDriver(DakotaBase):
 
             retval["cons"] = array([c1, c2])
             if self.force_exception:
-                raise RuntimeError("Forced exception")
+                msg = "Forced exception"
+                raise RuntimeError(msg)  # noqa: TRY301
 
         except Exception as exc:
             print("    caught", exc)
@@ -122,20 +126,20 @@ class TestDriver(DakotaBase):
         return retval
 
 
-def rosenbrock(x):
-    return 100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
+def rosenbrock(x: NDArray[np.float64]) -> float:
+    return float(100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2)
 
 
-def dummy_constraint1(x):
-    return x[0] + x[1] - 10  # <= 0
+def dummy_constraint1(x: NDArray[np.float64]) -> float:
+    return float(x[0] + x[1] - 10)  # <= 0
 
 
-def dummy_constraint2(x):
-    return -x[0] - x[1] - 10  # <= 0
+def dummy_constraint2(x: NDArray[np.float64]) -> float:
+    return float(-x[0] - x[1] - 10)  # <= 0
 
 
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
-def test_rosenbrock_with_everest_minimize(x0):
+def test_rosenbrock_with_everest_minimize(x0: NDArray[np.float64]) -> None:
     constraints = [
         {"type": "ineq", "fun": dummy_constraint1},
         {"type": "ineq", "fun": dummy_constraint2},
@@ -158,22 +162,21 @@ def test_rosenbrock_with_everest_minimize(x0):
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Doesn't work on macOS")
-def test_dakota_conmin_optimization():
+def test_dakota_conmin_optimization() -> None:
     driver = TestDriver()
     driver.run_dakota()
 
     best_point = getattr(driver, "best_point", None)
     if best_point is None:
-        raise RuntimeError(
-            "No best_point attribute found on driver - please add code to save the solution."
-        )
+        msg = "No best_point attribute found on driver - please add code to save the solution."
+        raise RuntimeError(msg)
 
     assert np.allclose(best_point, [1.0, 1.0], atol=1e-4)
 
 
 @pytest.mark.parametrize("x0", [np.array([-1.2, 1.0])])
 @pytest.mark.skipif(sys.platform == "darwin", reason="Doesn't work on macOS")
-def test_compare_dakota_and_everest_minimizers(x0):
+def test_compare_dakota_and_everest_minimizers(x0: NDArray[np.float64]) -> None:
     constraints = [
         {"type": "ineq", "fun": dummy_constraint1},
         {"type": "ineq", "fun": dummy_constraint2},
@@ -193,7 +196,8 @@ def test_compare_dakota_and_everest_minimizers(x0):
     dakota_best_point = getattr(driver, "best_point", None)
     dakota_best_fun = getattr(driver, "best_fun", None)
     if dakota_best_point is None or dakota_best_fun is None:
-        raise RuntimeError("Dakota driver did not record best solution.")
+        msg = "Dakota driver did not record best solution."
+        raise RuntimeError(msg)
 
     expected_x = np.array([1.0, 1.0])
     expected_fun = 0.0
@@ -205,8 +209,5 @@ def test_compare_dakota_and_everest_minimizers(x0):
     assert np.isclose(dakota_best_fun, expected_fun, atol=1e-6)
 
     assert np.isclose(dakota_best_fun, everest_result.fun, atol=1e-6)
-
-    print("Dakota best point:", dakota_best_point)
-    print("Everest result x:", everest_result.x)
 
     assert np.allclose(dakota_best_point, everest_result.x, atol=1e-3)

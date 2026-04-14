@@ -1,16 +1,21 @@
-"""Test suite for everest_optimizers.minimize() with method='optpp_q_newton'
+"""Test suite for everest_optimizers.minimize() with method='optpp_q_newton'.
 
-Testing the OptQNewton (Quasi-Newton Solver) method from everest_optimizers.minimize().
-In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
+Testing the OptQNewton (Quasi-Newton Solver) method from
+everest_optimizers.minimize(). In Dakota OPTPP this optimization algorithm is
+referred to as OptQNewton.
 """
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 
 from everest_optimizers import minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEFAULT_OPTIONS = {
     "debug": False,
@@ -20,9 +25,9 @@ DEFAULT_OPTIONS = {
 }
 
 
-def test_rosenbrock_simple():
+def test_rosenbrock_simple() -> None:
     def rosenbrock_obj(x: NDArray[np.float64]) -> float:
-        return 100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2
+        return float(100 * (x[1] - x[0] ** 2) ** 2 + (1 - x[0]) ** 2)
 
     def rosenbrock_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
         grad = np.zeros_like(x)
@@ -52,9 +57,9 @@ def test_rosenbrock_simple():
         np.array([-2.0, -2.0]),
     ],
 )
-def test_quadratic_from_multiple_starts(start_point: NDArray[np.float64]):
+def test_quadratic_from_multiple_starts(start_point: NDArray[np.float64]) -> None:
     def objective(x: NDArray[np.float64]) -> float:
-        return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+        return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
     def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])

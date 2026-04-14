@@ -7,19 +7,21 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 from scipy.optimize import Bounds
 
 from everest_optimizers import minimize
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
 
 # --- Fixed Problem Definition ---
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -27,14 +29,16 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
 
 
 X0 = np.array([0.0, 0.0])
-BOUNDS = Bounds([0, -np.inf], [np.inf, np.inf])
+BOUNDS = Bounds((0, -np.inf), (np.inf, np.inf))
 EXPECTED_SOLUTION = np.array([2.0, -1.0])
 
 # --- Tests for different options ---
 
 
 @pytest.mark.parametrize("search_method", ["line_search", "trust_pds"])
-def test_search_strategy_options(tmp_path: Path, monkeypatch: Any, search_method: str):
+def test_search_strategy_options(
+    tmp_path: Path, monkeypatch: Any, search_method: str
+) -> None:
     """Test that the optimizer runs with different search strategy settings."""
     monkeypatch.chdir(tmp_path)
     options = {"search_method": search_method}
@@ -43,16 +47,15 @@ def test_search_strategy_options(tmp_path: Path, monkeypatch: Any, search_method
         X0,
         method="optpp_bcq_newton",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         options=options,
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
 
 
-
 @pytest.mark.parametrize("tolerance", [1e-4, 1e-6, 1e-8])
-def test_convergence_tolerance_options(tolerance: float):
+def test_convergence_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different convergence tolerance settings."""
     options = {"convergence_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
@@ -60,7 +63,7 @@ def test_convergence_tolerance_options(tolerance: float):
         X0,
         method="optpp_bcq_newton",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         options=options,
     )
     assert result.success
@@ -77,8 +80,8 @@ def test_convergence_tolerance_options(tolerance: float):
         1e-8,
         1e-10,
     ],
-)  # TODO: investigate if this tolerance parameter is handled correctly
-def test_gradient_tolerance_options(tolerance: float):
+)  # TODO: investigate if this tolerance parameter is handled correctly  # noqa: FIX002, TD002, TD003
+def test_gradient_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {"gradient_tolerance": tolerance, "max_iterations": 10000}
     result = minimize(
@@ -86,7 +89,7 @@ def test_gradient_tolerance_options(tolerance: float):
         X0,
         method="optpp_bcq_newton",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         options=options,
     )
     assert result.success
@@ -94,7 +97,7 @@ def test_gradient_tolerance_options(tolerance: float):
 
 
 @pytest.mark.parametrize("max_iterations", [10, 100, 1000])
-def test_max_iterations_option(max_iterations: int):
+def test_max_iterations_option(max_iterations: int) -> None:
     """Test that the optimizer respects the max_iterations setting."""
     options = {"max_iterations": max_iterations}
     result = minimize(
@@ -102,14 +105,14 @@ def test_max_iterations_option(max_iterations: int):
         X0,
         method="optpp_bcq_newton",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         options=options,
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
 
 
-def test_too_low_max_iterations():
+def test_too_low_max_iterations() -> None:
     """Too low max_iterations should mean it numerically does not converge"""
     options = {"max_iterations": 1}
     result = minimize(
@@ -117,7 +120,7 @@ def test_too_low_max_iterations():
         X0,
         method="optpp_bcq_newton",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         options=options,
     )
     assert result.success  # algorithm terminates successfully
@@ -127,7 +130,7 @@ def test_too_low_max_iterations():
 
 
 @pytest.mark.parametrize("debug_flag", [True, False])
-def test_debug_option(debug_flag: bool):
+def test_debug_option(debug_flag: bool) -> None:  # noqa: FBT001
     """Test that the optimizer runs with different debug flag settings."""
     options = {"debug": debug_flag}
     result = minimize(
@@ -135,7 +138,7 @@ def test_debug_option(debug_flag: bool):
         X0,
         method="optpp_bcq_newton",
         jac=objective_grad,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         options=options,
     )
     assert result.success
@@ -148,7 +151,7 @@ def test_output_file_no_default_file(tmp_path: Path, monkeypatch: Any) -> None:
     minimize(
         objective,
         X0,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         method="optpp_bcq_newton",
         jac=objective_grad,
     )
@@ -161,7 +164,7 @@ def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
     minimize(
         objective,
         X0,
-        bounds=BOUNDS,  # type: ignore[arg-type]
+        bounds=BOUNDS,
         method="optpp_bcq_newton",
         jac=objective_grad,
         options={"output_file": "foo.out"},

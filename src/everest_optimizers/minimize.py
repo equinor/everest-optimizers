@@ -19,8 +19,9 @@ def minimize(  # noqa: PLR0913, PLR0917
     args: tuple[Any, ...] | None = (),
     method: str = "optpp_q_newton",
     jac: Callable[..., NDArray[np.float64]] | None = None,
-    bounds: Bounds | None = None,
-    constraints: list[LinearConstraint | NonlinearConstraint]
+    bounds: list[tuple[float, float]] | Bounds | None = None,
+    constraints: list[dict[str, Any]]
+    | list[LinearConstraint | NonlinearConstraint]
     | LinearConstraint
     | NonlinearConstraint
     | None = None,
@@ -156,8 +157,8 @@ def minimize(  # noqa: PLR0913, PLR0917
                 x0=x0,
                 args=args,
                 jac=jac,
-                bounds=bounds,
-                constraints=constraints,
+                bounds=bounds,  # type: ignore[arg-type]
+                constraints=constraints,  # type: ignore[arg-type]
                 callback=callback,
                 options=options,
             )
@@ -167,20 +168,18 @@ def minimize(  # noqa: PLR0913, PLR0917
                 x0=x0,
                 args=args,
                 jac=jac,
-                bounds=bounds,
-                constraints=constraints,
+                bounds=bounds,  # type: ignore[arg-type]
+                constraints=constraints,  # type: ignore[arg-type]
                 callback=callback,
                 options=options,
             )
         case "conmin_mfd":
-            assert constraints is None or isinstance(constraints, list)
-            assert bounds is None or isinstance(bounds, list)
             return minimize_conmin_mfd(
                 fun=fun,
                 x0=x0,
                 args=args,
-                bounds=bounds,
-                constraints=constraints,
+                bounds=bounds,  # type: ignore[arg-type]
+                constraints=constraints,  # type: ignore[arg-type]
                 options=options,
             )
         case "optpp_q_nips":
@@ -189,8 +188,8 @@ def minimize(  # noqa: PLR0913, PLR0917
                 x0=x0,
                 args=args,
                 jac=jac,
-                bounds=bounds,
-                constraints=constraints,
+                bounds=bounds,  # type: ignore[arg-type]
+                constraints=constraints,  # type: ignore[arg-type]
                 options=options,
             )
         case other:

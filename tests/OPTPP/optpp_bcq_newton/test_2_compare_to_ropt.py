@@ -24,7 +24,6 @@ def _function_runner(
     evaluator_context: EvaluatorContext,
     functions: list[_Function],
 ) -> EvaluatorResult:
-    """Run objective / constraint functions mimicking the *ropt* interface."""
     objective_count = evaluator_context.context.objectives.weights.size
     constraint_count = (
         0
@@ -75,7 +74,6 @@ def evaluator(test_functions: Any) -> Callable[[list[_Function]], Any]:
 
 @pytest.fixture(name="enopt_config")
 def enopt_config_fixture() -> dict[str, Any]:
-    """Standard configuration for the EnOpt optimizer."""
     return {
         "variables": {
             "variable_count": 3,
@@ -92,7 +90,7 @@ def enopt_config_fixture() -> dict[str, Any]:
 
 
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 1.0) ** 2 + (x[1] - 2.0) ** 2 + (x[2] - 3.0) ** 2
+    return float((x[0] - 1.0) ** 2 + (x[1] - 2.0) ** 2 + (x[2] - 3.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:

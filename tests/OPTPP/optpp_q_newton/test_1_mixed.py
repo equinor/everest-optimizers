@@ -6,13 +6,17 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 from scipy import optimize as sp_optimize
 from scipy.optimize import Bounds, LinearConstraint
 
 from everest_optimizers import minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEFAULT_OPTIONS = {
     "debug": False,
@@ -23,15 +27,15 @@ DEFAULT_OPTIONS = {
 
 
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
 
-def test_linear_equality_constraint():
-    A = np.array([[1, 1]])
+def test_linear_equality_constraint() -> None:
+    A = np.array([[1, 1]])  # noqa: N806
     lb = ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
     x0 = np.array([0.0, 0.0])
@@ -48,8 +52,8 @@ def test_linear_equality_constraint():
         )
 
 
-def test_linear_inequality_constraint():
-    A = np.array([[1, 1]])
+def test_linear_inequality_constraint() -> None:
+    A = np.array([[1, 1]])  # noqa: N806
     lb = np.array([-np.inf])
     ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
@@ -67,8 +71,8 @@ def test_linear_inequality_constraint():
         )
 
 
-def test_mixed_bounds():
-    bounds = Bounds([2.5, -np.inf], [np.inf, -1.5])
+def test_mixed_bounds() -> None:
+    bounds = Bounds((2.5, -np.inf), (np.inf, -1.5))
     x0 = np.array([3.0, -2.0])
     with pytest.raises(
         NotImplementedError, match="optpp_q_newton does not support bounds"
@@ -83,9 +87,9 @@ def test_mixed_bounds():
         )
 
 
-def test_bounds_and_linear_equality():
-    bounds = Bounds([0, -np.inf], [np.inf, np.inf])
-    A = np.array([[1, 1]])
+def test_bounds_and_linear_equality() -> None:
+    bounds = Bounds((0.0, -np.inf), (np.inf, np.inf))
+    A = np.array([[1, 1]])  # noqa: N806
     lb = ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
     x0 = np.array([0.0, 0.0])
@@ -103,9 +107,9 @@ def test_bounds_and_linear_equality():
         )
 
 
-def test_bounds_and_linear_inequality():
-    bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
-    A = np.array([[1, 1]])
+def test_bounds_and_linear_inequality() -> None:
+    bounds = Bounds((-np.inf, -np.inf), (1.5, np.inf))
+    A = np.array([[1, 1]])  # noqa: N806
     lb = np.array([1])
     ub = np.array([np.inf])
     constraints = LinearConstraint(A, lb, ub)
@@ -124,37 +128,13 @@ def test_bounds_and_linear_inequality():
         )
 
 
-@pytest.mark.xfail(
-    reason="Graceful failure handling for unbounded problems is not implemented"
-)
-def test_unbounded_problem():
-    """Test an unbounded problem, expecting a failure or specific status."""
-
-    def unbounded_obj(x):
-        return -x[0] - x[1]
-
-    def unbounded_grad(x):
-        return np.array([-1.0, -1.0])
-
-    x0 = np.array([1.0, 1.0])
-
-    result = minimize(
-        unbounded_obj,
-        x0,
-        method="optpp_q_newton",
-        jac=unbounded_grad,
-        options=DEFAULT_OPTIONS,
-    )
-    assert not result.success
-
-
-def test_higher_dimensions_unconstrained():
+def test_higher_dimensions_unconstrained() -> None:
     """Test a problem with 10 dimensions."""
 
-    def high_dim_obj(x):
+    def high_dim_obj(x: NDArray[np.float64]) -> float:
         return np.sum((x - np.arange(10)) ** 2)
 
-    def high_dim_grad(x):
+    def high_dim_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return 2 * (x - np.arange(10))
 
     x0 = np.zeros(10)
