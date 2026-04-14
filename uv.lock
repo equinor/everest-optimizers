@@ -28,6 +28,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cloudpickle"
+version = "3.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/fb/576f067976d320f5f0114a8d9fa1215425441bb35627b1993e5afd8111e5/cloudpickle-3.1.2.tar.gz", hash = "sha256:7fda9eb655c9c230dab534f1983763de5835249750e85fbcef43aaa30a9a2414", size = 22330, upload-time = "2025-11-03T09:25:26.604Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl", hash = "sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a", size = 22228, upload-time = "2025-11-03T09:25:25.534Z" },
+]
+
+[[package]]
 name = "cmake"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -947,16 +956,17 @@ wheels = [
 
 [[package]]
 name = "ropt"
-version = "0.25.0"
+version = "0.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "cloudpickle" },
     { name = "numpy" },
     { name = "pydantic" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/c8/55f5d5dbff4c8e6d81f449d350a5fa7b3fd51403582bedbaff1582748528/ropt-0.25.0.tar.gz", hash = "sha256:a2fb438bc5a0c2d60b093873a6e30e278c71ab14cf5d4720ca4b4b123634ad36", size = 150788, upload-time = "2025-11-25T12:18:12.943Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/11/6a3d88d8ff9754185b7b1a13704269ca8aed8ad3a1b29192f73cbec30b6f/ropt-0.27.0.tar.gz", hash = "sha256:7d739f6b5481fca81191281328bf7071a8d4cf3e77d8094fe626b14852f2a6bd", size = 162469, upload-time = "2026-04-14T11:27:10.831Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/62/008cb3417866c40e3f488a8c141286fc357e1cc4668c190f764995646aaf/ropt-0.25.0-py3-none-any.whl", hash = "sha256:9bca0d581e590053f114e8051c7eb0d446a64bd53118ac77668f7028bb7b30b6", size = 162825, upload-time = "2025-11-25T12:18:11.734Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/93/06a2e8df54a0461f5d997ecc25ac9009ba8af31eb46ee6eed222cdaad3f5/ropt-0.27.0-py3-none-any.whl", hash = "sha256:4aae99850337a8bafbfc63608d092d7cfde734ee64771f54a97afad1b97150d5", size = 176663, upload-time = "2026-04-14T11:27:09.05Z" },
 ]
 
 [[package]]
