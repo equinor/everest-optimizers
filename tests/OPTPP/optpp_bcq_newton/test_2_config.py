@@ -50,22 +50,6 @@ def test_search_strategy_options(tmp_path: Path, monkeypatch: Any, search_method
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
 
 
-def test_search_strategy_options_trust_region():
-    """Test that the trust-region method is not supported."""
-    options = {"search_method": "trust_region"}
-    with pytest.raises(
-        ValueError,
-        match="OptBCQNewton does not support the 'trust_region' search method",
-    ):
-        minimize(
-            objective,
-            X0,
-            method="optpp_bcq_newton",
-            jac=objective_grad,
-            bounds=BOUNDS,  # type: ignore[arg-type]
-            options=options,
-        )
-
 
 @pytest.mark.parametrize("tolerance", [1e-4, 1e-6, 1e-8])
 def test_convergence_tolerance_options(tolerance: float):

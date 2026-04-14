@@ -48,7 +48,7 @@ def minimize_optqnips(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
         raise ValueError(msg)
 
     if bounds is None and not constraints:
-        msg = "Either bounds or cponstraints must be provided for OptQNIPS"
+        msg = "Either bounds or constraints must be provided for OptQNIPS"
         raise ValueError(msg)
 
     constraint_objects: list[

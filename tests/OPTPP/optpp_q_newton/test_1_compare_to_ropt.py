@@ -24,11 +24,11 @@ def _function_runner(
     functions: list[_Function],
 ) -> EvaluatorResult:
     """Run objective / constraint functions mimicking the *ropt* interface."""
-    objective_count = evaluator_context.config.objectives.weights.size
+    objective_count = evaluator_context.context.objectives.weights.size
     constraint_count = (
         0
-        if evaluator_context.config.nonlinear_constraints is None
-        else evaluator_context.config.nonlinear_constraints.lower_bounds.size
+        if evaluator_context.context.nonlinear_constraints is None
+        else evaluator_context.context.nonlinear_constraints.lower_bounds.size
     )
     objective_results = np.zeros(
         (variables.shape[0], objective_count), dtype=np.float64
@@ -80,9 +80,9 @@ def enopt_config_fixture() -> dict[str, Any]:
             "variable_count": 3,
             "perturbation_magnitudes": 0.01,
         },
-        "optimizer": {
+        "backend": {
             "method": "optpp_q_newton",
-            "tolerance": 1e-6,
+            "convergence_tolerance": 1e-6,
         },
         "objectives": {
             "weights": [0.75, 0.25],
