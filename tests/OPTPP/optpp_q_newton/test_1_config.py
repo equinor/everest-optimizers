@@ -7,19 +7,21 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNewton.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint
 
 from everest_optimizers import minimize
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
 
 # --- Fixed Problem Definition ---
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -35,7 +37,9 @@ EXPECTED_SOLUTION = np.array([2.0, -1.0])
 
 
 @pytest.mark.parametrize("search_method", ["trust_region", "line_search", "trust_pds"])
-def test_search_strategy_options(tmp_path: Path, monkeypatch: Any, search_method: str):
+def test_search_strategy_options(
+    tmp_path: Path, monkeypatch: Any, search_method: str
+) -> None:
     """Test that the optimizer runs with different search strategy settings."""
     monkeypatch.chdir(tmp_path)
     options = {"search_method": search_method}
@@ -47,7 +51,7 @@ def test_search_strategy_options(tmp_path: Path, monkeypatch: Any, search_method
 
 
 @pytest.mark.parametrize("tolerance", [1e-4, 1e-6, 1e-8])
-def test_convergence_tolerance_options(tolerance: float):
+def test_convergence_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different convergence tolerance settings."""
     options = {"convergence_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
@@ -67,8 +71,8 @@ def test_convergence_tolerance_options(tolerance: float):
         1e-8,
         1e-10,
     ],
-)  # TODO: investigate if this tolerance parameter is handled correctly
-def test_gradient_tolerance_options(tolerance: float):
+)  # TODO: investigate if this tolerance parameter is handled correctly  # noqa: FIX002, TD002, TD003
+def test_gradient_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {"gradient_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
@@ -79,7 +83,7 @@ def test_gradient_tolerance_options(tolerance: float):
 
 
 @pytest.mark.parametrize("max_iterations", [10, 100, 1000])
-def test_max_iterations_option(max_iterations: int):
+def test_max_iterations_option(max_iterations: int) -> None:
     """Test that the optimizer respects the max_iterations setting."""
     options = {"max_iterations": max_iterations}
     result = minimize(
@@ -90,7 +94,7 @@ def test_max_iterations_option(max_iterations: int):
 
 
 @pytest.mark.parametrize("debug_flag", [True, False])
-def test_debug_option(debug_flag: bool):
+def test_debug_option(debug_flag: bool) -> None:  # noqa: FBT001
     """Test that the optimizer runs with different debug flag settings."""
     options = {"debug": debug_flag}
     result = minimize(

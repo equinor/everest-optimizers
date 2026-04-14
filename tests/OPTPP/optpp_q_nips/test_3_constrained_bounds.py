@@ -6,12 +6,16 @@ In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint
 
 from everest_optimizers import minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEFAULT_OPTIONS = {
     "debug": False,
@@ -22,15 +26,15 @@ DEFAULT_OPTIONS = {
 
 
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
 
-def test_lower_bounds_only():
-    bounds = Bounds([2.5, -np.inf], [np.inf, np.inf])
+def test_lower_bounds_only() -> None:
+    bounds = Bounds((2.5, -np.inf), (np.inf, np.inf))
     x0 = np.array([3.0, 0.0])
     result = minimize(
         objective,
@@ -45,8 +49,8 @@ def test_lower_bounds_only():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
 
-def test_upper_bounds_only():
-    bounds = Bounds([-np.inf, -np.inf], [np.inf, -1.5])
+def test_upper_bounds_only() -> None:
+    bounds = Bounds((-np.inf, -np.inf), (np.inf, -1.5))
     x0 = np.array([0.0, -2.0])
     result = minimize(
         objective,
@@ -61,8 +65,8 @@ def test_upper_bounds_only():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
 
-def test_mixed_bounds():
-    bounds = Bounds([2.5, -np.inf], [np.inf, -1.5])
+def test_mixed_bounds() -> None:
+    bounds = Bounds((2.5, -np.inf), (np.inf, -1.5))
     x0 = np.array([3.0, -2.0])
     result = minimize(
         objective,
@@ -77,9 +81,9 @@ def test_mixed_bounds():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
 
-def test_bounds_and_linear_equality():
-    bounds = Bounds([0, -np.inf], [np.inf, np.inf])
-    A = np.array([[1, 1]])
+def test_bounds_and_linear_equality() -> None:
+    bounds = Bounds((0.0, -np.inf), (np.inf, np.inf))
+    A = np.array([[1, 1]])  # noqa: N806
     lb = ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
     x0 = np.array([0.0, 0.0])
@@ -97,9 +101,9 @@ def test_bounds_and_linear_equality():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
 
-def test_bounds_and_linear_inequality():
-    bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
-    A = np.array([[1, 1]])
+def test_bounds_and_linear_inequality() -> None:
+    bounds = Bounds((-np.inf, -np.inf), (1.5, np.inf))
+    A = np.array([[1, 1]])  # noqa: N806
     lb = np.array([1])
     ub = np.array([np.inf])
     constraints = LinearConstraint(A, lb, ub)
@@ -118,8 +122,8 @@ def test_bounds_and_linear_inequality():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-4, atol=1e-4)
 
 
-def test_multiple_bounds():
-    bounds = Bounds([2.5, -1.5], [3.0, -1.0])
+def test_multiple_bounds() -> None:
+    bounds = Bounds((2.5, -1.5), (3.0, -1.0))
     x0 = np.array([2.8, -1.2])
     result = minimize(
         objective,
@@ -134,9 +138,9 @@ def test_multiple_bounds():
     np.testing.assert_allclose(result.x, expected_solution, rtol=1e-3, atol=1e-3)
 
 
-def test_bounds_and_multiple_linear_constraints():
-    bounds = Bounds([-np.inf, -np.inf], [1.5, np.inf])
-    A = np.array([[1, 1], [1, -1]])
+def test_bounds_and_multiple_linear_constraints() -> None:
+    bounds = Bounds((-np.inf, -np.inf), (1.5, np.inf))
+    A = np.array([[1, 1], [1, -1]])  # noqa: N806
     lb = np.array([1, 0])
     ub = np.array([np.inf, 0])
     constraints = LinearConstraint(A, lb, ub)
@@ -165,7 +169,7 @@ def test_bounds_and_multiple_linear_constraints():
         np.array([10.0, 10.0]),
     ],
 )
-def test_start_feasible_and_infeasible(x0: NDArray[np.float64]):
+def test_start_feasible_and_infeasible(x0: NDArray[np.float64]) -> None:
     """Test with starting points that may be inside or outside the feasible region."""
     bounds = Bounds([2.5, -np.inf], [np.inf, np.inf])
     result = minimize(
@@ -173,7 +177,7 @@ def test_start_feasible_and_infeasible(x0: NDArray[np.float64]):
         x0,
         method="optpp_q_nips",
         jac=objective_grad,
-        bounds=bounds,  # type: ignore[arg-type]
+        bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
     assert result.success

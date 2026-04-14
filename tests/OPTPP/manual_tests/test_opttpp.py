@@ -1,19 +1,19 @@
-#!/usr/bin/env python3
+# ruff: noqa: T201  # noqa: INP001
+
 
 import numpy as np
+from numpy.typing import NDArray
 
 from everest_optimizers import pyoptpp
 
 
-def _rosenbrock_value(x_np: np.ndarray) -> float:
-    """Rosenbrock function value for a numpy array input."""
+def _rosenbrock_value(x_np: NDArray[np.float64]) -> float:
     return float(
         np.sum(100.0 * (x_np[1:] - x_np[:-1] ** 2.0) ** 2.0 + (1 - x_np[:-1]) ** 2.0)
     )
 
 
-def _rosenbrock_grad(x_np: np.ndarray) -> np.ndarray:
-    """Gradient of the Rosenbrock function for a numpy array input."""
+def _rosenbrock_grad(x_np: NDArray[np.float64]) -> NDArray[np.float64]:
     grad = np.zeros_like(x_np)
     if x_np.size == 2:
         # Analytical 2D gradient
@@ -29,22 +29,21 @@ def _rosenbrock_grad(x_np: np.ndarray) -> np.ndarray:
     return grad
 
 
-def main():
+def main() -> None:
     """Main function to run the optimization test."""
     print("--- Testing OPTPP Python Wrapper ---")
-
     # Create an instance of the Rosenbrock problem
     ndim = 2
     x0_np = np.array([-1.2, 1.0])
 
     # Create Python callbacks for the objective and gradient following the
     # _OptQNewtonProblem pattern used in the library (NLF1.create factory).
-    def eval_f(x):
-        x_np = np.array(x.to_numpy(), copy=True)
+    def eval_f(x: NDArray[np.float64]) -> float:
+        x_np = np.asarray(x, copy=True)
         return _rosenbrock_value(x_np)
 
-    def eval_g(x):
-        x_np = np.array(x.to_numpy(), copy=True)
+    def eval_g(x: NDArray[np.float64]) -> NDArray[np.float64]:
+        x_np = np.asarray(x, copy=True)
         return _rosenbrock_grad(x_np)
 
     x0_vector = pyoptpp.SerialDenseVector(x0_np)

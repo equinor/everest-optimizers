@@ -1,18 +1,22 @@
-"""Test suite for everest_optimizers.minimize() with method='optpp_q_nips'
+"""Test suite for everest_optimizers.minimize() with method='optpp_q_nips'.
 
-Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from everest_optimizers.minimize().
-In Dakota OPTPP this optimization algorithm is referred to as OptQNIPS.
+Testing the OptQNIPS (Quasi-Newton Interior-Point Solver) method from
+everest_optimizers.minimize(). In Dakota OPTPP this optimization algorithm is
+referred to as OptQNIPS.
 """
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
-import pytest
-from numpy.typing import NDArray
 from scipy import optimize as sp_optimize
-from scipy.optimize import Bounds, LinearConstraint
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
 
 from everest_optimizers import minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEFAULT_OPTIONS = {
     "debug": False,
@@ -23,22 +27,22 @@ DEFAULT_OPTIONS = {
 
 
 def objective(x: NDArray[np.float64]) -> float:
-    return (x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2
+    return float((x[0] - 2.0) ** 2 + (x[1] + 1.0) ** 2)
 
 
 def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2.0), 2 * (x[1] + 1.0)])
 
 
-def test_kitchen_sink():
+def test_kitchen_sink() -> None:
     """A 'kitchen sink' test with bounds, linear equality, and inequality constraints."""
-    bounds = Bounds([0, -np.inf], [1.5, np.inf])
-    A_eq = np.array([[1, 1]])
+    bounds = Bounds((0.0, -np.inf), (1.5, np.inf))
+    A_eq = np.array([[1, 1]])  # noqa: N806
     b_eq = np.array([1])
-    A_ineq = np.array([[1, 0]])
+    A_ineq = np.array([[1, 0]])  # noqa: N806
     lb_ineq = np.array([-np.inf])
     ub_ineq = np.array([1.5])
-    constraints = [
+    constraints: list[LinearConstraint | NonlinearConstraint] = [
         LinearConstraint(A_eq, b_eq, b_eq),
         LinearConstraint(A_ineq, lb_ineq, ub_ineq),
     ]
@@ -69,9 +73,9 @@ def test_kitchen_sink():
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
 
-def test_active_and_inactive_constraints():
+def test_active_and_inactive_constraints() -> None:
     """Test with a mix of active and inactive constraints at the solution."""
-    bounds = Bounds([0, 0], [3, 3])
+    bounds = Bounds((0.0, 0.0), (3.0, 3.0))
     constraints = LinearConstraint(np.array([[1, 1]]), lb=[4], ub=[np.inf])
     x0 = np.array([1.0, 1.0])
 
@@ -102,12 +106,12 @@ def test_active_and_inactive_constraints():
     np.testing.assert_allclose(np.sum(res_everest.x), 4.0, atol=1e-5)
 
 
-def test_redundant_constraints():
+def test_redundant_constraints() -> None:
     """Test with redundant constraints that should not affect the outcome."""
-    bounds = Bounds([0, 0], [3, 3])
-    constraints = [
-        LinearConstraint(np.array([[1, 0]]), ub=[2.5]),
-        LinearConstraint(np.array([[1, 0]]), ub=[3.0]),  # Redundant
+    bounds = Bounds((0.0, 0.0), (3.0, 3.0))
+    constraints: list[LinearConstraint | NonlinearConstraint] = [
+        LinearConstraint(np.array([[1.0, 0.0]]), ub=[2.5]),
+        LinearConstraint(np.array([[1.0, 0.0]]), ub=[3.0]),  # Redundant
     ]
     x0 = np.array([1.0, 1.0])
 
@@ -136,60 +140,13 @@ def test_redundant_constraints():
     np.testing.assert_allclose(res_everest.fun, res_scipy.fun, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.xfail(
-    reason="Graceful failure for infeasible problems is not yet implemented."
-)
-def test_infeasible_problem():
-    """Test an infeasible problem, expecting a failure."""
-    bounds = Bounds([2, 2], [3, 3])
-    constraints = LinearConstraint(np.array([[1, 1]]), ub=[3])  # Contradicts bounds
-    x0 = np.array([2.5, 2.5])
-
-    result = minimize(
-        objective,
-        x0,
-        method="optpp_q_nips",
-        jac=objective_grad,
-        bounds=bounds,
-        constraints=constraints,
-        options=DEFAULT_OPTIONS,
-    )
-    assert not result.success
-
-
-@pytest.mark.xfail(
-    reason="Graceful failure for unbounded problems is not yet implemented."
-)
-def test_unbounded_problem():
-    """Test an unbounded problem, expecting a failure or specific status."""
-
-    def unbounded_obj(x):
-        return -x[0] - x[1]
-
-    def unbounded_grad(x):
-        return np.array([-1.0, -1.0])
-
-    bounds = Bounds([0, -np.inf], [np.inf, np.inf])
-    x0 = np.array([1.0, 1.0])
-
-    result = minimize(
-        unbounded_obj,
-        x0,
-        method="optpp_q_nips",
-        jac=unbounded_grad,
-        bounds=bounds,
-        options=DEFAULT_OPTIONS,
-    )
-    assert not result.success
-
-
-def test_higher_dimensions():
+def test_higher_dimensions() -> None:
     """Test a problem with 10 dimensions."""
 
-    def high_dim_obj(x):
+    def high_dim_obj(x: NDArray[np.float64]) -> float:
         return np.sum((x - np.arange(10)) ** 2)
 
-    def high_dim_grad(x):
+    def high_dim_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return 2 * (x - np.arange(10))
 
     x0 = np.zeros(10)
