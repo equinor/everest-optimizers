@@ -52,9 +52,6 @@ def set_basic_newton_options(
 
     match defaulted_options["search_method"].lower():
         case "trust_region" | "trustregion":
-            if isinstance(optimizer, OptBCQNewton):
-                msg = "OptBCQNewton does not support the 'trust_region' search method"
-                raise TypeError(msg)
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
         case "line_search" | "linesearch":
             optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)

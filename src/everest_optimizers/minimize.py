@@ -173,7 +173,7 @@ def minimize(  # noqa: PLR0913, PLR0917
                 options=options,
             )
         case "conmin_mfd":
-            assert constraints is None or isinstance(constraints, dict)
+            assert constraints is None or isinstance(constraints, list)
             assert bounds is None or isinstance(bounds, list)
             return minimize_conmin_mfd(
                 fun=fun,
