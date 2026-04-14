@@ -496,13 +496,13 @@ wheels = [
 
 [[package]]
 name = "mdolab-baseclasses"
-version = "1.8.4"
+version = "1.8.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/ce/1568e227bed0140f7c2800a6cef33afdd066ca6239ac4468e0f16b09c12b/mdolab_baseclasses-1.8.4-py3-none-any.whl", hash = "sha256:b7a4c9b6ee7e61b560077c76105648b83114122153fc823960752bbc3e703eb7", size = 69163, upload-time = "2025-08-19T18:09:32.911Z" },
+    { url = "https://files.pythonhosted.org/packages/77/9e/fedf7d310bff021dfc865f043ae5a1f795a15cf54d30653b379813aa5713/mdolab_baseclasses-1.8.5-py3-none-any.whl", hash = "sha256:2f1d229b0a21f81d2ea86f2bdf5784266614e471e7a82d786a8dca51bea44529", size = 69115, upload-time = "2026-03-19T17:11:10.719Z" },
 ]
 
 [[package]]
