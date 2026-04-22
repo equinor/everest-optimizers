@@ -115,3 +115,7 @@ strict = true
 [[tool.mypy.overrides]]
 module = "everest_optimizers.pyoptpp._pyoptpp"
 ignore_errors = true
+
+[tool.uv]
+fork-strategy = "requires-python"
+exclude-newer = "7 days"
