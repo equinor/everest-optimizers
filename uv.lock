@@ -20,7 +20,7 @@ name = "carolina"
 version = "2.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
+    { name = "numpy", marker = "python_full_version < '3.15'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/22/b7/94c72c4e84f00f754b080ab1c5f627a12c2e2deb0432e3dd88bbac57602f/carolina-2.0.4-cp311-cp311-macosx_15_0_arm64.whl", hash = "sha256:d67fa5e0785e54d44d5d58ac2994717caee91e715d5366c443dc628675e205e0", size = 15164182, upload-time = "2026-03-10T12:29:52.497Z" },
@@ -166,7 +166,6 @@ dependencies = [
     { name = "mdolab-baseclasses" },
     { name = "pydantic" },
     { name = "scipy" },
-    { name = "sqlitedict" },
 ]
 
 [package.dev-dependencies]
@@ -199,7 +198,6 @@ requires-dist = [
     { name = "mdolab-baseclasses" },
     { name = "pydantic" },
     { name = "scipy" },
-    { name = "sqlitedict" },
 ]
 
 [package.metadata.requires-dev]
@@ -1012,8 +1010,8 @@ name = "ropt-dakota"
 version = "0.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "carolina" },
-    { name = "numpy" },
+    { name = "carolina", marker = "python_full_version < '3.15'" },
+    { name = "numpy", marker = "python_full_version < '3.15'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/23/83/d17e794d7d1b7078bcce8499881baad7b75acdbd73ecaca98dae33373e8b/ropt_dakota-0.27.0.tar.gz", hash = "sha256:374ebbf665119e86505d16437566b308a59508e7fe023b1be395117d2ad4fb2b", size = 27904, upload-time = "2026-04-14T11:27:15.837Z" }
 wheels = [
@@ -1172,12 +1170,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
 ]
-
-[[package]]
-name = "sqlitedict"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/12/9a/7620d1e9dcb02839ed6d4b14064e609cdd7a8ae1e47289aa0456796dd9ca/sqlitedict-2.1.0.tar.gz", hash = "sha256:03d9cfb96d602996f1d4c2db2856f1224b96a9c431bdd16e78032a72940f9e8c", size = 21846, upload-time = "2022-12-03T13:39:13.102Z" }
 
 [[package]]
 name = "swig"
