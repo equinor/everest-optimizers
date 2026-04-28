@@ -5,7 +5,6 @@ requires = [
   "numpy",
   "pybind11",
   "scikit-build-core",
-  "sqlitedict",
   "setuptools_scm",
   "swig; sys_platform == 'darwin'",
 ]
