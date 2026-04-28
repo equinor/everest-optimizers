@@ -81,7 +81,7 @@ install(
         third-party/pyoptsparse/pyoptsparse/pyOpt_constraint.py
         third-party/pyoptsparse/pyoptsparse/pyOpt_error.py
         third-party/pyoptsparse/pyoptsparse/pyOpt_gradient.py
-        # third-party/pyoptsparse/pyoptsparse/pyOpt_history.py
+        third-party/pyoptsparse/pyoptsparse/pyOpt_history.py
         third-party/pyoptsparse/pyoptsparse/pyOpt_objective.py
         third-party/pyoptsparse/pyoptsparse/pyOpt_optimization.py
         third-party/pyoptsparse/pyoptsparse/pyOpt_optimizer.py
