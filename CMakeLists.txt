@@ -51,13 +51,11 @@ ExternalProject_Add(
     pyCONMIN
     GIT_REPOSITORY https://github.com/mdolab/pyoptsparse
     GIT_TAG
-        85549852b70d757de0e3acdcaa6c1fdf5458ce53 # v2.14.3
+        92cd8356b353533ef430e4820f87c9515cde8fe2 # v2.15.1
     SOURCE_DIR ${MOD_SRC}
     BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/_pyCONMIN"
     CONFIGURE_COMMAND meson setup . ${MOD_SRC} --buildtype=release
     BUILD_COMMAND meson compile ${MOD_TARGET}
-    # meson install currently does nothing. That will change if
-    # https://github.com/mdolab/pyoptsparse/pull/433 is merged.
     INSTALL_COMMAND meson install --destdir ${CMAKE_BINARY_DIR}
     # patching out all the modules we did not compile from pyoptsparse/__init__.py
     # and making sqlitedict optional
