@@ -1,0 +1,33 @@
+diff --git a/pyoptsparse/pyOpt_history.py b/pyoptsparse/pyOpt_history.py
+index 8f82f23..e526f75 100644
+--- a/pyoptsparse/pyOpt_history.py
++++ b/pyoptsparse/pyOpt_history.py
+@@ -5,7 +5,10 @@ import os
+ 
+ # External modules
+ import numpy as np
+-from sqlitedict import SqliteDict
++try:
++    from sqlitedict import SqliteDict
++except ImportError:
++    pass
+ 
+ # Local modules
+ from .pyOpt_error import pyOptSparseWarning
+diff --git a/pyoptsparse/pyOpt_optimization.py b/pyoptsparse/pyOpt_optimization.py
+index 38d9024..f58ef10 100644
+--- a/pyoptsparse/pyOpt_optimization.py
++++ b/pyoptsparse/pyOpt_optimization.py
+@@ -9,7 +9,10 @@ import warnings
+ import numpy as np
+ from numpy import ndarray
+ from scipy.sparse import coo_matrix
+-from sqlitedict import SqliteDict
++try:
++    from sqlitedict import SqliteDict
++except ImportError:
++    pass
+ 
+ # Local modules
+ from .pyOpt_MPI import MPI
+
