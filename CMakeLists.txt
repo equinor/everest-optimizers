@@ -60,8 +60,10 @@ ExternalProject_Add(
     # https://github.com/mdolab/pyoptsparse/pull/433 is merged.
     INSTALL_COMMAND meson install --destdir ${CMAKE_BINARY_DIR}
     # patching out all the modules we did not compile from pyoptsparse/__init__.py
+    # and making sqlitedict optional
     PATCH_COMMAND
-        patch pyoptsparse/__init__.py ${CMAKE_SOURCE_DIR}/pyoptsparse.patch
+        patch pyoptsparse/__init__.py ${CMAKE_SOURCE_DIR}/pyoptsparse.patch &&
+        patch -p1 -i ${CMAKE_SOURCE_DIR}/make_sqlitedict_optional.patch
 )
 message(STATUS "Finished configuring pyoptsparse")
 
