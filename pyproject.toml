@@ -2,11 +2,12 @@
 [build-system]
 requires = [
   "meson",
+  "ninja",
   "numpy",
   "pybind11",
   "scikit-build-core",
   "setuptools_scm",
-  "swig; sys_platform == 'darwin'",
+  "swig",
 ]
 build-backend = "scikit_build_core.build"
 
