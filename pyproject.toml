@@ -33,7 +33,7 @@ license = "LGPL-3.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["scipy", "mdolab-baseclasses", "sqlitedict", "pydantic"]
+dependencies = ["scipy", "mdolab-baseclasses", "pydantic"]
 
 [dependency-groups]
 test = [
