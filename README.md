@@ -1,20 +1,28 @@
 # everest-optimizers
 
-The everest-optimizers repository aims to replace the carolina repository by implementing the two algorithms OPTPP_Q_NEWTON and CONMIN_MFD from Dakota. This removes the need of building Dakota through Carolina every time you need to use these two algorithms. Dakota is huge and quite cumbersome to build, so by replacing this dependency we can gain a lot of time.
+The everest-optimizers repository aims to replace the carolina repository by
+implementing the two algorithms OPTPP_Q_NEWTON and CONMIN_MFD from Dakota. This
+removes the need of building Dakota through Carolina every time you need to use
+these two algorithms. Dakota is huge and quite cumbersome to build, so by
+replacing this dependency we can gain a lot of time.
 
 ## Note
-History starting from 14cb0a7ef00fa56c19f8a3956785b8c6bdbf2cbd and older were filtered to delete all files/folders under dakota-packages except OPTPP.
+History starting from 14cb0a7ef00fa56c19f8a3956785b8c6bdbf2cbd and older were
+filtered to delete all files/folders under dakota-packages except OPTPP.
 
 ## Getting Started
 
 ### CONMIN
 
-- We have used some python bindings and implementation from pyoptsparse: (https://github.com/mdolab/pyoptsparse/)
+- We have used some python bindings and implementation from pyoptsparse:
+(https://github.com/mdolab/pyoptsparse/)
 
 - See the following documentation for which input options the implementation have:
 (https://mdolab-pyoptsparse.readthedocs-hosted.com/en/latest/optimizers/CONMIN.html)
 
-To call the CONMIN implementation, we go through the python interface that we have made. Both CONMIN and OPTPP should be called using the minimize() function.
+To call the CONMIN implementation, we go through the python interface that we
+have made. Both CONMIN and OPTPP should be called using the minimize()
+function.
 
 Example:
 
@@ -28,12 +36,14 @@ result = minimize(
     options={"ITMAX": 100},
 )
 ```
-- See also example usage in the tests. For example: [tests/CONMIN/test_conmin_mfd.py](tests/CONMIN/test_conmin_mfd.py)
+- See also example usage in the tests. For example:
+[tests/CONMIN/test_conmin_mfd.py](tests/CONMIN/test_conmin_mfd.py)
 
 
 ## Installation
 
-1. (Optional) We recommend using a virtual enviroment. This can be created and activated by one of the following approaches:
+1. (Optional) We recommend using a virtual enviroment. This can be created and
+   activated by one of the following approaches:
 
 - Using uv:
 ```bash
@@ -56,7 +66,8 @@ pip install .[test]
 
 #### Alternative installation via Docker
 
-Alternatively, you can use Docker to build and run the project with all dependencies:
+Alternatively, you can use Docker to build and run the project with all
+dependencies:
 
 ```bash
 # Build the Docker image
@@ -66,7 +77,8 @@ docker build -t everest-optimizers .
 docker run everest-optimizers
 ```
 
-This approach automatically sets up all required dependencies and runs the tests in an isolated environment.
+This approach automatically sets up all required dependencies and runs the
+tests in an isolated environment.
 
 
 
@@ -80,7 +92,8 @@ To run tests, execute one of the following commands:
 pytest tests
 ```
 
-- All tests (this is not recommended as there are existing tests in Trilinos which are not working):
+- All tests (this is not recommended as there are existing tests in Trilinos
+which are not working):
 ```bash
 pytest
 ```
@@ -97,7 +110,8 @@ pytest path/to/your_file.py
 pytest path/to/your_file.py::name_of_test
 ```
 
-If you want to add print statements / see the print statements in the terminal, you should run with the -s:
+If you want to add print statements / see the print statements in the terminal,
+you should run with the -s:
 
 ```bash
 pytest tests -s
@@ -114,12 +128,14 @@ Build
 cmake --build build
 ```
 
-Copy the module to the virtual environment. so file might have a slightly different name depending on OS/python version
+Copy the module to the virtual environment. so file might have a slightly
+different name depending on OS/python version
 ```bash
 cp build/src/OPTPP-python/_pyoptpp.cpython-313-x86_64-linux-gnu.so .venv/lib/python3.13/site-packages/everest_optimizers/pyoptpp/_pyoptpp.cpython-313-x86_64-linux-gnu.so
 ```
 
-Run the OPTPP tests. The preload should point to your locally installed libasan.so.
+Run the OPTPP tests. The preload should point to your locally installed
+libasan.so.
 
 ```bash
 LD_PRELOAD=/usr/lib64/libasan.so.8.0.0 pytest "tests/OPTPP" -svvv --cache-clear
