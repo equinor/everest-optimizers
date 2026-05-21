@@ -13,7 +13,7 @@ start_tests () {
     rm -rf __ert
 
     pushd math_func
-    perl -p -i -e 's/optpp_q_newton/bcq_newton/' config_minimal.yml
+    sed -i  's/optpp_q_newton/bcq_newton/' config_minimal.yml
     everest run config_minimal.yml
     popd
 }
