@@ -7,6 +7,7 @@ start_tests () {
     pytest
 
     # Integration test with everest
+    rm -rf math_func
     git clone --depth 1 https://github.com/equinor/ert __ert
     cp -a __ert/test-data/everest/math_func .
     rm -rf __ert
