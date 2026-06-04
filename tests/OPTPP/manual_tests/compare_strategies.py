@@ -88,7 +88,7 @@ def run_scipy_bfgs_optimization(start_point):
     return solution_np, iterations, func_evals, path
 
 
-def run_optimization(strategy, start_point):  # noqa: C901, PLR0912
+def run_optimization(strategy, start_point):  # noqa: C901
     """Run optimization for a given strategy and starting point."""
     ndim = len(start_point)
     rosen_problem = Rosenbrock(ndim, start_point)
@@ -111,50 +111,47 @@ def run_optimization(strategy, start_point):  # noqa: C901, PLR0912
     # Parse the output file for metrics
     iterations = -1
     func_evals = -1
-    try:  # noqa: PLR1702
-        with pathlib.Path(log_filename).open(encoding="utf-8") as f:
-            lines = f.readlines()
-            # The final summary line appears after 'checkConvg'
-            for i, line in enumerate(reversed(lines)):
-                if "checkConvg:" in line:
-                    # The summary line is a few lines before this, starting with iteration count
-                    summary_line_index = len(lines) - i - 2
-                    if summary_line_index >= 0:
-                        summary_line = lines[summary_line_index]
-                        parts = summary_line.split()
-                        if len(parts) >= 2:
-                            iterations = int(parts[0])
-                            # For LineSearch, function evals are on the same summary line
-                            if len(parts) >= 4:
-                                try:
-                                    # Handle both integer and hex float strings
-                                    func_evals = int(float.fromhex(parts[3]))
-                                except ValueError:
-                                    func_evals = int(parts[3])
-                            else:
-                                # For other strategies, we sum them from the log
-                                total_fcn_evals = 0
-                                for log_line in lines:
-                                    if "fcn evals=" in log_line:
-                                        try:
-                                            evals = int(
-                                                log_line.split("fcn evals=")[1]
-                                                .split(",")[0]
-                                                .strip()
-                                            )
-                                            total_fcn_evals += evals
-                                        except (ValueError, IndexError):
-                                            pass  # Ignore lines that don't parse correctly
-                                    elif "No. function evaluations" in log_line:
-                                        try:
-                                            evals = int(log_line.split("=")[1].strip())
-                                            total_fcn_evals += evals
-                                        except (ValueError, IndexError):
-                                            pass  # Ignore lines that don't parse correctly
-                                func_evals = total_fcn_evals
-                    break
-    except (OSError, IndexError, ValueError) as e:
-        logging.warning("Could not parse log file %s: %s", log_filename, e)  # noqa: LOG015
+    with pathlib.Path(log_filename).open(encoding="utf-8") as f:  # noqa: PLR1702
+        lines = f.readlines()
+        # The final summary line appears after 'checkConvg'
+        for i, line in enumerate(reversed(lines)):
+            if "checkConvg:" in line:
+                # The summary line is a few lines before this, starting with iteration count
+                summary_line_index = len(lines) - i - 2
+                if summary_line_index >= 0:
+                    summary_line = lines[summary_line_index]
+                    parts = summary_line.split()
+                    if len(parts) >= 2:
+                        iterations = int(parts[0])
+                        # For LineSearch, function evals are on the same summary line
+                        if len(parts) >= 4:
+                            try:
+                                # Handle both integer and hex float strings
+                                func_evals = int(float.fromhex(parts[3]))
+                            except ValueError:
+                                func_evals = int(parts[3])
+                        else:
+                            # For other strategies, we sum them from the log
+                            total_fcn_evals = 0
+                            for log_line in lines:
+                                if "fcn evals=" in log_line:
+                                    try:
+                                        evals = int(
+                                            log_line.split("fcn evals=")[1]
+                                            .split(",")[0]
+                                            .strip()
+                                        )
+                                        total_fcn_evals += evals
+                                    except (ValueError, IndexError):
+                                        pass  # Ignore lines that don't parse correctly
+                                elif "No. function evaluations" in log_line:
+                                    try:
+                                        evals = int(log_line.split("=")[1].strip())
+                                        total_fcn_evals += evals
+                                    except (ValueError, IndexError):
+                                        pass  # Ignore lines that don't parse correctly
+                            func_evals = total_fcn_evals
+                break
 
     pathlib.Path(log_filename).unlink()
 
@@ -189,34 +186,29 @@ def compare_strategies():
     for name in all_strategy_names:
         for start_point in start_points:
             logging.info("Running %s from %s", name, start_point)  # noqa: LOG015
-            try:
-                if name == "SciPy BFGS":
-                    solution, iters, f_evals, path = run_scipy_bfgs_optimization(
-                        start_point
-                    )
-                else:
-                    strategy = strategies[name]
-                    solution, iters, f_evals, path = run_optimization(
-                        strategy, start_point
-                    )
+            if name == "SciPy BFGS":
+                solution, iters, f_evals, path = run_scipy_bfgs_optimization(
+                    start_point
+                )
+            else:
+                strategy = strategies[name]
+                solution, iters, f_evals, path = run_optimization(strategy, start_point)
 
-                results[name].append(
-                    {
-                        "start": start_point,
-                        "solution": solution,
-                        "iterations": iters,
-                        "func_evals": f_evals,
-                        "path": path,
-                    }
-                )
-                logging.info(  # noqa: LOG015
-                    "  -> Solution: %s, Iterations: %s, Func Evals: %s",
-                    solution,
-                    iters,
-                    f_evals,
-                )
-            except Exception as e:
-                logging.exception("  -> FAILED with error: %s", e)  # noqa: LOG015, TRY401
+            results[name].append(
+                {
+                    "start": start_point,
+                    "solution": solution,
+                    "iterations": iters,
+                    "func_evals": f_evals,
+                    "path": path,
+                }
+            )
+            logging.info(  # noqa: LOG015
+                "  -> Solution: %s, Iterations: %s, Func Evals: %s",
+                solution,
+                iters,
+                f_evals,
+            )
 
     # Plotting
     for i, start_point in enumerate(start_points):
