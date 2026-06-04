@@ -6,7 +6,9 @@ repos:
     -   id: check-yaml
         args: [--allow-multiple-documents]
     -   id: end-of-file-fixer
+        exclude: \.patch$
     -   id: trailing-whitespace
+        exclude: \.patch$
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.2
