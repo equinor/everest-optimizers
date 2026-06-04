@@ -97,30 +97,25 @@ class TestDriver(DakotaBase):  # type: ignore[misc]
         c2 = -x[0] - x[1] + 10
 
         retval = {}
-        try:
-            if asv[0] & 1:
-                f = [100 * f0 * f0 + f1 * f1]
-                retval["fns"] = array(f)
-                self.best_point = np.array(x)
-                self.best_fun = f[0]
+        if asv[0] & 1:
+            f = [100 * f0 * f0 + f1 * f1]
+            retval["fns"] = array(f)
+            self.best_point = np.array(x)
+            self.best_fun = f[0]
 
-            if asv[0] & 2:
-                g = [[-400 * f0 * x[0] - 2 * f1, 200 * f0]]
-                retval["fnGrads"] = array(g)
+        if asv[0] & 2:
+            g = [[-400 * f0 * x[0] - 2 * f1, 200 * f0]]
+            retval["fnGrads"] = array(g)
 
-            if asv[0] & 4:
-                fx = x[1] - 3 * x[0] * x[0]
-                h = [[[-400 * fx + 2, -400 * x[0]], [-400 * x[0], 200]]]
-                retval["fnHessians"] = array(h)
+        if asv[0] & 4:
+            fx = x[1] - 3 * x[0] * x[0]
+            h = [[[-400 * fx + 2, -400 * x[0]], [-400 * x[0], 200]]]
+            retval["fnHessians"] = array(h)
 
-            retval["cons"] = array([c1, c2])
-            if self.force_exception:
-                msg = "Forced exception"
-                raise RuntimeError(msg)  # noqa: TRY301
-
-        except Exception as exc:
-            print("    caught", exc)
-            raise
+        retval["cons"] = array([c1, c2])
+        if self.force_exception:
+            msg = "Forced exception"
+            raise RuntimeError(msg)
 
         print("    returning", retval)
         return retval
