@@ -40,8 +40,8 @@ test = [
   "pytest",
   "numpy",
   "cmake",
-  "ropt",
-  "ropt-dakota;python_version<'3.14'",
+  "ropt>=0.28",
+  "ropt-dakota>=0.28;python_version<'3.14'",
   "matplotlib",
 ]
 dev = [
@@ -119,3 +119,8 @@ ignore_errors = true
 [tool.uv]
 fork-strategy = "requires-python"
 exclude-newer = "7 days"
+
+[tool.uv.exclude-newer-package]
+carolina = false  # Developed by Equinor
+ropt = false # Developed in cooperation with Equinor
+ropt-dakota = false # Developed in cooperation with Equinor

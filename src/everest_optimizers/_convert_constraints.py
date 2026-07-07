@@ -32,7 +32,7 @@ def _create_constraint(
                 lambda x_arr: np.atleast_1d(constraint_func(x_arr))[constraint_index],  # type: ignore[misc]
                 epsilon=1e-8,
             )
-        return grad_row.reshape(len(x0), 1)
+        return np.array(grad_row).reshape(len(x0), 1)
 
     x0_vector = pyoptpp.SerialDenseVector(x0)
     return pyoptpp.NLF1(
