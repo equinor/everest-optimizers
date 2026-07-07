@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pytest
 from numpy.typing import NDArray
-from ropt.evaluator import EvaluatorContext, EvaluatorResult
+from ropt.evaluation import EvaluationBatchContext, EvaluationBatchResult
 from ropt.workflow import BasicOptimizer
 from scipy.optimize import Bounds
 
@@ -21,9 +21,9 @@ pytest.importorskip("ropt_dakota")
 
 def _function_runner(
     variables: NDArray[np.float64],
-    evaluator_context: EvaluatorContext,
+    evaluator_context: EvaluationBatchContext,
     functions: list[_Function],
-) -> EvaluatorResult:
+) -> EvaluationBatchResult:
     objective_count = evaluator_context.context.objectives.weights.size
     constraint_count = (
         0
@@ -47,7 +47,7 @@ def _function_runner(
                 function = functions[idx + objective_count]
                 assert constraint_results is not None
                 constraint_results[eval_idx, idx] = function(variables[eval_idx, :])
-    return EvaluatorResult(objectives=objective_results, constraints=constraint_results)
+    return EvaluationBatchResult(objectives=objective_results, constraints=constraint_results)
 
 
 def _compute_distance_squared(
