@@ -96,7 +96,7 @@ def test_high_convergence_tolerance_inaccurate() -> None:
         1e-8,
         1e-10,
     ],
-)  # TODO: investigate if this tolerance parameter is handled correctly  # noqa: FIX002, TD002, TD003
+)  # TODO: investigate if this tolerance parameter is handled correctly  # ruff: ignore[line-contains-todo, missing-todo-author, missing-todo-link]
 def test_gradient_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {"gradient_tolerance": tolerance, "max_iterations": 100000}
@@ -149,7 +149,7 @@ def test_too_low_max_iterations() -> None:
 
 
 @pytest.mark.parametrize("debug_flag", [True, False])
-def test_debug_option(debug_flag: bool) -> None:  # noqa: FBT001
+def test_debug_option(debug_flag: bool) -> None:  # ruff: ignore[boolean-type-hint-positional-argument]
     """Test that the optimizer runs with different debug flag settings."""
     options = {"debug": debug_flag}
     result = minimize(
@@ -195,4 +195,4 @@ def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
     assert not Path("OPT_DEFAULT.out").exists()
 
 
-# TODO: Implement tests for the params found at: https://snl-dakota.github.io/docs/6.22.0/users/usingdakota/reference/method-optpp_q_newton.html  # noqa: FIX002, TD002
+# TODO: Implement tests for the params found at: https://snl-dakota.github.io/docs/6.22.0/users/usingdakota/reference/method-optpp_q_newton.html  # ruff: ignore[line-contains-todo, missing-todo-author]

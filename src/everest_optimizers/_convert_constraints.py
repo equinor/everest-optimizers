@@ -40,7 +40,7 @@ def _create_constraint(
         evaluate_constraint_function,
         evaluate_constraint_gradient,
         x0_vector,
-        True,  # noqa: FBT003
+        True,  # ruff: ignore[boolean-positional-value-in-call]
     )
 
 
@@ -90,13 +90,13 @@ def convert_linear_constraint(
     optpp_constraints: list[pyoptpp.LinearEquation | pyoptpp.LinearInequality] = []
 
     # Get constraint matrix and bounds
-    A = np.asarray(scipy_constraint.A, dtype=float)  # noqa: N806
-    A = np.atleast_2d(A)  # noqa: N806
+    A = np.asarray(scipy_constraint.A, dtype=float)  # ruff: ignore[non-lowercase-variable-in-function]
+    A = np.atleast_2d(A)  # ruff: ignore[non-lowercase-variable-in-function]
 
     num_constraints = A.shape[0]
     for i in range(num_constraints):
-        A_row = A[i : i + 1, :]  # Keep as 2D for consistency  # noqa: N806
-        A_matrix = pyoptpp.SerialDenseMatrix(A_row)  # noqa: N806
+        A_row = A[i : i + 1, :]  # Keep as 2D for consistency  # ruff: ignore[non-lowercase-variable-in-function]
+        A_matrix = pyoptpp.SerialDenseMatrix(A_row)  # ruff: ignore[non-lowercase-variable-in-function]
         lb = scipy_constraint.lb[i]
         ub = scipy_constraint.ub[i]
 

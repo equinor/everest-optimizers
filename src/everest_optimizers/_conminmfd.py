@@ -11,7 +11,7 @@ from everest_optimizers.pyoptsparse import (  # type: ignore[import-untyped]
 )
 
 
-def minimize_conmin_mfd(  # noqa: PLR0913, PLR0917
+def minimize_conmin_mfd(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     fun: Callable[..., float],
     x0: NDArray[np.float64],
     args: tuple[Any, ...] = (),

@@ -44,7 +44,7 @@ class NLF1Problem:
             if self.callback is not None:
                 try:
                     self.callback(x_np)
-                except Exception as cb_err:  # noqa: BLE001
+                except Exception as cb_err:  # ruff: ignore[blind-except]
                     warnings.warn(
                         f"Callback function raised exception: {cb_err}",
                         RuntimeWarning,

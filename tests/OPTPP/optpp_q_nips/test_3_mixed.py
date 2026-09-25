@@ -37,9 +37,9 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
 def test_kitchen_sink() -> None:
     """A 'kitchen sink' test with bounds, linear equality, and inequality constraints."""
     bounds = Bounds((0.0, -np.inf), (1.5, np.inf))
-    A_eq = np.array([[1, 1]])  # noqa: N806
+    A_eq = np.array([[1, 1]])  # ruff: ignore[non-lowercase-variable-in-function]
     b_eq = np.array([1])
-    A_ineq = np.array([[1, 0]])  # noqa: N806
+    A_ineq = np.array([[1, 0]])  # ruff: ignore[non-lowercase-variable-in-function]
     lb_ineq = np.array([-np.inf])
     ub_ineq = np.array([1.5])
     constraints: list[LinearConstraint | NonlinearConstraint] = [

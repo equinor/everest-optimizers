@@ -12,7 +12,7 @@ from ._problem import NLF1Problem
 from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 
-def minimize_optbcqnewton(  # noqa: PLR0913, PLR0917
+def minimize_optbcqnewton(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     fun: Callable[..., float],
     x0: NDArray[np.float64],
     args: tuple[Any, ...] = (),

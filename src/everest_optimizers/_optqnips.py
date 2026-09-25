@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     )
 
 
-def minimize_optqnips(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too-many-arguments, too-many-statements, too-many-positional-arguments]
     fun: Callable[..., float],
     x0: np.ndarray,
     args: tuple[Any, ...] = (),

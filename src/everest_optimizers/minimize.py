@@ -13,7 +13,7 @@ from everest_optimizers._optqnewton import minimize_optqnewton
 from everest_optimizers._optqnips import minimize_optqnips
 
 
-def minimize(  # noqa: PLR0913, PLR0917
+def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     fun: Callable[..., float],
     x0: NDArray[np.float64],
     args: tuple[Any, ...] | None = (),

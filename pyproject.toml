@@ -90,22 +90,22 @@ extend-exclude = ["_pyoptpp.pyi"]
 preview = true
 select = ["ALL"]
 ignore = [
-  "COM812", # missing-trailing-comma
+  "missing-trailing-comma", # missing-trailing-comma
   "CPY",    # flake8-copyright
-  "D203",   # incorrect-blank-line-before-class
-  "D213",   # multi-line-summary-second-line
-  "E501",   # line-too-long
-  "S101",   # assert
+  "incorrect-blank-line-before-class",   # incorrect-blank-line-before-class
+  "multi-line-summary-second-line",   # multi-line-summary-second-line
+  "line-too-long",   # line-too-long
+  "assert",   # assert
 ]
 
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
   "D",       # pydocstyle
-  "ANN401",  # anytype
-  "PLC2701", # import-private-name
-  "PLR2004", # magic-value-comparison
-  "PLR0913", # too-many-arguments
+  "any-type",  # anytype
+  "import-private-name", # import-private-name
+  "magic-value-comparison", # magic-value-comparison
+  "too-many-arguments", # too-many-arguments
 ]
 
 [tool.mypy]

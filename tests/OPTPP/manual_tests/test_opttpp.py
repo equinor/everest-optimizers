@@ -1,4 +1,4 @@
-# ruff: noqa: T201  # noqa: INP001
+# ruff: file-ignore[print]  # ruff: ignore[implicit-namespace-package]
 
 
 import numpy as np

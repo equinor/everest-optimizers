@@ -71,7 +71,7 @@ def test_convergence_tolerance_options(tolerance: float) -> None:
         1e-8,
         1e-10,
     ],
-)  # TODO: investigate if this tolerance parameter is handled correctly  # noqa: FIX002, TD002, TD003
+)  # TODO: investigate if this tolerance parameter is handled correctly  # ruff: ignore[line-contains-todo, missing-todo-author, missing-todo-link]
 def test_gradient_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {"gradient_tolerance": tolerance, "max_iterations": 100000}
@@ -94,7 +94,7 @@ def test_max_iterations_option(max_iterations: int) -> None:
 
 
 @pytest.mark.parametrize("debug_flag", [True, False])
-def test_debug_option(debug_flag: bool) -> None:  # noqa: FBT001
+def test_debug_option(debug_flag: bool) -> None:  # ruff: ignore[boolean-type-hint-positional-argument]
     """Test that the optimizer runs with different debug flag settings."""
     options = {"debug": debug_flag}
     result = minimize(

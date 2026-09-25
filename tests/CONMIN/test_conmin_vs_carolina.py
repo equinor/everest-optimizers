@@ -1,4 +1,4 @@
-# ruff: noqa: T201
+# ruff: file-ignore[print]
 # Copyright 2013 National Renewable Energy Laboratory (NREL)
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");

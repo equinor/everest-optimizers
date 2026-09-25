@@ -35,7 +35,7 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
 
 
 def test_linear_equality_constraint() -> None:
-    A = np.array([[1, 1]])  # noqa: N806
+    A = np.array([[1, 1]])  # ruff: ignore[non-lowercase-variable-in-function]
     lb = ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
     x0 = np.array([0.0, 0.0])
@@ -53,7 +53,7 @@ def test_linear_equality_constraint() -> None:
 
 
 def test_linear_inequality_constraint() -> None:
-    A = np.array([[1, 1]])  # noqa: N806
+    A = np.array([[1, 1]])  # ruff: ignore[non-lowercase-variable-in-function]
     lb = np.array([-np.inf])
     ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
@@ -89,7 +89,7 @@ def test_mixed_bounds() -> None:
 
 def test_bounds_and_linear_equality() -> None:
     bounds = Bounds((0.0, -np.inf), (np.inf, np.inf))
-    A = np.array([[1, 1]])  # noqa: N806
+    A = np.array([[1, 1]])  # ruff: ignore[non-lowercase-variable-in-function]
     lb = ub = np.array([1])
     constraints = LinearConstraint(A, lb, ub)
     x0 = np.array([0.0, 0.0])
@@ -109,7 +109,7 @@ def test_bounds_and_linear_equality() -> None:
 
 def test_bounds_and_linear_inequality() -> None:
     bounds = Bounds((-np.inf, -np.inf), (1.5, np.inf))
-    A = np.array([[1, 1]])  # noqa: N806
+    A = np.array([[1, 1]])  # ruff: ignore[non-lowercase-variable-in-function]
     lb = np.array([1])
     ub = np.array([np.inf])
     constraints = LinearConstraint(A, lb, ub)
