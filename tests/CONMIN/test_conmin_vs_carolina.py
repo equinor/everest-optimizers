@@ -20,7 +20,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-# skip these tests if dakota_ropt is not installed.
+# skip these tests if dakota is not installed.
 pytest.importorskip("dakota")
 
 from dakota import DakotaBase, DakotaInput  # type: ignore[import-untyped]
