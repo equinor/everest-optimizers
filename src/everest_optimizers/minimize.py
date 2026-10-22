@@ -7,7 +7,6 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
-from everest_optimizers._conminmfd import minimize_conmin_mfd
 from everest_optimizers._optbcqnewton import minimize_optbcqnewton
 from everest_optimizers._optqnewton import minimize_optqnewton
 from everest_optimizers._optqnips import minimize_optqnips
@@ -56,8 +55,6 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         Type of solver. Currently supported:
         - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
         - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
-        - 'conmin_mfd': CONMIN solver
-
         More optimizers may be added in the future.
 
     jac : callable, optional
@@ -173,15 +170,6 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
                 callback=callback,
                 options=options,
             )
-        case "conmin_mfd":
-            return minimize_conmin_mfd(
-                fun=fun,
-                x0=x0,
-                args=args,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
-                options=options,
-            )
         case "optpp_q_nips":
             return minimize_optqnips(
                 fun=fun,
@@ -195,6 +183,6 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         case other:
             msg = (
                 f"Unknown method: {other}. Supported methods: "
-                "'optpp_q_newton', 'optpp_bcq_newton', 'optpp_q_nips', 'conmin_mfd'"
+                "'optpp_q_newton', 'optpp_bcq_newton', 'optpp_q_nips'"
             )
             raise ValueError(msg)
