@@ -42,56 +42,6 @@ add_subdirectory(${dakota-packages_SOURCE_DIR}/trilinos EXCLUDE_FROM_ALL)
 add_subdirectory(${dakota-packages_SOURCE_DIR}/OPTPP EXCLUDE_FROM_ALL)
 add_subdirectory(src/OPTPP-python)
 
-# Build pyoptsparse for CONMIN support
-include(ExternalProject)
-set(MOD_SRC "${CMAKE_CURRENT_SOURCE_DIR}/third-party/pyoptsparse")
-set(MOD_TARGET "conmin.${Python_SOABI}.so")
-message(STATUS "Downloading and configuring pyoptsparse")
-ExternalProject_Add(
-    pyCONMIN
-    GIT_REPOSITORY https://github.com/mdolab/pyoptsparse
-    GIT_TAG
-        92cd8356b353533ef430e4820f87c9515cde8fe2 # v2.15.1
-    SOURCE_DIR ${MOD_SRC}
-    BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/_pyCONMIN"
-    CONFIGURE_COMMAND meson setup . ${MOD_SRC} --buildtype=release
-    BUILD_COMMAND meson compile ${MOD_TARGET}
-    INSTALL_COMMAND meson install --destdir ${CMAKE_BINARY_DIR}
-    # patching out all the modules we did not compile from pyoptsparse/__init__.py
-    # and making sqlitedict optional
-    PATCH_COMMAND
-        patch pyoptsparse/__init__.py ${CMAKE_SOURCE_DIR}/pyoptsparse.patch &&
-        patch -p1 -i ${CMAKE_SOURCE_DIR}/make_sqlitedict_optional.patch
-)
-message(STATUS "Finished configuring pyoptsparse")
-
-install(
-    FILES
-        "${CMAKE_BINARY_DIR}/python/_pyCONMIN/pyoptsparse/pyCONMIN/${MOD_TARGET}"
-        third-party/pyoptsparse/pyoptsparse/pyCONMIN/__init__.py
-        third-party/pyoptsparse/pyoptsparse/pyCONMIN/pyCONMIN.py
-        third-party/pyoptsparse/pyoptsparse/pyCONMIN/LICENSE
-    DESTINATION everest_optimizers/pyoptsparse/pyCONMIN
-)
-install(
-    FILES
-        third-party/pyoptsparse/LICENSE
-        third-party/pyoptsparse/pyoptsparse/__init__.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_MPI.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_constraint.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_error.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_gradient.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_history.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_objective.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_optimization.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_optimizer.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_solution.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_types.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_utils.py
-        third-party/pyoptsparse/pyoptsparse/pyOpt_variable.py
-    DESTINATION everest_optimizers/pyoptsparse
-)
-
 # Install our python files
 file(GLOB EVEREST_OPTIMIZERS_SRC src/everest_optimizers/*.py)
 install(FILES ${EVEREST_OPTIMIZERS_SRC} DESTINATION everest_optimizers)

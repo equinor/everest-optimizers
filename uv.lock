@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -345,7 +345,6 @@ wheels = [
 name = "everest-optimizers"
 source = { editable = "." }
 dependencies = [
-    { name = "mdolab-baseclasses" },
     { name = "pydantic" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -357,7 +356,6 @@ dev = [
     { name = "carolina", version = "2.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "cmake" },
     { name = "matplotlib" },
-    { name = "meson" },
     { name = "mypy" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -367,7 +365,6 @@ dev = [
     { name = "scipy-stubs", version = "1.17.1.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy-stubs", version = "1.18.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "setuptools-scm" },
-    { name = "swig", marker = "sys_platform == 'darwin'" },
 ]
 test = [
     { name = "carolina", version = "2.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -381,7 +378,6 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mdolab-baseclasses" },
     { name = "pydantic" },
     { name = "scipy" },
 ]
@@ -391,7 +387,6 @@ dev = [
     { name = "carolina" },
     { name = "cmake" },
     { name = "matplotlib" },
-    { name = "meson" },
     { name = "mypy" },
     { name = "numpy" },
     { name = "pytest" },
@@ -399,7 +394,6 @@ dev = [
     { name = "scikit-build-core" },
     { name = "scipy-stubs" },
     { name = "setuptools-scm" },
-    { name = "swig", marker = "sys_platform == 'darwin'" },
 ]
 test = [
     { name = "carolina" },
@@ -800,28 +794,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/d9/a1218a31fa2d8082eb893548990ad09a2005ebda1b2b89dad88a8308e51a/matplotlib-3.11.2-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:854df8d7dfe9fdffcbaa6f39e44a6c24b409cb4d7561fbc09213b157d833f6a6", size = 9457702, upload-time = "2026-09-11T19:05:22.086Z" },
     { url = "https://files.pythonhosted.org/packages/68/d7/a9fde05d87c3c853f233ec20c5b5c3a1c86035e1ed4bfa397cd54d46ec90/matplotlib-3.11.2-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:eac4b07d4e3743b172451e122ea964f72f152879d4f9adcf3f3d33e518f12ead", size = 9287753, upload-time = "2026-09-11T19:05:24.677Z" },
     { url = "https://files.pythonhosted.org/packages/ec/79/ea2ae4eab84f011c1dc8145864f78e5a63adda8efb95557ef36cc38e6da2/matplotlib-3.11.2-pp311-pypy311_pp73-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:7ef7a53b66780e5d942923724f08577fbc5be1f7322da0f0f3f9dcaa45dd803d", size = 9848259, upload-time = "2026-09-11T19:05:27.455Z" },
-]
-
-[[package]]
-name = "mdolab-baseclasses"
-version = "1.9.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "packaging" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/ac/4d05acc91d7853018d39d8e220da273d1b3450902ddffa1bf62441fd341e/mdolab_baseclasses-1.9.0-py3-none-any.whl", hash = "sha256:5046f9cbcafd0424eb65c8f33c550fcc6c7875a7c1e86a2d99f80d21e2ec785c", size = 70307, upload-time = "2026-06-16T19:20:39.385Z" },
-]
-
-[[package]]
-name = "meson"
-version = "1.12.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f9/c9/8c9983f4f3d9c4e22fd76bcf8cd053e4472aefae45fd044669b6daa34b53/meson-1.12.1.tar.gz", hash = "sha256:ab0a6ca09f8ef70c564c8241fb5a23957886a0b53fb58412b5e07eaf07dba743", size = 2524665, upload-time = "2026-09-22T22:58:28.875Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/99/36cd25f9598eef70db97577440a70a360af505f6f01c2338a18d1556079c/meson-1.12.1-py3-none-any.whl", hash = "sha256:930bc7542cbd9f57009e182fd014eba48cf1a0180a7b9006d2d32d8f168d8b02", size = 1108668, upload-time = "2026-09-22T22:58:26.047Z" },
 ]
 
 [[package]]
@@ -1649,15 +1621,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
-]
-
-[[package]]
-name = "swig"
-version = "4.5.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7a/4a/0e273ba5c943f8bd1ec53671146f5062062199297e8dbc0d1f11977555a6/swig-4.5.0.tar.gz", hash = "sha256:eb6594f05a1f87783f981e92501c604ac08cc23bb20fa4e6bd5d3a283819f8a5", size = 25844, upload-time = "2026-08-21T18:28:45.676Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/4f/08973affe2b98b21c5ad32609b528e0bb9cc5dccf87ac107d3b0e1a423b9/swig-4.5.0-py3-none-macosx_10_9_universal2.whl", hash = "sha256:d7185ecc74f514a5636d5b2e3197acf9eebd07c40d7a5198b03363d9f56ed864", size = 2649879, upload-time = "2026-08-21T18:28:15.672Z" },
 ]
 
 [[package]]

@@ -1,44 +1,16 @@
 # everest-optimizers
 
 The everest-optimizers repository aims to replace the carolina repository by
-implementing the two algorithms OPTPP_Q_NEWTON and CONMIN_MFD from Dakota. This
-removes the need of building Dakota through Carolina every time you need to use
-these two algorithms. Dakota is huge and quite cumbersome to build, so by
-replacing this dependency we can gain a lot of time.
+implementing optimization algorithms from Dakota's OPTPP library. This removes
+the need of building Dakota through Carolina to use these algorithms. Dakota
+is huge and quite cumbersome to build, so by replacing this dependency we can
+gain a lot of time.
 
 ## Note
 History starting from 14cb0a7ef00fa56c19f8a3956785b8c6bdbf2cbd and older were
 filtered to delete all files/folders under dakota-packages except OPTPP.
 
 ## Getting Started
-
-### CONMIN
-
-- We have used some python bindings and implementation from pyoptsparse:
-(https://github.com/mdolab/pyoptsparse/)
-
-- See the following documentation for which input options the implementation have:
-(https://mdolab-pyoptsparse.readthedocs-hosted.com/en/latest/optimizers/CONMIN.html)
-
-To call the CONMIN implementation, we go through the python interface that we
-have made. Both CONMIN and OPTPP should be called using the minimize()
-function.
-
-Example:
-
-```python
-result = minimize(
-    fun=obj,
-    x0=x0,
-    method="conmin_mfd",
-    bounds=bounds,
-    constraints=constraints,
-    options={"ITMAX": 100},
-)
-```
-- See also example usage in the tests. For example:
-[tests/CONMIN/test_conmin_mfd.py](tests/CONMIN/test_conmin_mfd.py)
-
 
 ## Installation
 

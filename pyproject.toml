@@ -1,13 +1,11 @@
 
 [build-system]
 requires = [
-  "meson",
   "ninja",
   "numpy",
   "pybind11",
   "scikit-build-core",
   "setuptools_scm",
-  "swig",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -33,7 +31,7 @@ license = "LGPL-3.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["scipy", "mdolab-baseclasses", "pydantic"]
+dependencies = ["scipy", "pydantic"]
 
 [dependency-groups]
 test = [
@@ -44,13 +42,11 @@ test = [
   "matplotlib",
 ]
 dev = [
-  "meson",
   "mypy",
   "ruff",
   "scikit-build-core",
   "scipy-stubs",
   "setuptools_scm",
-  "swig; sys_platform == 'darwin'",
   { include-group = "test" },
 ]
 
@@ -62,7 +58,7 @@ filterwarnings = [
   "error",
   "ignore:numpy.ndarray size changed, may indicate binary incompatibility.*:RuntimeWarning",
 ]
-testpaths = ["tests/CONMIN", "tests/OPTPP"]
+testpaths = ["tests/OPTPP"]
 
 [tool.setuptools_scm]
 
@@ -73,7 +69,7 @@ sdist.include = ["src/pybind_module/_version.py"]
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
 test-groups = ["test"]
-test-command = ["pytest {package}/tests/CONMIN", "pytest {package}/tests/OPTPP"]
+test-command = ["pytest {package}/tests/OPTPP"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
