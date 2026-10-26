@@ -90,13 +90,13 @@ def convert_linear_constraint(
     optpp_constraints: list[pyoptpp.LinearEquation | pyoptpp.LinearInequality] = []
 
     # Get constraint matrix and bounds
-    A = np.asarray(scipy_constraint.A, dtype=float)  # ruff: ignore[non-lowercase-variable-in-function]
-    A = np.atleast_2d(A)  # ruff: ignore[non-lowercase-variable-in-function]
+    coefficients = np.asarray(scipy_constraint.A, dtype=float)
+    coefficients = np.atleast_2d(coefficients)
 
-    num_constraints = A.shape[0]
+    num_constraints = coefficients.shape[0]
     for i in range(num_constraints):
-        A_row = A[i : i + 1, :]  # Keep as 2D for consistency  # ruff: ignore[non-lowercase-variable-in-function]
-        A_matrix = pyoptpp.SerialDenseMatrix(A_row)  # ruff: ignore[non-lowercase-variable-in-function]
+        row = coefficients[i : i + 1, :]  # Keep as 2D for consistency
+        matrix = pyoptpp.SerialDenseMatrix(row)
         lb = scipy_constraint.lb[i]
         ub = scipy_constraint.ub[i]
 
@@ -107,12 +107,12 @@ def convert_linear_constraint(
         if np.isclose(lb - ub, 0, atol=1e-12):
             # Equality constraint: lb == ub
             rhs = pyoptpp.SerialDenseVector(lb)
-            optpp_constraints.append(pyoptpp.LinearEquation(A_matrix, rhs))
+            optpp_constraints.append(pyoptpp.LinearEquation(matrix, rhs))
 
         else:
             lower = pyoptpp.SerialDenseVector(lb)
             upper = pyoptpp.SerialDenseVector(ub)
-            optpp_constraints.append(pyoptpp.LinearInequality(A_matrix, lower, upper))
+            optpp_constraints.append(pyoptpp.LinearInequality(matrix, lower, upper))
 
     return optpp_constraints
 
