@@ -44,9 +44,9 @@ def test_search_strategy_options(
     options = {"search_method": search_method}
     result = minimize(
         objective,
+        objective_grad,
         X0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=BOUNDS,
         options=options,
     )
@@ -60,9 +60,9 @@ def test_convergence_tolerance_options(tolerance: float) -> None:
     options = {"convergence_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
         objective,
+        objective_grad,
         X0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=BOUNDS,
         options=options,
     )
@@ -86,9 +86,9 @@ def test_gradient_tolerance_options(tolerance: float) -> None:
     options = {"gradient_tolerance": tolerance, "max_iterations": 10000}
     result = minimize(
         objective,
+        objective_grad,
         X0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=BOUNDS,
         options=options,
     )
@@ -102,9 +102,9 @@ def test_max_iterations_option(max_iterations: int) -> None:
     options = {"max_iterations": max_iterations}
     result = minimize(
         objective,
+        objective_grad,
         X0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=BOUNDS,
         options=options,
     )
@@ -117,9 +117,9 @@ def test_too_low_max_iterations() -> None:
     options = {"max_iterations": 1}
     result = minimize(
         objective,
+        objective_grad,
         X0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=BOUNDS,
         options=options,
     )
@@ -135,9 +135,9 @@ def test_debug_option(debug_flag: bool) -> None:  # ruff: ignore[boolean-type-hi
     options = {"debug": debug_flag}
     result = minimize(
         objective,
+        objective_grad,
         X0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=BOUNDS,
         options=options,
     )
@@ -150,10 +150,10 @@ def test_output_file_no_default_file(tmp_path: Path, monkeypatch: Any) -> None:
     assert not Path("OPT_DEFAULT.out").exists()
     minimize(
         objective,
+        objective_grad,
         X0,
         bounds=BOUNDS,
         method="optpp_bcq_newton",
-        jac=objective_grad,
     )
     assert not Path("OPT_DEFAULT.out").exists()
 
@@ -163,10 +163,10 @@ def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
     assert not Path("foo.out").exists()
     minimize(
         objective,
+        objective_grad,
         X0,
         bounds=BOUNDS,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         options={"output_file": "foo.out"},
     )
     assert Path("foo.out").exists()

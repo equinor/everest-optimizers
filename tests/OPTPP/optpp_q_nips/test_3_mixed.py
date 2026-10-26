@@ -50,9 +50,9 @@ def test_kitchen_sink() -> None:
 
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
@@ -81,9 +81,9 @@ def test_active_and_inactive_constraints() -> None:
 
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
@@ -117,9 +117,9 @@ def test_redundant_constraints() -> None:
 
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
@@ -155,9 +155,9 @@ def test_higher_dimensions() -> None:
 
     res_everest = minimize(
         high_dim_obj,
+        high_dim_grad,
         x0,
         method="optpp_q_nips",
-        jac=high_dim_grad,
         bounds=bounds,
         constraints=constraints,
         options={"max_iterations": 500},

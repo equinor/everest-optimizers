@@ -9,9 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 from scipy.optimize import Bounds, NonlinearConstraint
 
 from everest_optimizers import minimize
+from everest_optimizers._convert_constraints import convert_nonlinear_constraint
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -33,6 +35,12 @@ def objective_grad(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.array([2 * (x[0] - 2), 2 * (x[1] - 2)])
 
 
+def test_nonlinear_constraint_requires_analytic_jacobian() -> None:
+    constraint = NonlinearConstraint(lambda x: np.array([x[0] ** 2]), 0.0, 1.0)
+    with pytest.raises(TypeError, match="jac"):
+        convert_nonlinear_constraint(constraint, np.array([0.5]))
+
+
 def test_nonlinear_equality_constraint() -> None:
     def nonlinear_constraint(x: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.array([x[0] ** 2 + x[1] ** 2 - 4.0])
@@ -47,9 +55,9 @@ def test_nonlinear_equality_constraint() -> None:
     )
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraint,
         options=DEFAULT_OPTIONS,
@@ -77,9 +85,9 @@ def test_nonlinear_inequality_constraint() -> None:
     )
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraint,
         options=DEFAULT_OPTIONS,

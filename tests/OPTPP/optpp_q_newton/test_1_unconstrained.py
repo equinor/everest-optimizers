@@ -38,9 +38,9 @@ def test_rosenbrock_simple() -> None:
     x0 = np.array([0.0, 0.0])
     result = minimize(
         rosenbrock_obj,
+        rosenbrock_grad,
         x0,
         method="optpp_q_newton",
-        jac=rosenbrock_grad,
         options=DEFAULT_OPTIONS,
     )
     assert result.success
@@ -66,9 +66,9 @@ def test_quadratic_from_multiple_starts(start_point: NDArray[np.float64]) -> Non
 
     result = minimize(
         objective,
+        objective_grad,
         start_point,
         method="optpp_q_newton",
-        jac=objective_grad,
         options=DEFAULT_OPTIONS,
     )
     assert result.success

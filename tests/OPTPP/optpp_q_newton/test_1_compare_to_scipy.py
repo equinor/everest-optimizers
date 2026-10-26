@@ -39,9 +39,9 @@ def test_unconstrained() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_newton",
-        jac=objective_grad,
         options=DEFAULT_OPTIONS,
     )
     assert res_everest.success

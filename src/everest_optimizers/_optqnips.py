@@ -27,9 +27,9 @@ if TYPE_CHECKING:
 
 def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too-many-arguments, too-many-statements, too-many-positional-arguments]
     fun: Callable[..., float],
+    jac: Callable[..., npt.NDArray[np.float64]],
     x0: np.ndarray,
     args: tuple[Any, ...] = (),
-    jac: Callable[..., npt.NDArray[np.float64]] | None = None,
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     callback: Callable[..., None] | None = None,

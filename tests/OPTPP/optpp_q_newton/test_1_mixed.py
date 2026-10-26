@@ -44,9 +44,9 @@ def test_linear_equality_constraint() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             constraints=constraints,
             options=DEFAULT_OPTIONS,
         )
@@ -63,9 +63,9 @@ def test_linear_inequality_constraint() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             constraints=constraints,
             options=DEFAULT_OPTIONS,
         )
@@ -79,9 +79,9 @@ def test_mixed_bounds() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             bounds=bounds,
             options=DEFAULT_OPTIONS,
         )
@@ -98,9 +98,9 @@ def test_bounds_and_linear_equality() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             bounds=bounds,
             constraints=constraints,
             options=DEFAULT_OPTIONS,
@@ -119,9 +119,9 @@ def test_bounds_and_linear_inequality() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             bounds=bounds,
             constraints=constraints,
             options=DEFAULT_OPTIONS,
@@ -141,9 +141,9 @@ def test_higher_dimensions_unconstrained() -> None:
 
     res_everest = minimize(
         high_dim_obj,
+        high_dim_grad,
         x0,
         method="optpp_q_newton",
-        jac=high_dim_grad,
         options={"max_iterations": 500},
     )
     assert res_everest.success

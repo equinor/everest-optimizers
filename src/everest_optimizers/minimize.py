@@ -14,10 +14,10 @@ from everest_optimizers._optqnips import minimize_optqnips
 
 def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     fun: Callable[..., float],
+    jac: Callable[..., NDArray[np.float64]],
     x0: NDArray[np.float64],
     args: tuple[Any, ...] | None = (),
     method: str = "optpp_q_newton",
-    jac: Callable[..., NDArray[np.float64]] | None = None,
     bounds: list[tuple[float, float]] | Bounds | None = None,
     constraints: list[dict[str, Any]]
     | list[LinearConstraint | NonlinearConstraint]
@@ -29,8 +29,8 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
 ) -> OptimizeResult:
     """Minimization of scalar function of one or more variables.
 
-    This function is intended to be a drop-in replacement for
-    scipy.optimize.minimize. The optpp_q_newton method is a quasi-Newton
+    This function requires an objective Jacobian, unlike scipy.optimize.minimize.
+    The optpp_q_newton method is a quasi-Newton
     optimization algorithm from the OPTPP library.
 
     Parameters (parameter structure is based on scipy.optimize.minimize)
@@ -42,6 +42,11 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
 
         where x is a 1-D array with shape (n,) and args is a tuple of the
         fixed parameters needed to completely specify the function.
+
+    jac : callable
+        Function computing the gradient vector:
+
+            jac(x, *args) -> array_like, shape (n,)
 
     x0 : ndarray, shape (n,)
         Initial guess. Array of real elements of size (n,), where n is the
@@ -57,19 +62,12 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
         More optimizers may be added in the future.
 
-    jac : callable, optional
-        Method for computing the gradient vector. If it is a callable, it should
-        be a function that returns the gradient vector:
-
-            jac(x, *args) -> array_like, shape (n,)
-
-        If None, gradients will be estimated using finite differences.
-
     bounds : sequence, optional
         Bounds on variables. Supported by 'optpp_q_nips'.
 
     constraints : dict or list, optional
-        Constraints definition. Supported by 'optpp_q_nips'.
+        Constraints definition. Supported by 'optpp_q_nips'. Nonlinear
+        constraints require a callable Jacobian.
 
     callback : callable, optional
         Callback function. Not implemented for optpp_q_newton.
@@ -108,12 +106,12 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     Raises
     ------
     ValueError: If the method is not recognized or if the input parameters are invalid.
+    TypeError: If jac is not callable.
 
     Notes
     -----
-    This function is designed to be a drop-in replacement for scipy.optimize.minimize
-    for the supported methods. The optpp_q_newton method is a quasi-Newton optimization
-    algorithm from the OPTPP library.
+    The optpp_q_newton method is a quasi-Newton optimization algorithm
+    from the OPTPP library.
 
     Examples
     --------
@@ -132,7 +130,7 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     ...     return grad
     >>>
     >>> x0 = np.array([-1.2, 1.0])
-    >>> result = minimize(rosenbrock, x0, method='optpp_q_newton', jac=rosenbrock_grad)
+    >>> result = minimize(rosenbrock, rosenbrock_grad, x0, method='optpp_q_newton')
     >>> print(result.x)  # Should be close to [1.0, 1.0]
 
     """
@@ -140,6 +138,10 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     if x0.ndim != 1:
         msg = "x0 must be 1-dimensional"
         raise ValueError(msg)
+
+    if not callable(jac):
+        msg = "jac must be a callable objective Jacobian"
+        raise TypeError(msg)
 
     if not isinstance(args, tuple):
         args = (args,)

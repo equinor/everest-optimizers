@@ -32,4 +32,3 @@ updates:
       all-commit-hooks:
         patterns:
           - "*"
-
