@@ -47,9 +47,9 @@ def test_linear_inequality_constraint() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
     )
@@ -72,9 +72,9 @@ def test_linear_mixed_constraints() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
     )
@@ -105,9 +105,9 @@ def test_bounds_and_linear_inequality() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
@@ -135,9 +135,9 @@ def test_unconstrained() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_nips",
-            jac=objective_grad,
             options=DEFAULT_OPTIONS,
         )
 
@@ -147,9 +147,9 @@ def test_bounds() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -181,9 +181,9 @@ def test_start_feasible_and_infeasible_scipy_comparison(
     bounds = Bounds([2.5, -np.inf], [np.inf, np.inf])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -231,9 +231,9 @@ def test_complex_problem_parameterized_start(x0: NDArray[np.float64]) -> None:
 
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         bounds=bounds,
         constraints=constraints,
         options=DEFAULT_OPTIONS,

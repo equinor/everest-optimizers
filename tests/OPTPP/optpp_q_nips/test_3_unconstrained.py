@@ -40,8 +40,8 @@ def test_rosenbrock_simple() -> None:
     ):
         minimize(
             rosenbrock_obj,
+            rosenbrock_grad,
             x0,
             method="optpp_q_nips",
-            jac=rosenbrock_grad,
             options=DEFAULT_OPTIONS,
         )

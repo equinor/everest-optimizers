@@ -38,9 +38,9 @@ def test_lower_bounds_only() -> None:
     x0 = np.array([3.0, 0.0])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -54,9 +54,9 @@ def test_upper_bounds_only() -> None:
     x0 = np.array([0.0, -2.0])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -70,9 +70,9 @@ def test_mixed_bounds() -> None:
     x0 = np.array([3.0, -2.0])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -86,9 +86,9 @@ def test_multiple_bounds() -> None:
     x0 = np.array([2.8, -1.2])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -112,9 +112,9 @@ def test_start_feasible_and_infeasible(x0: NDArray[np.float64]) -> None:
     bounds = Bounds((2.5, -np.inf), (np.inf, np.inf))
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )

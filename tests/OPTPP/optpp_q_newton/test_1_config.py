@@ -44,7 +44,7 @@ def test_search_strategy_options(
     monkeypatch.chdir(tmp_path)
     options = {"search_method": search_method}
     result = minimize(
-        objective, X0, method="optpp_q_newton", jac=objective_grad, options=options
+        objective, objective_grad, X0, method="optpp_q_newton", options=options
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
@@ -55,7 +55,7 @@ def test_convergence_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different convergence tolerance settings."""
     options = {"convergence_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
-        objective, X0, method="optpp_q_newton", jac=objective_grad, options=options
+        objective, objective_grad, X0, method="optpp_q_newton", options=options
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
@@ -76,7 +76,7 @@ def test_gradient_tolerance_options(tolerance: float) -> None:
     """Test that the optimizer runs with different gradient tolerance settings."""
     options = {"gradient_tolerance": tolerance, "max_iterations": 100000}
     result = minimize(
-        objective, X0, method="optpp_q_newton", jac=objective_grad, options=options
+        objective, objective_grad, X0, method="optpp_q_newton", options=options
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
@@ -87,7 +87,7 @@ def test_max_iterations_option(max_iterations: int) -> None:
     """Test that the optimizer respects the max_iterations setting."""
     options = {"max_iterations": max_iterations}
     result = minimize(
-        objective, X0, method="optpp_q_newton", jac=objective_grad, options=options
+        objective, objective_grad, X0, method="optpp_q_newton", options=options
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-3, atol=1e-3)
@@ -98,7 +98,7 @@ def test_debug_option(debug_flag: bool) -> None:  # ruff: ignore[boolean-type-hi
     """Test that the optimizer runs with different debug flag settings."""
     options = {"debug": debug_flag}
     result = minimize(
-        objective, X0, method="optpp_q_newton", jac=objective_grad, options=options
+        objective, objective_grad, X0, method="optpp_q_newton", options=options
     )
     assert result.success
     np.testing.assert_allclose(result.x, EXPECTED_SOLUTION, rtol=1e-4, atol=1e-4)
@@ -107,13 +107,26 @@ def test_debug_option(debug_flag: bool) -> None:  # ruff: ignore[boolean-type-hi
 def test_output_file_no_default_file(tmp_path: Path, monkeypatch: Any) -> None:
     monkeypatch.chdir(tmp_path)
     assert not Path("OPT_DEFAULT.out").exists()
-    minimize(objective, X0, method="optpp_q_newton")
+    minimize(objective, objective_grad, X0, method="optpp_q_newton")
     assert not Path("OPT_DEFAULT.out").exists()
 
 
 def test_output_file_exists(tmp_path: Path, monkeypatch: Any) -> None:
     monkeypatch.chdir(tmp_path)
     assert not Path("foo.out").exists()
-    minimize(objective, X0, method="optpp_q_newton", options={"output_file": "foo.out"})
+    minimize(
+        objective,
+        objective_grad,
+        X0,
+        method="optpp_q_newton",
+        options={"output_file": "foo.out"},
+    )
     assert Path("foo.out").exists()
     assert not Path("OPT_DEFAULT.out").exists()
+
+
+def test_objective_jacobian_is_required() -> None:
+    with pytest.raises(TypeError, match="jac"):
+        minimize(objective, x0=X0)  # type: ignore[call-arg]
+    with pytest.raises(TypeError, match="jac"):
+        minimize(objective, None, X0)  # type: ignore[arg-type]

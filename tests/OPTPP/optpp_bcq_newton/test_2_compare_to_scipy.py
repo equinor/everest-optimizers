@@ -42,9 +42,9 @@ def test_unconstrained() -> None:
     with pytest.raises(ValueError, match="OptBCQNewton requires bound constraints"):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_bcq_newton",
-            jac=objective_grad,
             options=DEFAULT_OPTIONS,
         )
 
@@ -54,9 +54,9 @@ def test_bounds() -> None:
     x0 = np.array([0.0, 0.0])
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )
@@ -88,9 +88,9 @@ def test_start_feasible_and_infeasible_scipy_comparison(
     bounds = Bounds((2.5, -np.inf), (np.inf, np.inf))
     res_everest = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_bcq_newton",
-        jac=objective_grad,
         bounds=bounds,
         options=DEFAULT_OPTIONS,
     )

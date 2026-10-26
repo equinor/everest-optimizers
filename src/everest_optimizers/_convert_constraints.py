@@ -3,14 +3,14 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, approx_fprime
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
 
 from everest_optimizers import pyoptpp
 
 
 def _create_constraint(
     constraint_func: Callable[..., Any],
-    constraint_jac: Callable[..., Any] | None,
+    constraint_jac: Callable[..., Any],
     x0: NDArray[np.float64],
     constraint_index: int,
 ) -> pyoptpp.NLF1:
@@ -22,16 +22,9 @@ def _create_constraint(
 
     def evaluate_constraint_gradient(x: NDArray[np.float64]) -> NDArray[np.float64]:
         x_np = np.asarray(x, copy=True)
-        if constraint_jac is not None:
-            jac = constraint_jac(x_np)
-            jac = np.atleast_2d(jac)
-            grad_row = jac[constraint_index, :]
-        else:
-            grad_row = approx_fprime(
-                x_np,
-                lambda x_arr: np.atleast_1d(constraint_func(x_arr))[constraint_index],  # type: ignore[misc]
-                epsilon=1e-8,
-            )
+        jac = constraint_jac(x_np)
+        jac = np.atleast_2d(jac)
+        grad_row = jac[constraint_index, :]
         return np.array(grad_row).reshape(len(x0), 1)
 
     x0_vector = pyoptpp.SerialDenseVector(x0)
@@ -51,6 +44,10 @@ def convert_nonlinear_constraint(
         pyoptpp.NonLinearEquation | pyoptpp.NonLinearInequality
     ] = []
 
+    if not callable(scipy_constraint.jac):
+        msg = "Nonlinear constraints require a callable jacobian"
+        raise TypeError(msg)
+
     # Get constraint bounds
     lower_bounds = np.atleast_1d(scipy_constraint.lb).astype(float)
     upper_bounds = np.atleast_1d(scipy_constraint.ub).astype(float)
@@ -60,7 +57,6 @@ def convert_nonlinear_constraint(
     num_constraints = len(constraint_values)
 
     for i in range(num_constraints):
-        assert scipy_constraint.jac is None or callable(scipy_constraint.jac)
         constraint = _create_constraint(
             scipy_constraint.fun, scipy_constraint.jac, x0, i
         )

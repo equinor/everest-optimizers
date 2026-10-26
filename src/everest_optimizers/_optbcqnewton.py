@@ -14,9 +14,9 @@ from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 def minimize_optbcqnewton(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     fun: Callable[..., float],
+    jac: Callable[..., NDArray[np.float64]],
     x0: NDArray[np.float64],
     args: tuple[Any, ...] = (),
-    jac: Callable[..., NDArray[np.float64]] | None = None,
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
     callback: Callable[..., None] | None = None,

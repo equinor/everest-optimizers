@@ -51,9 +51,9 @@ def test_nonlinear_equality_constraint() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             constraints=constraint,
             options=DEFAULT_OPTIONS,
         )
@@ -75,9 +75,9 @@ def test_nonlinear_inequality_constraint() -> None:
     ):
         minimize(
             objective,
+            objective_grad,
             x0,
             method="optpp_q_newton",
-            jac=objective_grad,
             constraints=constraint,
             options=DEFAULT_OPTIONS,
         )

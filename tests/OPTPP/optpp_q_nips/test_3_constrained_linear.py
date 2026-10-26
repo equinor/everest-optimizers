@@ -39,9 +39,9 @@ def test_linear_equality_constraint() -> None:
     x0 = np.array([0.0, 0.0])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
     )
@@ -59,9 +59,9 @@ def test_linear_inequality_constraint() -> None:
     x0 = np.array([0.0, 0.0])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
     )
@@ -79,9 +79,9 @@ def test_linear_mixed_constraints() -> None:
     x0 = np.array([0.0, 0.0])
     result = minimize(
         objective,
+        objective_grad,
         x0,
         method="optpp_q_nips",
-        jac=objective_grad,
         constraints=constraints,
         options=DEFAULT_OPTIONS,
     )
