@@ -121,30 +121,34 @@ def convert_linear_constraint(
 ) -> list[pyoptpp.LinearEquation | pyoptpp.LinearInequality]:
     optpp_constraints: list[pyoptpp.LinearEquation | pyoptpp.LinearInequality] = []
 
-    # Get constraint matrix and bounds
-    coefficients = np.asarray(scipy_constraint.A, dtype=float)
-    coefficients = np.atleast_2d(coefficients)
+    coefficients = np.atleast_2d(np.asarray(scipy_constraint.A, dtype=float))
+    lower_bounds = np.asarray(scipy_constraint.lb, dtype=float)
+    upper_bounds = np.asarray(scipy_constraint.ub, dtype=float)
+    finite_lower = np.isfinite(lower_bounds)
+    finite_upper = np.isfinite(upper_bounds)
+    equality_mask = np.zeros(coefficients.shape[0], dtype=bool)
+    both_finite = finite_lower & finite_upper
+    equality_mask[both_finite] = np.isclose(
+        lower_bounds[both_finite] - upper_bounds[both_finite], 0, atol=1e-12
+    )
 
-    num_constraints = coefficients.shape[0]
-    for i in range(num_constraints):
-        row = coefficients[i : i + 1, :]  # Keep as 2D for consistency
-        matrix = pyoptpp.SerialDenseMatrix(row)
-        lb = scipy_constraint.lb[i]
-        ub = scipy_constraint.ub[i]
+    inequality_mask = (finite_lower | finite_upper) & ~equality_mask
+    if inequality_mask.any():
+        optpp_constraints.append(
+            pyoptpp.LinearInequality(
+                pyoptpp.SerialDenseMatrix(coefficients[inequality_mask, :]),
+                pyoptpp.SerialDenseVector(lower_bounds[inequality_mask]),
+                pyoptpp.SerialDenseVector(upper_bounds[inequality_mask]),
+            )
+        )
 
-        if not np.isfinite(lb) and not np.isfinite(ub):
-            # Not a real constraint as both bounds are infinite
-            continue
-
-        if np.isclose(lb - ub, 0, atol=1e-12):
-            # Equality constraint: lb == ub
-            rhs = pyoptpp.SerialDenseVector(lb)
-            optpp_constraints.append(pyoptpp.LinearEquation(matrix, rhs))
-
-        else:
-            lower = pyoptpp.SerialDenseVector(lb)
-            upper = pyoptpp.SerialDenseVector(ub)
-            optpp_constraints.append(pyoptpp.LinearInequality(matrix, lower, upper))
+    if equality_mask.any():
+        optpp_constraints.append(
+            pyoptpp.LinearEquation(
+                pyoptpp.SerialDenseMatrix(coefficients[equality_mask, :]),
+                pyoptpp.SerialDenseVector(lower_bounds[equality_mask]),
+            )
+        )
 
     return optpp_constraints
 
