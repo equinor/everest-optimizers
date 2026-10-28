@@ -12,20 +12,27 @@ def _create_constraint(
     constraint_func: Callable[..., Any],
     constraint_jac: Callable[..., Any],
     x0: NDArray[np.float64],
-    constraint_index: int,
+    constraint_mask: NDArray[np.bool_],
 ) -> pyoptpp.NLF1:
     def evaluate_constraint_function(x: NDArray[np.float64]) -> NDArray[np.float64]:
         x_np = np.asarray(x, copy=True)
         c_values = np.atleast_1d(constraint_func(x_np))
-        result = c_values[constraint_index]
-        return np.array([result])
+        if c_values.shape != constraint_mask.shape:
+            msg = (
+                "Nonlinear constraint function size does not match its bounds; "
+                "provide explicit bounds for each constraint component"
+            )
+            raise ValueError(msg)
+        return np.asarray(c_values, dtype=float)[constraint_mask]
 
     def evaluate_constraint_gradient(x: NDArray[np.float64]) -> NDArray[np.float64]:
         x_np = np.asarray(x, copy=True)
         jac = constraint_jac(x_np)
         jac = np.atleast_2d(jac)
-        grad_row = jac[constraint_index, :]
-        return np.array(grad_row).reshape(len(x0), 1)
+        if jac.shape != (constraint_mask.size, len(x0)):
+            msg = "Nonlinear constraint Jacobian shape does not match its bounds"
+            raise ValueError(msg)
+        return np.asarray(jac[constraint_mask, :], dtype=float)
 
     x0_vector = pyoptpp.SerialDenseVector(x0)
     return pyoptpp.NLF1(
@@ -48,34 +55,42 @@ def convert_nonlinear_constraint(
         msg = "Nonlinear constraints require a callable jacobian"
         raise TypeError(msg)
 
-    # Get constraint bounds
-    lower_bounds = np.atleast_1d(scipy_constraint.lb).astype(float)
-    upper_bounds = np.atleast_1d(scipy_constraint.ub).astype(float)
+    lower_bounds, upper_bounds = np.broadcast_arrays(
+        np.atleast_1d(np.asarray(scipy_constraint.lb, dtype=float)),
+        np.atleast_1d(np.asarray(scipy_constraint.ub, dtype=float)),
+    )
+    if lower_bounds.ndim != 1:
+        msg = "Nonlinear constraint bounds must be scalar or one-dimensional"
+        raise ValueError(msg)
+    finite_lower = np.isfinite(lower_bounds)
+    equality_mask = finite_lower & (lower_bounds == upper_bounds)
 
-    # Evaluate constraint at initial point to determine number of constraints
-    constraint_values = scipy_constraint.fun(x0)
-    num_constraints = len(constraint_values)
-
-    for i in range(num_constraints):
+    inequality_mask = ~equality_mask
+    if inequality_mask.any():
         constraint = _create_constraint(
-            scipy_constraint.fun, scipy_constraint.jac, x0, i
+            scipy_constraint.fun, scipy_constraint.jac, x0, inequality_mask
+        )
+        nlp = pyoptpp.NLP(constraint)
+        lower = pyoptpp.SerialDenseVector(lower_bounds[inequality_mask])
+        upper = pyoptpp.SerialDenseVector(upper_bounds[inequality_mask])
+        optpp_constraints.append(
+            pyoptpp.NonLinearInequality(
+                nlp, lower, upper, np.count_nonzero(inequality_mask)
+            )
         )
 
-        if not np.isfinite(lower_bounds[i]) and not np.isfinite(upper_bounds[i]):
-            # Not a real constraint as both bounds are infinite
-            continue
-
-        if np.isclose(lower_bounds[i] - upper_bounds[i], 0, atol=1e-12):
-            # Equality constraint: lb == ub
-            nlp = pyoptpp.NLP(constraint)
-            rhs = pyoptpp.SerialDenseVector(lower_bounds[i])
-            optpp_constraints.append(pyoptpp.NonLinearEquation(nlp, rhs))
-
-        else:
-            nlp = pyoptpp.NLP(constraint)
-            lower = pyoptpp.SerialDenseVector(lower_bounds[i])
-            upper = pyoptpp.SerialDenseVector(upper_bounds[i])
-            optpp_constraints.append(pyoptpp.NonLinearInequality(nlp, lower, upper))
+    if equality_mask.any():
+        constraint = _create_constraint(
+            scipy_constraint.fun, scipy_constraint.jac, x0, equality_mask
+        )
+        nlp = pyoptpp.NLP(constraint)
+        optpp_constraints.append(
+            pyoptpp.NonLinearEquation(
+                nlp,
+                pyoptpp.SerialDenseVector(lower_bounds[equality_mask]),
+                np.count_nonzero(equality_mask),
+            )
+        )
 
     return optpp_constraints
 

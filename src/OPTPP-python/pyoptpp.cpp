@@ -270,6 +270,10 @@ PYBIND11_MODULE(_pyoptpp, m) {
         OptppArray<Constraint> constraint_array{};
         constraint_array.reserve(constraints.size());
         for (auto& c : constraints) {
+          // OPT++ crashes sorting a constraint without active rows (all bounds >= BIG_BND).
+          if (c->getNumOfCons() == 0) {
+            continue;
+          }
           constraint_array.append(Constraint(c.release()));
         }
         return new CompoundConstraint(constraint_array);
