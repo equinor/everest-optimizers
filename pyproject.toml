@@ -57,6 +57,7 @@ xfail_strict = true
 filterwarnings = [
   "error",
   "ignore:numpy.ndarray size changed, may indicate binary incompatibility.*:RuntimeWarning",
+  'ignore:The configuration option "asyncio_default_fixture_loop_scope" is unset\.:pytest.PytestDeprecationWarning',
 ]
 testpaths = ["tests/OPTPP"]
 
