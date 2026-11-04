@@ -160,7 +160,7 @@ public:
         throw std::runtime_error("evalCG: Returned numpy array must be 2D!");
       }
 
-      T_SerialDenseMatrix grad(buf.shape[0], buf.shape[1]);
+      T_SerialDenseMatrix grad(buf.shape[1], buf.shape[0]);
       std::memcpy(grad.values(), buf.ptr, buf.shape[0] * buf.shape[1] * sizeof(double));
       return grad;
     } catch (py::error_already_set& e) {
@@ -211,7 +211,7 @@ PYBIND11_MODULE(_pyoptpp, m) {
 
   py::class_<T_SerialSymDenseMatrix>(m, "SerialSymDenseMatrix");
   py::class_<T_SerialDenseMatrix>(m, "SerialDenseMatrix", py::buffer_protocol())
-      .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
+      .def(py::init([](py::array_t<double, py::array::f_style | py::array::forcecast> arr) {
         if (arr.ndim() != 2) {
           throw std::runtime_error("Numpy array must be 2D");
         }
