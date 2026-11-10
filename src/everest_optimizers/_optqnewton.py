@@ -18,7 +18,6 @@ def minimize_optqnewton(  # ruff: ignore[too-many-arguments, too-many-positional
     args: tuple[Any, ...] = (),
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
-    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     x0 = np.asarray(x0, dtype=float)
@@ -34,7 +33,7 @@ def minimize_optqnewton(  # ruff: ignore[too-many-arguments, too-many-positional
         msg = "optpp_q_newton does not support constraints"
         raise NotImplementedError(msg)
 
-    problem = NLF1Problem(fun, x0, args, jac, callback)
+    problem = NLF1Problem(fun, x0, args, jac)
     with remove_default_output(options):
         optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
     set_basic_newton_options(optimizer, options)

@@ -32,7 +32,6 @@ def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too
     args: tuple[Any, ...] = (),
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
-    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     # Minimize a scalar function using the OPT++ OptQNIPS optimizer.
@@ -77,7 +76,7 @@ def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too
         msg = "OptQNIPS requires at least bounds constraints"
         raise ValueError(msg)
 
-    problem = NLF1Problem(fun, x0, args, jac, callback)
+    problem = NLF1Problem(fun, x0, args, jac)
     problem.nlf1_problem.setConstraints(cc_ptr)
     with remove_default_output(options):
         optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)

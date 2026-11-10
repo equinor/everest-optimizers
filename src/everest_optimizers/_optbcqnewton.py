@@ -19,7 +19,6 @@ def minimize_optbcqnewton(  # ruff: ignore[too-many-arguments, too-many-position
     args: tuple[Any, ...] = (),
     bounds: Bounds | None = None,
     constraints: list[LinearConstraint | NonlinearConstraint] | None = None,
-    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     x0 = np.asarray(x0, dtype=float)
@@ -38,7 +37,7 @@ def minimize_optbcqnewton(  # ruff: ignore[too-many-arguments, too-many-position
     # Make sure to start with a feasible estimate:
     x0 = np.minimum(np.maximum(x0, bounds.lb), bounds.ub)
 
-    problem = NLF1Problem(fun, x0, args, jac, callback)
+    problem = NLF1Problem(fun, x0, args, jac)
     cc_ptr = pyoptpp.create_compound_constraint(
         [convert_bound_constraint(bounds, len(x0))]
     )

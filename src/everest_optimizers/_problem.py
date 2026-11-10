@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -15,14 +14,11 @@ class NLF1Problem:
         x0: NDArray[np.float64],
         args: tuple[Any, ...],
         jac: Callable[..., NDArray[np.float64]],
-        callback: Callable[..., None] | None = None,
     ) -> None:
         self.fun = fun
         self.x0 = np.asarray(x0, dtype=float)
         self.args = args
         self.jac = jac
-        self.callback = callback
-
         self.nfev = 0
         self.njev = 0
         self.current_x: NDArray[np.float64] | None = None
@@ -40,16 +36,6 @@ class NLF1Problem:
             f_val = self.fun(x_np, *self.args)
             self.current_f = float(f_val)
             self.nfev += 1
-
-            if self.callback is not None:
-                try:
-                    self.callback(x_np)
-                except Exception as cb_err:  # ruff: ignore[blind-except]
-                    warnings.warn(
-                        f"Callback function raised exception: {cb_err}",
-                        RuntimeWarning,
-                        stacklevel=2,
-                    )
 
             return self.current_f
 

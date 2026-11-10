@@ -18,13 +18,11 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     x0: NDArray[np.float64],
     args: tuple[Any, ...] | None = (),
     method: str = "optpp_q_newton",
-    bounds: list[tuple[float, float]] | Bounds | None = None,
-    constraints: list[dict[str, Any]]
-    | list[LinearConstraint | NonlinearConstraint]
+    bounds: Bounds | None = None,
+    constraints: list[LinearConstraint | NonlinearConstraint]
     | LinearConstraint
     | NonlinearConstraint
     | None = None,
-    callback: Callable[..., None] | None = None,
     options: dict[str, Any] | None = None,
 ) -> OptimizeResult:
     """Minimization of scalar function of one or more variables.
@@ -62,15 +60,11 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
         More optimizers may be added in the future.
 
-    bounds : sequence, optional
-        Bounds on variables. Supported by 'optpp_q_nips'.
+    bounds : Bounds, optional
+        Bounds on variables.
 
-    constraints : dict or list, optional
-        Constraints definition. Supported by 'optpp_q_nips'. Nonlinear
-        constraints require a callable Jacobian.
-
-    callback : callable, optional
-        Callback function. Not implemented for optpp_q_newton.
+    constraints : LinearConstraint, NonlinearConstraint or list, optional
+        Constraints specified by SciPy constraint objects.
 
     options : dict, optional
         A dictionary of solver options. For optpp_q_newton, supported options are:
@@ -106,7 +100,8 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
     Raises
     ------
     ValueError: If the method is not recognized or if the input parameters are invalid.
-    TypeError: If jac is not callable.
+    TypeError: If jac is not callable, bounds is not a Bounds object, or
+        constraints contains unsupported objects.
 
     Notes
     -----
@@ -143,11 +138,28 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
         msg = "jac must be a callable objective Jacobian"
         raise TypeError(msg)
 
+    if bounds is not None and not isinstance(bounds, Bounds):
+        msg = "bounds must be a scipy.optimize.Bounds object"
+        raise TypeError(msg)
+
     if not isinstance(args, tuple):
         args = (args,)
 
     if constraints is not None and not isinstance(constraints, Collection):
         constraints = [constraints]
+
+    if constraints is not None and (
+        isinstance(constraints, (dict, str, bytes))
+        or any(
+            not isinstance(constraint, (LinearConstraint, NonlinearConstraint))
+            for constraint in constraints
+        )
+    ):
+        msg = (
+            "constraints must be LinearConstraint or NonlinearConstraint objects, "
+            "or a collection of these"
+        )
+        raise TypeError(msg)
 
     match method.lower():
         case "optpp_q_newton":
@@ -156,9 +168,8 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
                 x0=x0,
                 args=args,
                 jac=jac,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
-                callback=callback,
+                bounds=bounds,
+                constraints=constraints,
                 options=options,
             )
         case "optpp_bcq_newton":
@@ -167,9 +178,8 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
                 x0=x0,
                 args=args,
                 jac=jac,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
-                callback=callback,
+                bounds=bounds,
+                constraints=constraints,
                 options=options,
             )
         case "optpp_q_nips":
@@ -178,8 +188,8 @@ def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
                 x0=x0,
                 args=args,
                 jac=jac,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
+                bounds=bounds,
+                constraints=constraints,
                 options=options,
             )
         case other:
