@@ -12,6 +12,7 @@ from ._optpp import (
     Bounds,
     LinearConstraints,
     run_bcq_newton,
+    run_lbfgs,
     run_q_newton,
     run_q_nips,
 )
@@ -19,6 +20,8 @@ from ._problem import NLF1Problem
 
 # Bounds at or beyond this magnitude count as absent.
 _BIG_BOUND: Final = 1.0e10
+# OptLBFGS replaces OptQNewton from this number of variables on.
+_LARGE_SCALE: Final = 100
 
 _INT_OPTIONS: Final = {"max_iterations", "max_function_evaluations"}
 _FLOAT_OPTIONS: Final = {
@@ -168,7 +171,9 @@ def minimize_optpp_q_newton(  # ruff: ignore[too-many-arguments, too-many-positi
         return run_bcq_newton(
             problem, finite_bounds, _newton_options(method_options, has_bounds=True)
         )
-    return run_q_newton(problem, _newton_options(method_options, has_bounds=False))
+    if x0.size < _LARGE_SCALE:
+        return run_q_newton(problem, _newton_options(method_options, has_bounds=False))
+    return run_lbfgs(problem, _lbfgs_options(method_options))
 
 
 def _has_finite_bounds(bounds: Bounds) -> bool:
@@ -218,6 +223,18 @@ def _newton_options(
     if search_strategy == "trust_region":
         options["tr_size"] = method_options["max_step"]
     return options
+
+
+def _lbfgs_options(method_options: dict[str, Any]) -> dict[str, Any]:
+    search_method = method_options.get("search_method")
+    mode_override = (
+        method_options.get("speculative", False)
+        or search_method == "gradient_based_line_search"
+    )
+    return _common_options(method_options, mode_override=mode_override) | {
+        "grad_tol": method_options["gradient_tolerance"],
+        "is_expensive": search_method == "value_based_line_search",
+    }
 
 
 def _qnips_options(

@@ -29,7 +29,7 @@ DEFAULTS = {
     "max_step": 1000.0,
 }
 
-RUNNERS = ("run_q_newton", "run_bcq_newton", "run_q_nips")
+RUNNERS = ("run_q_newton", "run_bcq_newton", "run_lbfgs", "run_q_nips")
 
 LINEAR_CONSTRAINTS = (np.array([[1.0, 1.0]]), np.array([-np.inf]), np.array([1.0]))
 
@@ -192,6 +192,25 @@ def test_minimize_bounds_use_bcq_newton(
         "search_strategy": "line_search",
         "is_expensive": True,
     }
+
+
+def test_minimize_large_problem_uses_lbfgs(
+    calls: list[tuple[str, tuple[Any, ...]]],
+) -> None:
+    name, args = run(calls, size=100)
+    assert name == "run_lbfgs"
+    assert args[-1] == DEFAULTS | {
+        "mode_override": False,
+        "grad_tol": 1e-4,
+        "is_expensive": False,
+    }
+
+
+def test_minimize_just_below_large_scale_uses_q_newton(
+    calls: list[tuple[str, tuple[Any, ...]]],
+) -> None:
+    name, _ = run(calls, size=99)
+    assert name == "run_q_newton"
 
 
 def test_minimize_linear_constraints_use_q_nips(

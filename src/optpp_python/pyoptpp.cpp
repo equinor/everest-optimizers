@@ -20,6 +20,7 @@
 #include "NonLinearConstraint.h"
 #include "Opt.h"
 #include "OptBCQNewton.h"
+#include "OptLBFGS.h"
 #include "OptQNIPS.h"
 #include "OptQNewton.h"
 #include "Teuchos_SerialDenseMatrix.hpp"
@@ -316,6 +317,22 @@ PYBIND11_MODULE(_pyoptpp, m) {
       .def("setMaxFeval", &OptBCQNewton::setMaxFeval, py::arg("max_function_evaluations"))
       .def("setFcnTol", &OptBCQNewton::setFcnTol, py::arg("convergence_tolerance"))
       .def("setGradTol", &OptBCQNewton::setGradTol, py::arg("gradient_tolerance"));
+
+  py::class_<OptLBFGS>(m, "OptLBFGS")
+      .def(py::init([](NLF1* p) { return new OptLBFGS(p); }), py::arg("p"))
+      .def("cleanup", &OptLBFGS::cleanup)
+      .def("optimize", &OptLBFGS::optimize)
+      .def("getReturnCode", &OptLBFGS::getReturnCode)
+      .def("setDebug", &OptimizeClass::setDebug)
+      .def(
+          "setOutputFile",
+          static_cast<int (OptLBFGS::*)(const char*, int)>(&OptLBFGS::setOutputFile),
+          py::arg("filename"), py::arg("mode")
+      )
+      .def("setMaxStep", &OptLBFGS::setMaxStep, py::arg("max_step"))
+      .def("setMaxIter", &OptLBFGS::setMaxIter, py::arg("max_iterations"))
+      .def("setFcnTol", &OptLBFGS::setFcnTol, py::arg("convergence_tolerance"))
+      .def("setGradTol", &OptLBFGS::setGradTol, py::arg("gradient_tolerance"));
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
       .def(py::init([](NLF1* p) { return new OptQNIPS(p); }), py::arg("p"))

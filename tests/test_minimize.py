@@ -92,6 +92,16 @@ def test_minimize_solves_quadratic_from_different_starts(x0: list[float]) -> Non
     np.testing.assert_allclose(x, [2.0, -1.0], atol=1e-4)
 
 
+def test_minimize_solves_large_problem() -> None:
+    x, status = minimize(
+        np.tile([-1.2, 1.0], 50),
+        evaluate=_rosenbrock,
+        options=TOLERANCES | {"max_iterations": 1000},
+    )
+    assert status > 0
+    np.testing.assert_allclose(x, np.ones(100), atol=1e-4)
+
+
 @pytest.mark.parametrize(
     ("lower", "upper", "x0", "expected"),
     [
