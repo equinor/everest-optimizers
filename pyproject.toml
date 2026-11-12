@@ -31,16 +31,10 @@ license = "LGPL-3.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["scipy", "pydantic"]
+dependencies = ["scipy"]
 
 [dependency-groups]
-test = [
-  "carolina",
-  "pytest",
-  "numpy",
-  "cmake",
-  "matplotlib",
-]
+test = ["pytest"]
 dev = [
   "mypy",
   "ruff",
@@ -68,7 +62,6 @@ sdist.include = ["src/pybind_module/_version.py"]
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
-test-groups = ["test"]
 test-command = ["pytest {package}/tests/OPTPP"]
 
 [tool.cibuildwheel.linux]
@@ -114,6 +107,3 @@ ignore_errors = true
 [tool.uv]
 fork-strategy = "requires-python"
 exclude-newer = "7 days"
-
-[tool.uv.exclude-newer-package]
-carolina = false  # Developed by Equinor

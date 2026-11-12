@@ -29,10 +29,6 @@ optpp_pic/
 .claude
 .pytest_cache
 
-# Dakota
-dakota_tabular.dat
-dakota.in
-dakota.rst
 *.pyc
 *~
 *.swp
