@@ -52,7 +52,7 @@ filterwarnings = [
   "error",
   "ignore:numpy.ndarray size changed, may indicate binary incompatibility.*:RuntimeWarning",
 ]
-testpaths = ["tests/OPTPP"]
+testpaths = ["tests"]
 
 [tool.setuptools_scm]
 
@@ -62,7 +62,7 @@ sdist.include = ["src/pybind_module/_version.py"]
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
-test-command = ["pytest {package}/tests/OPTPP"]
+test-command = ["pytest {package}/tests"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
