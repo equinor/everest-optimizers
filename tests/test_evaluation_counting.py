@@ -1,6 +1,8 @@
 """Tests for the OPT++ evaluation counters.
 
-OPT++ counts each objective request that reaches the evaluator.
+OPT++ counts each objective request that reaches the evaluator, including requests
+that are answered from stored evaluations. The expected values are the counts
+of the reference `optpp_q_newton` implementation on the same problems.
 """
 
 from __future__ import annotations
@@ -34,6 +36,21 @@ def work_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
+def _circle(x: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    values = np.array([np.sum((x - 2.0) ** 2), x @ x - 4.0])
+    gradients = np.array([2 * (x - 2.0), 2 * x])
+    return values, gradients
+
+
+def _mixed(x: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    delta = x - 1.0
+    values = np.array([delta @ delta, 0.5 - x[0] ** 2 - x[1] ** 2, np.sum(x) - 1.0])
+    gradients = np.array(
+        [2 * delta, [-2 * x[0], -2 * x[1], 0.0], [1.0, 1.0, 1.0]],
+    )
+    return values, gradients
+
+
 def _evaluator(
     problem: Problem, calls: list[EvaluationMode]
 ) -> Callable[[NDArray[np.float64], EvaluationMode], EvaluationResult]:
@@ -53,6 +70,54 @@ def _iteration_rows(output_file: Path) -> list[list[str]]:
         line.split() for line in output_file.read_text(encoding="utf-8").splitlines()
     )
     return [row for row in rows if len(row) > 4 and row[0].isdigit()]
+
+
+def test_optpp_q_newton_counts_objective_requests_answered_by_the_constraint_evaluation(
+    work_dir: Path,
+) -> None:
+    calls: list[EvaluationMode] = []
+    output_file = work_dir / "optimizer.out"
+
+    minimize(
+        np.array([1.5, 1.5]),
+        evaluate=_evaluator(_circle, calls),
+        bounds=(np.full(2, -5.0), np.full(2, 5.0)),
+        nonlinear_equalities=np.array([True]),
+        options={"output_file": str(output_file)},
+    )
+
+    assert [int(row[-3]) for row in _iteration_rows(output_file)] == [2, 3, 4]
+    assert len(calls) == 4
+
+
+@pytest.mark.parametrize(
+    ("problem", "x0", "nonlinear_equalities", "max_evaluations", "expected_calls"),
+    [
+        (_circle, [1.5, 1.5], [True], 2, 3),
+        (_mixed, [0.0, 0.0, 0.0], [False, True], 2, 3),
+        (_mixed, [0.0, 0.0, 0.0], [False, True], 3, 4),
+        (_mixed, [0.0, 0.0, 0.0], [False, True], 4, 5),
+    ],
+)
+@pytest.mark.usefixtures("work_dir")
+def test_optpp_q_newton_stops_at_max_function_evaluations(
+    problem: Problem,
+    x0: list[float],
+    nonlinear_equalities: list[bool],
+    max_evaluations: int,
+    expected_calls: int,
+) -> None:
+    calls: list[EvaluationMode] = []
+
+    minimize(
+        np.array(x0),
+        evaluate=_evaluator(problem, calls),
+        bounds=(np.full(len(x0), -5.0), np.full(len(x0), 5.0)),
+        nonlinear_equalities=np.array(nonlinear_equalities),
+        options={"max_function_evaluations": max_evaluations},
+    )
+
+    assert len(calls) == expected_calls
 
 
 def _rosenbrock(
