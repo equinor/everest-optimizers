@@ -5,8 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
-from everest_optimizers import pyoptpp
-
+from . import _pyoptpp
 from ._problem import NLF1Problem
 from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
@@ -36,6 +35,6 @@ def minimize_optqnewton(  # ruff: ignore[too-many-arguments, too-many-positional
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
     with remove_default_output(options):
-        optimizer = pyoptpp.OptQNewton(problem.nlf1_problem)
+        optimizer = _pyoptpp.OptQNewton(problem.nlf1_problem)
     set_basic_newton_options(optimizer, options)
     return run_newton(optimizer, problem, x0)

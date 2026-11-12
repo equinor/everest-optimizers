@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
 
-from everest_optimizers import pyoptpp
+from . import _pyoptpp
 
 
 def _create_constraint(
@@ -13,7 +13,7 @@ def _create_constraint(
     constraint_jac: Callable[..., Any],
     x0: NDArray[np.float64],
     constraint_index: int,
-) -> pyoptpp.NLF1:
+) -> _pyoptpp.NLF1:
     def evaluate_constraint_function(x: NDArray[np.float64]) -> NDArray[np.float64]:
         x_np = np.asarray(x, copy=True)
         c_values = np.atleast_1d(constraint_func(x_np))
@@ -27,8 +27,8 @@ def _create_constraint(
         grad_row = jac[constraint_index, :]
         return np.array(grad_row).reshape(len(x0), 1)
 
-    x0_vector = pyoptpp.SerialDenseVector(x0)
-    return pyoptpp.NLF1(
+    x0_vector = _pyoptpp.SerialDenseVector(x0)
+    return _pyoptpp.NLF1(
         len(x0),
         evaluate_constraint_function,
         evaluate_constraint_gradient,
@@ -39,9 +39,9 @@ def _create_constraint(
 
 def convert_nonlinear_constraint(
     scipy_constraint: NonlinearConstraint, x0: NDArray[np.float64]
-) -> list[pyoptpp.NonLinearEquation | pyoptpp.NonLinearInequality]:
+) -> list[_pyoptpp.NonLinearEquation | _pyoptpp.NonLinearInequality]:
     optpp_constraints: list[
-        pyoptpp.NonLinearEquation | pyoptpp.NonLinearInequality
+        _pyoptpp.NonLinearEquation | _pyoptpp.NonLinearInequality
     ] = []
 
     if not callable(scipy_constraint.jac):
@@ -67,23 +67,23 @@ def convert_nonlinear_constraint(
 
         if np.isclose(lower_bounds[i] - upper_bounds[i], 0, atol=1e-12):
             # Equality constraint: lb == ub
-            nlp = pyoptpp.NLP(constraint)
-            rhs = pyoptpp.SerialDenseVector(lower_bounds[i])
-            optpp_constraints.append(pyoptpp.NonLinearEquation(nlp, rhs))
+            nlp = _pyoptpp.NLP(constraint)
+            rhs = _pyoptpp.SerialDenseVector(lower_bounds[i])
+            optpp_constraints.append(_pyoptpp.NonLinearEquation(nlp, rhs))
 
         else:
-            nlp = pyoptpp.NLP(constraint)
-            lower = pyoptpp.SerialDenseVector(lower_bounds[i])
-            upper = pyoptpp.SerialDenseVector(upper_bounds[i])
-            optpp_constraints.append(pyoptpp.NonLinearInequality(nlp, lower, upper))
+            nlp = _pyoptpp.NLP(constraint)
+            lower = _pyoptpp.SerialDenseVector(lower_bounds[i])
+            upper = _pyoptpp.SerialDenseVector(upper_bounds[i])
+            optpp_constraints.append(_pyoptpp.NonLinearInequality(nlp, lower, upper))
 
     return optpp_constraints
 
 
 def convert_linear_constraint(
     scipy_constraint: LinearConstraint,
-) -> list[pyoptpp.LinearEquation | pyoptpp.LinearInequality]:
-    optpp_constraints: list[pyoptpp.LinearEquation | pyoptpp.LinearInequality] = []
+) -> list[_pyoptpp.LinearEquation | _pyoptpp.LinearInequality]:
+    optpp_constraints: list[_pyoptpp.LinearEquation | _pyoptpp.LinearInequality] = []
 
     # Get constraint matrix and bounds
     coefficients = np.asarray(scipy_constraint.A, dtype=float)
@@ -92,7 +92,7 @@ def convert_linear_constraint(
     num_constraints = coefficients.shape[0]
     for i in range(num_constraints):
         row = coefficients[i : i + 1, :]  # Keep as 2D for consistency
-        matrix = pyoptpp.SerialDenseMatrix(row)
+        matrix = _pyoptpp.SerialDenseMatrix(row)
         lb = scipy_constraint.lb[i]
         ub = scipy_constraint.ub[i]
 
@@ -102,18 +102,20 @@ def convert_linear_constraint(
 
         if np.isclose(lb - ub, 0, atol=1e-12):
             # Equality constraint: lb == ub
-            rhs = pyoptpp.SerialDenseVector(lb)
-            optpp_constraints.append(pyoptpp.LinearEquation(matrix, rhs))
+            rhs = _pyoptpp.SerialDenseVector(lb)
+            optpp_constraints.append(_pyoptpp.LinearEquation(matrix, rhs))
 
         else:
-            lower = pyoptpp.SerialDenseVector(lb)
-            upper = pyoptpp.SerialDenseVector(ub)
-            optpp_constraints.append(pyoptpp.LinearInequality(matrix, lower, upper))
+            lower = _pyoptpp.SerialDenseVector(lb)
+            upper = _pyoptpp.SerialDenseVector(ub)
+            optpp_constraints.append(_pyoptpp.LinearInequality(matrix, lower, upper))
 
     return optpp_constraints
 
 
-def convert_bound_constraint(bounds: Bounds, x0_length: int) -> pyoptpp.BoundConstraint:
-    lb_vec = pyoptpp.SerialDenseVector(np.asarray(bounds.lb, dtype=float))
-    ub_vec = pyoptpp.SerialDenseVector(np.asarray(bounds.ub, dtype=float))
-    return pyoptpp.BoundConstraint(x0_length, lb_vec, ub_vec)
+def convert_bound_constraint(
+    bounds: Bounds, x0_length: int
+) -> _pyoptpp.BoundConstraint:
+    lb_vec = _pyoptpp.SerialDenseVector(np.asarray(bounds.lb, dtype=float))
+    ub_vec = _pyoptpp.SerialDenseVector(np.asarray(bounds.ub, dtype=float))
+    return _pyoptpp.BoundConstraint(x0_length, lb_vec, ub_vec)

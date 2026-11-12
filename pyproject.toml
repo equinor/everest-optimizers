@@ -101,7 +101,7 @@ ignore = [
 strict = true
 
 [[tool.mypy.overrides]]
-module = "everest_optimizers.pyoptpp._pyoptpp"
+module = "everest_optimizers._pyoptpp"
 ignore_errors = true
 
 [tool.uv]

@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from everest_optimizers import pyoptpp
+from . import _pyoptpp
 
 
 class NLF1Problem:
@@ -31,7 +31,7 @@ class NLF1Problem:
 
         self.nlf1_problem = self._create_nlf1_problem()
 
-    def _create_nlf1_problem(self) -> pyoptpp.NLF1:
+    def _create_nlf1_problem(self) -> _pyoptpp.NLF1:
         # Create callback functions for objective evaluation
         def eval_f(x: NDArray[np.float64]) -> float:
             x_np = np.asarray(x, copy=True)
@@ -61,5 +61,5 @@ class NLF1Problem:
             self.njev += 1
             return grad_np
 
-        x0_vector = pyoptpp.SerialDenseVector(self.x0)
-        return pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
+        x0_vector = _pyoptpp.SerialDenseVector(self.x0)
+        return _pyoptpp.NLF1(len(self.x0), eval_f, eval_g, x0_vector)
