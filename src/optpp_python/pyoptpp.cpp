@@ -1,9 +1,6 @@
-#include <pybind11/functional.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
-#include <fmt/format.h>
 
 #include <cstring>
 #include <memory>
@@ -21,15 +18,12 @@
 #include "NLP.h"
 #include "NLPBase.h"
 #include "NonLinearConstraint.h"
-#include "NonLinearEquation.h"
-#include "NonLinearInequality.h"
 #include "Opt.h"
 #include "OptBCQNewton.h"
 #include "OptQNIPS.h"
 #include "OptQNewton.h"
 #include "Teuchos_SerialDenseMatrix.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
-#include "Teuchos_SerialSymDenseMatrix.hpp"
 
 namespace py = pybind11;
 using namespace OPTPP;
@@ -37,147 +31,7 @@ using namespace OPTPP;
 namespace {
 
 using T_SerialDenseVector = Teuchos::SerialDenseVector<int, double>;
-using T_SerialSymDenseMatrix = Teuchos::SerialSymDenseMatrix<int, double>;
 using T_SerialDenseMatrix = Teuchos::SerialDenseMatrix<int, double>;
-
-// Dummy C++ function for the default case
-void default_update_model(int, int, T_SerialDenseVector) {}
-
-// Non-linear function class that holds Python callbacks
-class CallbackNLF1 : public NLF1 {
-private:
-  py::function py_eval_func;
-  py::function py_eval_grad;
-  bool is_constraint;
-
-public:
-  // Unified constructor - use is_constraint flag to determine behavior
-  CallbackNLF1(int ndim, py::function eval_func, py::function eval_grad, bool is_constraint = false)
-      : NLF1(ndim), py_eval_func(eval_func), py_eval_grad(eval_grad), is_constraint(is_constraint) {
-  }
-
-  void initFcn() override {}
-
-  void eval() override {
-    this->fvalue = this->evalF(this->mem_xc);
-    this->mem_grad = this->evalG(this->mem_xc);
-    this->nfevals++;
-    this->ngevals++;
-  }
-
-  real evalF(const T_SerialDenseVector& x) override {
-    if (is_constraint) {
-      return 0.0; // Dummy value for constraint-only NLF1
-    }
-    py::gil_scoped_acquire gil;
-    try {
-      return py_eval_func(x).cast<real>();
-    } catch (py::error_already_set& e) {
-      throw;
-    } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("Error in evalF callback: {}", e.what()));
-    }
-  }
-
-  T_SerialDenseVector evalG(const T_SerialDenseVector& x) override {
-    if (is_constraint) {
-      // Return zero gradient for constraint-only NLF1
-      if (mem_grad.length() != this->getDim()) {
-        mem_grad.resize(this->getDim());
-      }
-      for (int i = 0; i < this->getDim(); ++i) {
-        mem_grad(i) = 0.0;
-      }
-      return mem_grad;
-    }
-    py::gil_scoped_acquire gil;
-    try {
-      py::object result = py_eval_grad(x);
-      py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
-          result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
-      py::buffer_info buf = result_array.request();
-
-      if (buf.ndim != 1 || buf.shape[0] != this->getDim()) {
-        throw std::runtime_error("evalG: Returned numpy array has wrong dimensions!");
-      }
-      // The optimizer depends on the internal state of mem_grad being updated.
-      // We must copy the data from the Python override into mem_grad.
-      if (mem_grad.length() != this->getDim()) {
-        mem_grad.resize(this->getDim());
-      }
-      std::memcpy(mem_grad.values(), buf.ptr, this->getDim() * sizeof(double));
-      return mem_grad;
-    } catch (py::error_already_set& e) {
-      throw;
-    } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("Error in evalG callback: {}", e.what()));
-    }
-  }
-
-  T_SerialDenseVector evalG() override { return this->evalG(this->getXc()); }
-
-  T_SerialSymDenseMatrix evalH(T_SerialDenseVector& x) override {
-    // Return identity matrix - Hessian is not used in these algorithms
-    int dim = this->getDim();
-    T_SerialSymDenseMatrix H(dim);
-    for (int i = 0; i < dim; ++i) {
-      H(i, i) = 1.0;
-    }
-    return H;
-  }
-
-  T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
-    if (!is_constraint) {
-      return T_SerialDenseVector(1);
-    }
-
-    py::gil_scoped_acquire gil;
-    try {
-      py::object result = py_eval_func(x);
-      py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
-          result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
-      py::buffer_info buf = result_array.request();
-
-      if (buf.ndim != 1) {
-        throw std::runtime_error("evalCF: Returned numpy array must be 1D!");
-      }
-
-      T_SerialDenseVector constraints(buf.shape[0]);
-      std::memcpy(constraints.values(), buf.ptr, buf.shape[0] * sizeof(double));
-      return constraints;
-    } catch (py::error_already_set& e) {
-      throw;
-    } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("Error in evalCF callback: {}", e.what()));
-    }
-  }
-
-  T_SerialDenseMatrix evalCG(const T_SerialDenseVector& x) override {
-    if (!is_constraint) {
-      return T_SerialDenseMatrix(1, this->getDim());
-    }
-
-    py::gil_scoped_acquire gil;
-    try {
-      py::object result = py_eval_grad(x);
-      py::array_t<double, py::array::c_style | py::array::forcecast> result_array =
-          result.cast<py::array_t<double, py::array::c_style | py::array::forcecast>>();
-      py::buffer_info buf = result_array.request();
-
-      if (buf.ndim != 2) {
-        throw std::runtime_error("evalCG: Returned numpy array must be 2D!");
-      }
-
-      T_SerialDenseMatrix grad(buf.shape[0], buf.shape[1]);
-      std::memcpy(grad.values(), buf.ptr, buf.shape[0] * buf.shape[1] * sizeof(double));
-      return grad;
-    } catch (py::error_already_set& e) {
-      throw;
-    } catch (const std::exception& e) {
-      throw std::runtime_error(fmt::format("Error in evalCG callback: {}", e.what()));
-    }
-  }
-};
 
 void initialize(int, T_SerialDenseVector&) {}
 
@@ -324,45 +178,18 @@ public:
 } // namespace
 
 PYBIND11_MODULE(_pyoptpp, m) {
-  m.doc() = "Python bindings for OPTPP library";
-
-  py::class_<T_SerialDenseVector>(m, "SerialDenseVector", py::buffer_protocol())
-      .def(py::init<int>())
+  py::class_<T_SerialDenseVector>(m, "SerialDenseVector")
       .def(py::init([](py::array_t<double, py::array::c_style | py::array::forcecast> arr) {
         auto vec = new T_SerialDenseVector(arr.size());
         std::memcpy(vec->values(), arr.data(), arr.size() * sizeof(double));
         return vec;
       }))
-      .def("size", &T_SerialDenseVector::length)
-      .def("__len__", &T_SerialDenseVector::length)
-      .def(
-          "__getitem__",
-          [](const T_SerialDenseVector& v, int i) {
-            if (i < 0)
-              i += v.length();
-            if (i < 0 || i >= v.length())
-              throw py::index_error();
-            return v(i);
-          }
-      )
-      .def(
-          "__setitem__",
-          [](T_SerialDenseVector& v, int i, double val) {
-            if (i < 0)
-              i += v.length();
-            if (i < 0 || i >= v.length())
-              throw py::index_error();
-            v(i) = val;
-          }
-      )
       .def("to_numpy", [](T_SerialDenseVector& v) {
         return py::array_t<double>(
             {static_cast<size_t>(v.length())}, {sizeof(double)}, v.values(), py::cast(v)
         );
       });
-
-  py::class_<T_SerialSymDenseMatrix>(m, "SerialSymDenseMatrix");
-  py::class_<T_SerialDenseMatrix>(m, "SerialDenseMatrix", py::buffer_protocol())
+  py::class_<T_SerialDenseMatrix>(m, "SerialDenseMatrix")
       .def(py::init([](py::array_t<double, py::array::f_style | py::array::forcecast> arr) {
         if (arr.ndim() != 2) {
           throw std::runtime_error("Numpy array must be 2D");
@@ -373,33 +200,11 @@ PYBIND11_MODULE(_pyoptpp, m) {
       }));
 
   py::classh<NLPBase>(m, "NLPBase");
-  py::classh<NLP>(m, "NLP") // Use regular py::class_ instead of py::classh
-      .def(
-          py::init([](std::unique_ptr<NLPBase> p) { return new NLP(p.release()); }),
-          py::arg("base"), "Create NLP from NLPBase pointer (transfers ownership to NLP's SmartPtr)"
-      );
-
-  py::classh<NLP0, NLPBase>(m, "NLP0");
-  py::classh<NLP1, NLP0>(m, "NLP1");
-  py::classh<NLF1, NLP1>(m, "NLF1")
-      .def(
-          py::init(
-              [](int ndim, py::function eval_func, py::function eval_grad,
-                 const T_SerialDenseVector& x0, bool is_constraint) -> NLF1* {
-                CallbackNLF1* nlf1 = new CallbackNLF1(ndim, eval_func, eval_grad, is_constraint);
-                nlf1->setX(x0);
-                nlf1->setIsExpensive(true);
-
-                return nlf1;
-              }
-          ),
-          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::keep_alive<0, 4>(), py::arg("ndim"),
-          py::arg("eval_func"), py::arg("eval_grad"), py::arg("x0"),
-          py::arg("is_constraint") = false,
-          "Create an NLF1 object with Python callbacks (objective or constraint)"
-      )
+  py::classh<NLP>(m, "NLP").def(
+      py::init([](std::unique_ptr<NLPBase> p) { return new NLP(p.release()); }), py::arg("base")
+  );
+  py::classh<NLF1, NLPBase>(m, "NLF1")
       .def("getXc", &NLF1::getXc)
-      .def("getF", &NLF1::getF)
       .def("setIsExpensive", &NLF1::setIsExpensive, py::arg("is_expensive"))
       .def("setModeOverride", &NLF1::setModeOverride, py::arg("override_mode"))
       .def(
@@ -422,17 +227,32 @@ PYBIND11_MODULE(_pyoptpp, m) {
           py::arg("evaluate")
       );
 
-  py::classh<Constraint>(m, "Constraint");
-  py::classh<CompoundConstraint>(m, "CompoundConstraint");
   py::classh<ConstraintBase>(m, "ConstraintBase");
-
+  py::classh<CompoundConstraint>(m, "CompoundConstraint");
   py::classh<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
       .def(
-          py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
-          py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::arg("nc"), py::arg("A"),
+          py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(), py::arg("nc"),
+          py::arg("lower"), py::arg("upper")
+      );
+  py::classh<LinearEquation, ConstraintBase>(m, "LinearEquation")
+      .def(
+          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(), py::arg("A"),
           py::arg("rhs")
       );
-
+  py::classh<LinearInequality, ConstraintBase>(m, "LinearInequality")
+      .def(
+          py::init<
+              const T_SerialDenseMatrix&, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
+          py::arg("A"), py::arg("lower"), py::arg("upper")
+      );
+  py::classh<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint")
+      .def(
+          py::init([](std::unique_ptr<NLP> nlprob, const T_SerialDenseVector& lower,
+                      const T_SerialDenseVector& upper, int ne, int ni) {
+            return new OwnedNonLinearConstraint(nlprob.release(), lower, upper, ne, ni);
+          }),
+          py::arg("nlprob"), py::arg("lower"), py::arg("upper"), py::arg("ne"), py::arg("ni")
+      );
   m.def(
       "create_compound_constraint",
       [](std::vector<std::unique_ptr<ConstraintBase>> constraints) {
@@ -450,76 +270,28 @@ PYBIND11_MODULE(_pyoptpp, m) {
       py::arg("constraints")
   );
 
-  py::classh<LinearConstraint, ConstraintBase>(m, "LinearConstraint");
-  py::classh<LinearEquation, LinearConstraint>(m, "LinearEquation")
-      .def(
-          py::init<const T_SerialDenseMatrix&, const T_SerialDenseVector&>(),
-          py::keep_alive<0, 1>(), py::keep_alive<0, 2>(), py::arg("A"), py::arg("rhs")
-      );
-  py::classh<LinearInequality, LinearConstraint>(m, "LinearInequality")
-      .def(
-          py::init<
-              const T_SerialDenseMatrix&, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
-          py::keep_alive<0, 1>(), py::keep_alive<0, 2>(), py::keep_alive<0, 3>(), py::arg("A"),
-          py::arg("lower"), py::arg("upper")
-      );
-
-  py::classh<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint")
-      .def(
-          py::init([](std::unique_ptr<NLP> nlprob, const T_SerialDenseVector& lower,
-                      const T_SerialDenseVector& upper, int ne, int ni) {
-            return new OwnedNonLinearConstraint(nlprob.release(), lower, upper, ne, ni);
-          }),
-          py::arg("nlprob"), py::arg("lower"), py::arg("upper"), py::arg("ne"), py::arg("ni")
-      );
-  py::classh<NonLinearInequality, NonLinearConstraint>(m, "NonLinearInequality")
-      .def(
-          py::init([](std::unique_ptr<NLP> nlprob, const T_SerialDenseVector& lower,
-                      const T_SerialDenseVector& upper, int numconstraints) {
-            return new NonLinearInequality(nlprob.release(), lower, upper, numconstraints);
-          }),
-          py::keep_alive<0, 2>(), py::arg("nlprob"), py::arg("lower"), py::arg("upper"),
-          py::arg("numconstraints") = 1
-      );
-  py::classh<NonLinearEquation, NonLinearConstraint>(m, "NonLinearEquation")
-      .def(
-          py::init([](std::unique_ptr<NLP> nlprob, const T_SerialDenseVector& rhs,
-                      int numconstraints) {
-            return new NonLinearEquation(nlprob.release(), rhs, numconstraints);
-          }),
-          py::keep_alive<0, 2>(), py::arg("nlprob"), py::arg("rhs"), py::arg("numconstraints") = 1
-      );
-
   py::enum_<SearchStrategy>(m, "SearchStrategy")
       .value("TrustRegion", SearchStrategy::TrustRegion)
-      .value("LineSearch", SearchStrategy::LineSearch)
-      .value("TrustPDS", SearchStrategy::TrustPDS)
-      .export_values();
-
+      .value("LineSearch", SearchStrategy::LineSearch);
   py::enum_<MeritFcn>(m, "MeritFcn")
       .value("NormFmu", MeritFcn::NormFmu)
       .value("ArgaezTapia", MeritFcn::ArgaezTapia)
-      .value("VanShanno", MeritFcn::VanShanno)
-      .export_values();
+      .value("VanShanno", MeritFcn::VanShanno);
 
+  // The optimizers keep a non-owning pointer to the NLF1, which the caller must keep alive.
   py::class_<OptQNewton>(m, "OptQNewton")
-      .def(
-          py::init([](NLF1* p) { return new OptQNewton(p, &default_update_model); }), py::arg("p"),
-          py::keep_alive<0, 1>()
-      )
+      .def(py::init([](NLF1* p) { return new OptQNewton(p); }), py::arg("p"))
       .def("cleanup", &OptQNewton::cleanup)
       .def("optimize", &OptQNewton::optimize)
       .def("getReturnCode", &OptQNewton::getReturnCode)
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
+      .def("setDebug", &OptimizeClass::setDebug)
       .def(
           "setOutputFile",
           static_cast<int (OptQNewton::*)(const char*, int)>(&OptQNewton::setOutputFile),
-          py::arg("filename"), py::arg("mode") = 0
+          py::arg("filename"), py::arg("mode")
       )
       .def("setSearchStrategy", &OptQNewton::setSearchStrategy, py::arg("s"))
-      .def("setSearchSize", &OptQNewton::setSearchSize, py::arg("search_pattern_size"))
       .def("setTRSize", &OptQNewton::setTRSize, py::arg("size"))
-      .def("setGradMult", &OptQNewton::setGradMult, py::arg("gradient_multiplier"))
       .def("setMaxStep", &OptQNewton::setMaxStep, py::arg("max_step"))
       .def("setMaxIter", &OptQNewton::setMaxIter, py::arg("max_iterations"))
       .def("setMaxFeval", &OptQNewton::setMaxFeval, py::arg("max_function_evaluations"))
@@ -527,23 +299,18 @@ PYBIND11_MODULE(_pyoptpp, m) {
       .def("setGradTol", &OptQNewton::setGradTol, py::arg("gradient_tolerance"));
 
   py::class_<OptBCQNewton>(m, "OptBCQNewton")
-      .def(
-          py::init([](NLF1* p) { return new OptBCQNewton(p, &default_update_model); }),
-          py::arg("p"), py::keep_alive<0, 1>()
-      )
+      .def(py::init([](NLF1* p) { return new OptBCQNewton(p); }), py::arg("p"))
       .def("cleanup", &OptBCQNewton::cleanup)
       .def("optimize", &OptBCQNewton::optimize)
       .def("getReturnCode", &OptBCQNewton::getReturnCode)
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug, "Set debug flag to true")
+      .def("setDebug", &OptimizeClass::setDebug)
       .def(
           "setOutputFile",
           static_cast<int (OptBCQNewton::*)(const char*, int)>(&OptBCQNewton::setOutputFile),
-          py::arg("filename"), py::arg("mode") = 0
+          py::arg("filename"), py::arg("mode")
       )
       .def("setSearchStrategy", &OptBCQNewton::setSearchStrategy, py::arg("s"))
-      .def("setSearchSize", &OptBCQNewton::setSearchSize, py::arg("search_pattern_size"))
       .def("setTRSize", &OptBCQNewton::setTRSize, py::arg("size"))
-      .def("setGradMult", &OptBCQNewton::setGradMult, py::arg("gradient_multiplier"))
       .def("setMaxStep", &OptBCQNewton::setMaxStep, py::arg("max_step"))
       .def("setMaxIter", &OptBCQNewton::setMaxIter, py::arg("max_iterations"))
       .def("setMaxFeval", &OptBCQNewton::setMaxFeval, py::arg("max_function_evaluations"))
@@ -551,31 +318,21 @@ PYBIND11_MODULE(_pyoptpp, m) {
       .def("setGradTol", &OptBCQNewton::setGradTol, py::arg("gradient_tolerance"));
 
   py::class_<OptQNIPS>(m, "OptQNIPS")
-      .def(
-          py::init([](NLF1* p) { return new OptQNIPS(p, &default_update_model); }), py::arg("p"),
-          py::keep_alive<0, 1>()
-      )
+      .def(py::init([](NLF1* p) { return new OptQNIPS(p); }), py::arg("p"))
       .def("cleanup", &OptQNIPS::cleanup)
       .def("optimize", &OptQNIPS::optimize)
       .def("getReturnCode", &OptQNIPS::getReturnCode)
-      .def("setDebug", &OPTPP::OptimizeClass::setDebug)
+      .def("setDebug", &OptimizeClass::setDebug)
       .def(
           "setOutputFile",
           static_cast<int (OptQNIPS::*)(const char*, int)>(&OptQNIPS::setOutputFile),
-          py::arg("filename"), py::arg("mode") = 0
+          py::arg("filename"), py::arg("mode")
       )
-      .def("setSearchStrategy", &OptQNIPS::setSearchStrategy, py::arg("s"))
-      .def("setSearchSize", &OptQNIPS::setSearchSize, py::arg("search_pattern_size"))
-      .def("setTRSize", &OptQNIPS::setTRSize, py::arg("size"))
-      .def("setGradMult", &OptQNIPS::setGradMult, py::arg("gradient_multiplier"))
       .def("setMaxStep", &OptQNIPS::setMaxStep, py::arg("max_step"))
       .def("setMaxIter", &OptQNIPS::setMaxIter, py::arg("max_iterations"))
       .def("setMaxFeval", &OptQNIPS::setMaxFeval, py::arg("max_function_evaluations"))
       .def("setFcnTol", &OptQNIPS::setFcnTol, py::arg("convergence_tolerance"))
-      .def("setGradTol", &OptQNIPS::setGradTol, py::arg("gradient_tolerance"))
-      .def("setConTol", &OptQNIPS::setConTol, py::arg("constraint_tolerance"))
       .def("setMeritFcn", &OptQNIPS::setMeritFcn, py::arg("merit_function"))
       .def("setCenteringParameter", &OptQNIPS::setCenteringParameter, py::arg("sigma"))
-      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"))
-      .def("setMu", &OptQNIPS::setMu, py::arg("mu"));
+      .def("setStepLengthToBdry", &OptQNIPS::setStepLengthToBdry, py::arg("tau"));
 }
