@@ -34,6 +34,7 @@ class NLF1Problem:
                 np.flatnonzero(~nonlinear_equalities),
             )
         )
+        self._evaluations: dict[tuple[float, ...], list[_Evaluation]] = {}
         self._evaluate_callback = self._create_evaluate_callback()
         self.nlf1_problem = _pyoptpp.ObjectiveNLF1(
             x0.size,
@@ -73,7 +74,11 @@ class NLF1Problem:
 
     def _evaluate(self, x: NDArray[np.float64], mode: int) -> _EvaluateCallbackResult:
         evaluation_mode = EvaluationMode(mode)
-        evaluation = self._evaluate_requested(x, evaluation_mode)
+        key = tuple(x.tolist())
+        evaluation = self._stored_evaluation(key, evaluation_mode)
+        if evaluation is None:
+            evaluation = self._evaluate_requested(x, evaluation_mode)
+            self._evaluations.setdefault(key, []).append(evaluation)
 
         values = evaluation.values if evaluation_mode & EvaluationMode.VALUES else None
         gradients = (
@@ -86,6 +91,14 @@ class NLF1Problem:
                 (gradients[:1], gradients[1:][self.constraint_order]), axis=0
             )
         return values, gradients
+
+    def _stored_evaluation(
+        self, key: tuple[float, ...], mode: EvaluationMode
+    ) -> _Evaluation | None:
+        for evaluation in self._evaluations.get(key, ()):
+            if evaluation.mode & mode == mode:
+                return evaluation
+        return None
 
     def _evaluate_requested(
         self, point: NDArray[np.float64], mode: EvaluationMode

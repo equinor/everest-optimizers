@@ -44,6 +44,14 @@ For `n` variables and `m` nonlinear constraints, `values` has shape `(1 + m,)`
 and `gradients` has shape `(1 + m, n)`. The first entry or row belongs to the
 objective; the remaining entries or rows belong to the nonlinear constraints.
 
+`minimize` stores every evaluation until it returns. The evaluator is not called
+for a request when one stored evaluation of exactly the same point contains
+everything that is requested. Otherwise the evaluator is called for the complete
+request and its result is stored. Stored evaluations of the same point are not
+combined: if a point has one stored evaluation of values and another of
+gradients, a request for both calls the evaluator. The evaluator must return the
+same result each time it is called for the same point.
+
 Bounds and constraints are given as NumPy arrays:
 
 - `bounds` is a pair `(lower, upper)` of variable bounds, broadcast to the shape
@@ -90,8 +98,10 @@ implementation retains process-wide state between optimization runs.
 
 `max_function_evaluations` is compared with the number of objective-value
 requests that OPT++ makes. OPT++ does not count a request that its most recent
-objective evaluation already covers. OPT++ checks it between iterations, so it
-is not a hard cap.
+objective evaluation already covers. It does count a request that `minimize`
+answers from the stored evaluations described above, so this number can exceed
+the number of evaluator calls. OPT++ checks it between iterations, so it is not
+a hard cap.
 
 ## Tests
 
