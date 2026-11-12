@@ -1,12 +1,6 @@
 
 [build-system]
-requires = [
-  "ninja",
-  "numpy",
-  "pybind11",
-  "scikit-build-core",
-  "setuptools_scm",
-]
+requires = ["ninja", "numpy", "pybind11", "scikit-build-core", "setuptools_scm"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -79,22 +73,22 @@ extend-exclude = ["_pyoptpp.pyi"]
 preview = true
 select = ["ALL"]
 ignore = [
-  "missing-trailing-comma", # missing-trailing-comma
-  "CPY",    # flake8-copyright
-  "incorrect-blank-line-before-class",   # incorrect-blank-line-before-class
-  "multi-line-summary-second-line",   # multi-line-summary-second-line
-  "line-too-long",   # line-too-long
-  "assert",   # assert
+  "missing-trailing-comma",
+  "CPY",
+  "incorrect-blank-line-before-class",
+  "multi-line-summary-second-line",
+  "line-too-long",
+  "assert",
 ]
 
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
-  "D",       # pydocstyle
-  "any-type",  # anytype
-  "import-private-name", # import-private-name
-  "magic-value-comparison", # magic-value-comparison
-  "too-many-arguments", # too-many-arguments
+  "D",
+  "any-type",
+  "import-private-name",
+  "magic-value-comparison",
+  "too-many-arguments",
 ]
 
 [tool.mypy]
