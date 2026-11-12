@@ -8,10 +8,9 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import OptimizeResult
 
-from everest_optimizers import pyoptpp
-
+from . import _pyoptpp
 from ._problem import NLF1Problem
-from .pyoptpp import OptBCQNewton, OptQNewton, OptQNIPS
+from ._pyoptpp import OptBCQNewton, OptQNewton, OptQNIPS
 
 NewtonOptimizer = OptQNewton | OptBCQNewton | OptQNIPS
 
@@ -52,11 +51,11 @@ def set_basic_newton_options(
 
     match defaulted_options["search_method"].lower():
         case "trust_region" | "trustregion":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustRegion)
+            optimizer.setSearchStrategy(_pyoptpp.SearchStrategy.TrustRegion)
         case "line_search" | "linesearch":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.LineSearch)
+            optimizer.setSearchStrategy(_pyoptpp.SearchStrategy.LineSearch)
         case "trust_pds" | "trustpds":
-            optimizer.setSearchStrategy(pyoptpp.SearchStrategy.TrustPDS)
+            optimizer.setSearchStrategy(_pyoptpp.SearchStrategy.TrustPDS)
         case _:
             msg = (
                 f"Unknown search method: {defaulted_options['search_method']}. "

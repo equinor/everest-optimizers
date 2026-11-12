@@ -5,18 +5,18 @@ import numpy as np
 import numpy.typing as npt
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
-from everest_optimizers import pyoptpp
 from everest_optimizers._convert_constraints import (
     convert_bound_constraint,
     convert_linear_constraint,
     convert_nonlinear_constraint,
 )
 
+from . import _pyoptpp
 from ._problem import NLF1Problem
 from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
 if TYPE_CHECKING:
-    from everest_optimizers.pyoptpp import (
+    from ._pyoptpp import (
         BoundConstraint,
         LinearEquation,
         LinearInequality,
@@ -72,7 +72,7 @@ def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too
                 msg = f"Unsupported constraint type: {type(constraint)}"
                 raise TypeError(msg)
     if constraint_objects:
-        cc_ptr = pyoptpp.create_compound_constraint(constraint_objects)
+        cc_ptr = _pyoptpp.create_compound_constraint(constraint_objects)
     else:
         msg = "OptQNIPS requires at least bounds constraints"
         raise ValueError(msg)
@@ -80,7 +80,7 @@ def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too
     problem = NLF1Problem(fun, x0, args, jac, callback)
     problem.nlf1_problem.setConstraints(cc_ptr)
     with remove_default_output(options):
-        optimizer = pyoptpp.OptQNIPS(problem.nlf1_problem)
+        optimizer = _pyoptpp.OptQNIPS(problem.nlf1_problem)
 
     # Set and remove OptQNIPS-specific options:
     if options is not None:
@@ -89,15 +89,15 @@ def minimize_optqnips(  # ruff: ignore[complex-structure, too-many-branches, too
             case "el_bakry":
                 default_centering = 0.2
                 default_step_to_boundary = 0.8
-                optimizer.setMeritFcn(pyoptpp.MeritFcn.NormFmu)
+                optimizer.setMeritFcn(_pyoptpp.MeritFcn.NormFmu)
             case "argaez_tapia":
                 default_centering = 0.2
                 default_step_to_boundary = 0.99995
-                optimizer.setMeritFcn(pyoptpp.MeritFcn.ArgaezTapia)
+                optimizer.setMeritFcn(_pyoptpp.MeritFcn.ArgaezTapia)
             case "van_shanno":
                 default_centering = 0.1
                 default_step_to_boundary = 0.95
-                optimizer.setMeritFcn(pyoptpp.MeritFcn.VanShanno)
+                optimizer.setMeritFcn(_pyoptpp.MeritFcn.VanShanno)
             case merit_fn:
                 msg = (
                     f"Unknown merit function: {merit_fn}. "

@@ -14,4 +14,4 @@ pybind11_add_module(_pyoptpp pyoptpp.cpp)
 
 target_include_directories(_pyoptpp PRIVATE ${optpp_SOURCE_DIR}/include)
 target_link_libraries(_pyoptpp PRIVATE optpp ${Teuchos_LIBRARIES} fmt::fmt)
-install(TARGETS _pyoptpp DESTINATION everest_optimizers/pyoptpp)
+install(TARGETS _pyoptpp DESTINATION everest_optimizers)

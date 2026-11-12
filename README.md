@@ -103,7 +103,7 @@ cmake --build build
 Copy the module to the virtual environment. so file might have a slightly
 different name depending on OS/python version
 ```bash
-cp build/src/OPTPP-python/_pyoptpp.cpython-313-x86_64-linux-gnu.so .venv/lib/python3.13/site-packages/everest_optimizers/pyoptpp/_pyoptpp.cpython-313-x86_64-linux-gnu.so
+cp build/src/OPTPP-python/_pyoptpp.cpython-313-x86_64-linux-gnu.so .venv/lib/python3.13/site-packages/everest_optimizers/_pyoptpp.cpython-313-x86_64-linux-gnu.so
 ```
 
 Run the OPTPP tests. The preload should point to your locally installed

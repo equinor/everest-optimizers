@@ -5,9 +5,9 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
-from everest_optimizers import pyoptpp
 from everest_optimizers._convert_constraints import convert_bound_constraint
 
+from . import _pyoptpp
 from ._problem import NLF1Problem
 from ._utils import remove_default_output, run_newton, set_basic_newton_options
 
@@ -39,11 +39,11 @@ def minimize_optbcqnewton(  # ruff: ignore[too-many-arguments, too-many-position
     x0 = np.minimum(np.maximum(x0, bounds.lb), bounds.ub)
 
     problem = NLF1Problem(fun, x0, args, jac, callback)
-    cc_ptr = pyoptpp.create_compound_constraint(
+    cc_ptr = _pyoptpp.create_compound_constraint(
         [convert_bound_constraint(bounds, len(x0))]
     )
     problem.nlf1_problem.setConstraints(cc_ptr)
     with remove_default_output(options):
-        optimizer = pyoptpp.OptBCQNewton(problem.nlf1_problem)
+        optimizer = _pyoptpp.OptBCQNewton(problem.nlf1_problem)
     set_basic_newton_options(optimizer, options)
     return run_newton(optimizer, problem, x0)
