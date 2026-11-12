@@ -21,26 +21,26 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(pybind11)
 
 # Build OPTPP. trilinos is also needed to build it.
-message(STATUS "Downloading dakota-packages")
+message(STATUS "Downloading OPTPP")
 FetchContent_Declare(
-    dakota-packages
+    optpp_packages
     GIT_REPOSITORY https://github.com/snl-dakota/dakota-packages
     GIT_TAG e83c52d7519d2421dffdfbd2b6fc6f7e54a86727
     SOURCE_DIR
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/dakota-packages"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/optpp_packages"
     PATCH_COMMAND
         git apply "${CMAKE_CURRENT_SOURCE_DIR}/OPTPP-van-shanno-fix.patch"
-    # exclude in case dakota-packages adds a root CMakeLists.txt file
+    # exclude in case the repository adds a root CMakeLists.txt file
     EXCLUDE_FROM_ALL
 )
-FetchContent_MakeAvailable(dakota-packages)
-message(STATUS "Finished downloading dakota-packages")
+FetchContent_MakeAvailable(optpp_packages)
+message(STATUS "Finished downloading OPTPP")
 
 set(Teuchos_DIR ${CMAKE_CURRENT_BINARY_DIR}/trilinos/packages/teuchos)
 set(Trilinos_ENABLE_Teuchos ON CACHE BOOL "" FORCE)
-add_subdirectory(${dakota-packages_SOURCE_DIR}/trilinos EXCLUDE_FROM_ALL)
-add_subdirectory(${dakota-packages_SOURCE_DIR}/OPTPP EXCLUDE_FROM_ALL)
-add_subdirectory(src/OPTPP-python)
+add_subdirectory(${optpp_packages_SOURCE_DIR}/trilinos EXCLUDE_FROM_ALL)
+add_subdirectory(${optpp_packages_SOURCE_DIR}/OPTPP EXCLUDE_FROM_ALL)
+add_subdirectory(src/optpp_python)
 
 # Install our python files
 file(GLOB EVEREST_OPTIMIZERS_SRC src/everest_optimizers/*.py)
