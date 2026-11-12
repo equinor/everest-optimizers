@@ -66,8 +66,9 @@ termination code, which is positive if the optimizer converged.
 
 `minimize` selects and configures an OPT++ algorithm: an interior-point method
 for problems with linear or nonlinear constraints, a bound-constrained
-quasi-Newton method for problems with finite variable bounds, and a quasi-Newton
-method for unconstrained problems. Bounds with a magnitude of `1e30` or more
+quasi-Newton method for problems with finite variable bounds, a quasi-Newton
+method for unconstrained problems with fewer than 100 variables, and a
+limited-memory BFGS method otherwise. Bounds with a magnitude of `1e30` or more
 count as absent.
 
 It accepts the options `max_iterations`, `max_function_evaluations`,
