@@ -25,7 +25,7 @@ license = "LGPL-3.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["scipy"]
+dependencies = ["numpy"]
 
 [dependency-groups]
 test = ["pytest"]
@@ -33,7 +33,6 @@ dev = [
   "mypy",
   "ruff",
   "scikit-build-core",
-  "scipy-stubs",
   "setuptools_scm",
   { include-group = "test" },
 ]
