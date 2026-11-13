@@ -26,6 +26,7 @@ jobs:
           - ["3.14", cp314]
         os_arch:
           - [ubuntu-latest, manylinux_x86_64]
+          - [ubuntu-24.04-arm, manylinux_aarch64]
           - [macos-latest, macosx_arm64]
     env:
       CIBW_BUILD: ${{ matrix.python[1] }}-${{ matrix.os_arch[1] }}
