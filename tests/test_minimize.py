@@ -309,9 +309,18 @@ def test_minimize_stops_at_max_iterations() -> None:
     assert status == -4
 
 
-def test_minimize_removes_the_default_output_file(work_dir: Path) -> None:
+def test_minimize_writes_no_default_output_file(work_dir: Path) -> None:
     minimize(np.zeros(2), evaluate=_quadratic([2.0, -1.0]))
     assert list(work_dir.iterdir()) == []
+
+
+def test_minimize_leaves_an_existing_default_output_file_intact(
+    work_dir: Path,
+) -> None:
+    default_output = work_dir / "OPT_DEFAULT.out"
+    default_output.write_text("unrelated\n", encoding="utf-8")
+    minimize(np.zeros(2), evaluate=_quadratic([2.0, -1.0]))
+    assert default_output.read_text(encoding="utf-8") == "unrelated\n"
 
 
 def test_minimize_writes_the_output_file(work_dir: Path) -> None:
