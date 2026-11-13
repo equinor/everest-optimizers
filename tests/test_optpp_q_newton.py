@@ -80,6 +80,7 @@ def run(
         ({"merit_function": "norm_fmu"}, "must be one of"),
         ({"speculative": 1}, "must be a boolean"),
         ({"max_iter": 10}, "Unsupported option"),
+        ({"output_file": "opt.out"}, "Unsupported option"),
     ],
 )
 def test_minimize_rejects_invalid_option_dict(
@@ -340,7 +341,6 @@ def test_minimize_maps_common_options(
             "gradient_tolerance": 1e-9,
             "speculative": True,
             "output": "debug",
-            "output_file": "opt.out",
         },
     )
     assert args[-1] == DEFAULTS | {
@@ -348,7 +348,6 @@ def test_minimize_maps_common_options(
         "max_iter": 3,
         "fcn_tol": 1e-8,
         "mode_override": True,
-        "output_file": "opt.out",
         "max_feval": 4,
         "grad_tol": 1e-9,
         "search_strategy": "trust_region",

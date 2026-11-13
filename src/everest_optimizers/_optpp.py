@@ -116,8 +116,8 @@ def _set_common_settings(
 ) -> None:
     if settings["debug"]:
         optimizer.setDebug()
-    if "output_file" in settings:
-        optimizer.setOutputFile(settings["output_file"], 0)
+    if "_output_file" in settings:
+        optimizer.setOutputFile(str(settings["_output_file"]), 0)
     optimizer.setMaxIter(settings["max_iter"])
     optimizer.setFcnTol(settings["fcn_tol"])
     optimizer.setMaxStep(settings["max_step"])

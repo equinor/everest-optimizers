@@ -327,7 +327,7 @@ def test_minimize_writes_the_output_file(work_dir: Path) -> None:
     minimize(
         np.zeros(2),
         evaluate=_quadratic([2.0, -1.0]),
-        options={"output_file": "optimizer.out"},
+        output_file=work_dir / "optimizer.out",
     )
     assert [path.name for path in work_dir.iterdir()] == ["optimizer.out"]
 
