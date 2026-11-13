@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -8,7 +9,7 @@ import pytest
 from everest_optimizers import EvaluationMode, minimize
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
     from numpy.typing import NDArray
@@ -26,6 +27,17 @@ pytestmark = pytest.mark.usefixtures("work_dir")
 def work_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.chdir(tmp_path)
     return tmp_path
+
+
+@pytest.fixture
+def capture_native_output(request: pytest.FixtureRequest) -> Iterator[None]:
+    request.getfixturevalue("capfd")
+    fflush = ctypes.CDLL(None).fflush
+    fflush.argtypes = [ctypes.c_void_p]
+    fflush.restype = ctypes.c_int
+    yield
+    # Flush native buffers before capfd restores the output file descriptors.
+    assert fflush(None) == 0
 
 
 def _quadratic(target: list[float]) -> Evaluate:
@@ -330,6 +342,26 @@ def test_minimize_writes_the_output_file(work_dir: Path) -> None:
         output_file=work_dir / "optimizer.out",
     )
     assert [path.name for path in work_dir.iterdir()] == ["optimizer.out"]
+
+
+@pytest.mark.parametrize("output", ["normal", "debug"])
+@pytest.mark.usefixtures("capture_native_output")
+def test_minimize_report_uses_decimal_floats(work_dir: Path, output: str) -> None:
+    output_file = work_dir / "optimizer.out"
+    minimize(
+        np.zeros(2),
+        evaluate=_quadratic([2.0, -1.0]),
+        output_file=output_file,
+        options={"output": output},
+    )
+    report = output_file.read_text(encoding="utf-8")
+    initial_value = next(
+        line.split("=", maxsplit=1)[1].strip()
+        for line in report.splitlines()
+        if line.startswith("Function Value")
+    )
+    assert initial_value == "5.0000e+00"
+    assert "0x" not in report.lower()
 
 
 @pytest.mark.parametrize(
