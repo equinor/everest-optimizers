@@ -1,190 +1,83 @@
-"""Minimization using the OPTPP library."""
+"""Minimization with the OPT++ `optpp_q_newton` method."""
 
-from collections.abc import Callable, Collection
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint, OptimizeResult
 
-from everest_optimizers._optbcqnewton import minimize_optbcqnewton
-from everest_optimizers._optqnewton import minimize_optqnewton
-from everest_optimizers._optqnips import minimize_optqnips
+from ._evaluation import Evaluator
+from ._optpp import Bounds, LinearConstraints
+from ._optpp_q_newton import minimize_optpp_q_newton
 
 
-def minimize(  # ruff: ignore[too-many-arguments, too-many-positional-arguments]
-    fun: Callable[..., float],
-    jac: Callable[..., NDArray[np.float64]],
+def minimize(  # ruff: ignore[too-many-arguments]
     x0: NDArray[np.float64],
-    args: tuple[Any, ...] | None = (),
-    method: str = "optpp_q_newton",
-    bounds: list[tuple[float, float]] | Bounds | None = None,
-    constraints: list[dict[str, Any]]
-    | list[LinearConstraint | NonlinearConstraint]
-    | LinearConstraint
-    | NonlinearConstraint
-    | None = None,
-    callback: Callable[..., None] | None = None,
+    *,
+    evaluate: Evaluator,
+    bounds: Bounds | None = None,
+    linear_constraints: LinearConstraints | None = None,
+    nonlinear_equalities: NDArray[np.bool_] | None = None,
     options: dict[str, Any] | None = None,
-) -> OptimizeResult:
-    """Minimization of scalar function of one or more variables.
+) -> tuple[NDArray[np.float64], int]:
+    """Minimize an objective with the `optpp_q_newton` method.
 
-    This function requires an objective Jacobian, unlike scipy.optimize.minimize.
-    The optpp_q_newton method is a quasi-Newton
-    optimization algorithm from the OPTPP library.
+    Args:
+        x0:                   The initial point, a one-dimensional array.
+        evaluate:             Evaluates the objective and the nonlinear constraints.
+        bounds:               The lower and upper bounds of the variables.
+        linear_constraints:   The coefficients, lower bounds and upper bounds of
+                              the linear constraints.
+        nonlinear_equalities: For each nonlinear constraint, whether it is an
+                              equality.
+        options:              The options, keyed by option name.
 
-    Parameters (parameter structure is based on scipy.optimize.minimize)
-    ----------
-    fun : callable
-        The objective function to be minimized:
+    Returns:
+        The final point and the OPT++ termination status.
 
-            fun(x, *args) -> float
-
-        where x is a 1-D array with shape (n,) and args is a tuple of the
-        fixed parameters needed to completely specify the function.
-
-    jac : callable
-        Function computing the gradient vector:
-
-            jac(x, *args) -> array_like, shape (n,)
-
-    x0 : ndarray, shape (n,)
-        Initial guess. Array of real elements of size (n,), where n is the
-        number of independent variables.
-
-    args : tuple, optional
-        Extra arguments passed to the objective function and its derivatives
-        (fun, jac functions).
-
-    method : str, optional
-        Type of solver. Currently supported:
-        - 'optpp_q_newton': optpp_q_newton optimizer from OPTPP
-        - 'optpp_q_nips': quasi-Newton interior-point solver from OPTPP
-        More optimizers may be added in the future.
-
-    bounds : sequence, optional
-        Bounds on variables. Supported by 'optpp_q_nips'.
-
-    constraints : dict or list, optional
-        Constraints definition. Supported by 'optpp_q_nips'. Nonlinear
-        constraints require a callable Jacobian.
-
-    callback : callable, optional
-        Callback function. Not implemented for optpp_q_newton.
-
-    options : dict, optional
-        A dictionary of solver options. For optpp_q_newton, supported options are:
-
-        - 'search_method' : str
-            Search strategy: 'TrustRegion' (default), 'LineSearch', or 'TrustPDS'
-        - 'tr_size' : float
-            Trust region size (default: 100.0)
-        - 'debug' : bool
-            Enable debug output (default: False)
-        - 'output_file' : str
-            Output file for debug information (default: None)
-
-
-    Returns
-    -------
-    res : OptimizeResult
-        The optimization result represented as an OptimizeResult object.
-        Important attributes are:
-        - x : ndarray
-            The solution array
-        - fun : float
-            Value of the objective function at the solution
-        - success : bool
-            Whether the optimizer exited successfully
-        - message : str
-            Description of the termination cause
-        - nfev : int
-            Number of function evaluations
-        - njev : int
-            Number of jacobian evaluations
-
-    Raises
-    ------
-    ValueError: If the method is not recognized or if the input parameters are invalid.
-    TypeError: If jac is not callable.
-
-    Notes
-    -----
-    The optpp_q_newton method is a quasi-Newton optimization algorithm
-    from the OPTPP library.
-
-    Examples
-    --------
-    Minimize the Rosenbrock function:
-
-    >>> import numpy as np
-    >>> from everest_optimizers import minimize
-    >>>
-    >>> def rosenbrock(x):
-    ...     return 100 * (x[1] - x[0]**2)**2 + (1 - x[0])**2
-    >>>
-    >>> def rosenbrock_grad(x):
-    ...     grad = np.zeros_like(x)
-    ...     grad[0] = -400 * x[0] * (x[1] - x[0]**2) - 2 * (1 - x[0])
-    ...     grad[1] = 200 * (x[1] - x[0]**2)
-    ...     return grad
-    >>>
-    >>> x0 = np.array([-1.2, 1.0])
-    >>> result = minimize(rosenbrock, rosenbrock_grad, x0, method='optpp_q_newton')
-    >>> print(result.x)  # Should be close to [1.0, 1.0]
+    Raises:
+        ValueError: If an argument has an invalid shape, a lower bound exceeds
+                    its upper bound, or an option is invalid.
 
     """
-    x0 = np.asarray(x0, dtype=float)
+    x0 = np.asarray(x0, dtype=np.float64)
     if x0.ndim != 1:
-        msg = "x0 must be 1-dimensional"
+        msg = "x0 must be one-dimensional"
         raise ValueError(msg)
-
-    if not callable(jac):
-        msg = "jac must be a callable objective Jacobian"
-        raise TypeError(msg)
-
-    if not isinstance(args, tuple):
-        args = (args,)
-
-    if constraints is not None and not isinstance(constraints, Collection):
-        constraints = [constraints]
-
-    match method.lower():
-        case "optpp_q_newton":
-            return minimize_optqnewton(
-                fun=fun,
-                x0=x0,
-                args=args,
-                jac=jac,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
-                callback=callback,
-                options=options,
-            )
-        case "optpp_bcq_newton":
-            return minimize_optbcqnewton(
-                fun=fun,
-                x0=x0,
-                args=args,
-                jac=jac,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
-                callback=callback,
-                options=options,
-            )
-        case "optpp_q_nips":
-            return minimize_optqnips(
-                fun=fun,
-                x0=x0,
-                args=args,
-                jac=jac,
-                bounds=bounds,  # type: ignore[arg-type]
-                constraints=constraints,  # type: ignore[arg-type]
-                options=options,
-            )
-        case other:
-            msg = (
-                f"Unknown method: {other}. Supported methods: "
-                "'optpp_q_newton', 'optpp_bcq_newton', 'optpp_q_nips'"
-            )
+    if bounds is not None:
+        lower, upper = bounds
+        bounds = (
+            np.broadcast_to(np.asarray(lower, dtype=np.float64), x0.shape),
+            np.broadcast_to(np.asarray(upper, dtype=np.float64), x0.shape),
+        )
+        if np.any(bounds[0] > bounds[1]):
+            msg = "The lower bounds must not exceed the upper bounds"
             raise ValueError(msg)
+    if linear_constraints is not None:
+        linear_constraints = _linear_constraints(linear_constraints, x0.size)
+    equalities = np.asarray(
+        [] if nonlinear_equalities is None else nonlinear_equalities, dtype=np.bool_
+    )
+    if equalities.ndim != 1:
+        msg = "nonlinear_equalities must be one-dimensional"
+        raise ValueError(msg)
+    return minimize_optpp_q_newton(
+        evaluate, x0, bounds, linear_constraints, equalities, options
+    )
+
+
+def _linear_constraints(
+    linear_constraints: LinearConstraints, size: int
+) -> LinearConstraints | None:
+    coefficients, lower, upper = linear_constraints
+    coefficients = np.atleast_2d(np.asarray(coefficients, dtype=np.float64))
+    rows = coefficients.shape[0]
+    if coefficients.shape != (rows, size):
+        msg = f"The linear constraint coefficients must have shape (m, {size})"
+        raise ValueError(msg)
+    if rows == 0:
+        return None
+    return (
+        coefficients,
+        np.broadcast_to(np.asarray(lower, dtype=np.float64), (rows,)),
+        np.broadcast_to(np.asarray(upper, dtype=np.float64), (rows,)),
+    )

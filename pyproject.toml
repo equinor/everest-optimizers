@@ -25,7 +25,7 @@ license = "LGPL-3.0-or-later"
 license-files = ["LICENSE", "NOTICE"]
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["scipy"]
+dependencies = ["numpy"]
 
 [dependency-groups]
 test = ["pytest"]
@@ -33,7 +33,6 @@ dev = [
   "mypy",
   "ruff",
   "scikit-build-core",
-  "scipy-stubs",
   "setuptools_scm",
   { include-group = "test" },
 ]
@@ -45,6 +44,7 @@ xfail_strict = true
 filterwarnings = [
   "error",
   "ignore:numpy.ndarray size changed, may indicate binary incompatibility.*:RuntimeWarning",
+  'ignore:The configuration option "asyncio_default_fixture_loop_scope" is unset\.:pytest.PytestDeprecationWarning',
 ]
 testpaths = ["tests"]
 
@@ -94,10 +94,6 @@ ignore = [
 
 [tool.mypy]
 strict = true
-
-[[tool.mypy.overrides]]
-module = "everest_optimizers._pyoptpp"
-ignore_errors = true
 
 [tool.uv]
 fork-strategy = "requires-python"
