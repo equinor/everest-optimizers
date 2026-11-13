@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from fractions import Fraction
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -86,6 +87,45 @@ def test_minimize_rejects_invalid_option_dict(
 ) -> None:
     with pytest.raises(ValueError, match=match):
         minimize(np.zeros(2), evaluate=evaluate, options=options)
+
+
+@pytest.mark.parametrize(
+    "step_length",
+    [
+        -0.1,
+        1.1,
+        np.nan,
+        np.inf,
+        -np.inf,
+        pytest.param(Fraction(2**53 + 1, 2**53), id="fraction-just-above-one"),
+        True,
+    ],
+)
+def test_minimize_rejects_invalid_steplength_to_boundary(
+    calls: list[tuple[str, tuple[Any, ...]]], step_length: object
+) -> None:
+    with pytest.raises(
+        ValueError, match="steplength_to_boundary must be a number between 0 and 1"
+    ):
+        minimize(
+            np.zeros(2),
+            evaluate=evaluate,
+            linear_constraints=LINEAR_CONSTRAINTS,
+            options={"steplength_to_boundary": step_length},
+        )
+    assert calls == []
+
+
+@pytest.mark.parametrize("step_length", [0.0, 1.0, np.float32(0.5), Fraction(1, 2)])
+def test_minimize_accepts_valid_steplength_to_boundary(
+    calls: list[tuple[str, tuple[Any, ...]]], step_length: object
+) -> None:
+    _, args = run(
+        calls,
+        linear_constraints=LINEAR_CONSTRAINTS,
+        options={"steplength_to_boundary": step_length},
+    )
+    assert args[-1]["step_length_to_bdry"] == step_length
 
 
 @pytest.mark.parametrize(
