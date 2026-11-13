@@ -56,6 +56,7 @@ sdist.include = ["src/pybind_module/_version.py"]
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
+test-groups = ["test"]
 test-command = ["pytest {package}/tests"]
 
 [tool.cibuildwheel.linux]
