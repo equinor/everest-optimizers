@@ -332,6 +332,25 @@ def test_minimize_writes_the_output_file(work_dir: Path) -> None:
     assert [path.name for path in work_dir.iterdir()] == ["optimizer.out"]
 
 
+@pytest.mark.parametrize("output", ["normal", "debug"])
+def test_minimize_report_uses_decimal_floats(work_dir: Path, output: str) -> None:
+    output_file = work_dir / "optimizer.out"
+    minimize(
+        np.zeros(2),
+        evaluate=_quadratic([2.0, -1.0]),
+        output_file=output_file,
+        options={"output": output},
+    )
+    report = output_file.read_text(encoding="utf-8")
+    initial_value = next(
+        line.split("=", maxsplit=1)[1].strip()
+        for line in report.splitlines()
+        if line.startswith("Function Value")
+    )
+    assert initial_value == "5.0000e+00"
+    assert "0x" not in report.lower()
+
+
 @pytest.mark.parametrize(
     ("x0", "bounds", "linear_constraints", "nonlinear_equalities", "match"),
     [

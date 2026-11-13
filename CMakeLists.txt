@@ -32,6 +32,7 @@ FetchContent_Declare(
         git apply
             "${CMAKE_CURRENT_SOURCE_DIR}/OPTPP-van-shanno-fix.patch"
             "${CMAKE_CURRENT_SOURCE_DIR}/OPTPP-null-default-output.patch"
+            "${CMAKE_CURRENT_SOURCE_DIR}/OPTPP-decimal-output.patch"
     # exclude in case the repository adds a root CMakeLists.txt file
     EXCLUDE_FROM_ALL
 )

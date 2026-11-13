@@ -1,0 +1,16 @@
+diff --git a/OPTPP/src/Utils/ioformat.C b/OPTPP/src/Utils/ioformat.C
+--- a/OPTPP/src/Utils/ioformat.C
++++ b/OPTPP/src/Utils/ioformat.C
+@@ -64,10 +64,10 @@ oformatstate::oformatstate (char code, int w, int p, char c, ios::fmtflags f)
+       break;
+     case 'E': oflags |= ios::uppercase;
+     case 'e':
+-      oflags |= ios::scientific;
++      oflags = (oflags & ~ios::floatfield) | ios::scientific;
+       break;
+     case 'f':
+-      oflags |= ios::fixed;
++      oflags = (oflags & ~ios::floatfield) | ios::fixed;
+       break;
+     case 'G': oflags |= ios::uppercase;
+     case 'g':

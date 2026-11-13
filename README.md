@@ -91,6 +91,7 @@ receive OPT++ output.
 
 `"output": "debug"` turns on the OPT++ debug output; the other `output` levels
 have no effect. Without `output_file`, OPT++ output is discarded.
+Reports use decimal floating-point notation, such as `5.0000e+00`.
 
 `search_method` accepts `value_based_line_search`, `gradient_based_line_search`,
 and `trust_region`. The `tr_pds` strategy is disabled because its OPT++
