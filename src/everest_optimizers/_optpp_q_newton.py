@@ -18,7 +18,7 @@ from ._optpp import (
 from ._problem import NLF1Problem
 
 # Bounds at or beyond this magnitude count as absent.
-_BIG_BOUND: Final = 1.0e30
+_BIG_BOUND: Final = 1.0e10
 
 _INT_OPTIONS: Final = {"max_iterations", "max_function_evaluations"}
 _FLOAT_OPTIONS: Final = {
