@@ -27,6 +27,8 @@ jobs:
         include:
           - python-version: "3.12"
             os: macos-latest
+          - python-version: "3.12"
+            os: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -46,7 +48,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
 
       - name: Install build tools (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libegl1 liblapack-dev libblas-dev gfortran
