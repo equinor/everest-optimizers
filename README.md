@@ -82,15 +82,15 @@ count as absent.
 It accepts the options `max_iterations`, `max_function_evaluations`,
 `convergence_tolerance`, `gradient_tolerance`, `max_step`, `search_method`,
 `merit_function`, `steplength_to_boundary`, `centering_parameter`,
-`speculative`, and `output`, plus `output_file`. Supply these as a dictionary
-keyed by option name, such as `{"max_iterations": 50, "speculative": True}`.
-Unspecified options use their default values.
+`speculative`, and `output`. Supply these as a dictionary keyed by option name,
+such as `{"max_iterations": 50, "speculative": True}`. Unspecified options use
+their default values. The `output_file` keyword argument can name a `Path` to
+receive OPT++ output.
 
 `steplength_to_boundary` must be a number between 0 and 1, inclusive.
 
 `"output": "debug"` turns on the OPT++ debug output; the other `output` levels
-have no effect. `output_file` names the file that receives the OPT++ output;
-without it, the output is discarded.
+have no effect. Without `output_file`, OPT++ output is discarded.
 
 `search_method` accepts `value_based_line_search`, `gradient_based_line_search`,
 and `trust_region`. The `tr_pds` strategy is disabled because its OPT++

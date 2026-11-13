@@ -83,7 +83,7 @@ def test_optpp_q_newton_counts_objective_requests_answered_by_the_constraint_eva
         evaluate=_evaluator(_circle, calls),
         bounds=(np.full(2, -5.0), np.full(2, 5.0)),
         nonlinear_equalities=np.array([True]),
-        options={"output_file": str(output_file)},
+        output_file=output_file,
     )
 
     assert [int(row[-3]) for row in _iteration_rows(output_file)] == [2, 3, 4]
@@ -173,7 +173,6 @@ def test_optpp_q_newton_max_function_evaluations_counts_objective_requests(
     options: dict[str, Any] = {
         "max_function_evaluations": 5,
         "max_iterations": 20,
-        "output_file": str(output_file),
     }
     if search_method is not None:
         options["search_method"] = search_method
@@ -185,6 +184,7 @@ def test_optpp_q_newton_max_function_evaluations_counts_objective_requests(
         evaluate=_evaluator(_rosenbrock, []),
         bounds=bounds,
         linear_constraints=linear_constraints,
+        output_file=output_file,
         options=options,
     )
 
