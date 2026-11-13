@@ -1,9 +1,5 @@
 """Configure and run the OPT++ optimizers."""
 
-from collections.abc import Generator
-from contextlib import contextmanager
-from os import devnull
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -32,9 +28,8 @@ _MERIT_FUNCTIONS = {
 def run_q_newton(
     problem: NLF1Problem, settings: dict[str, Any]
 ) -> tuple[NDArray[np.float64], int]:
-    with _no_default_output(settings):
-        optimizer = _pyoptpp.OptQNewton(problem.nlf1_problem)
-        _set_newton_settings(optimizer, problem, settings)
+    optimizer = _pyoptpp.OptQNewton(problem.nlf1_problem)
+    _set_newton_settings(optimizer, problem, settings)
     return _run(optimizer, problem)
 
 
@@ -44,18 +39,16 @@ def run_bcq_newton(
     problem.nlf1_problem.setConstraints(
         _pyoptpp.create_compound_constraint([_bound_constraint(bounds)])
     )
-    with _no_default_output(settings):
-        optimizer = _pyoptpp.OptBCQNewton(problem.nlf1_problem)
-        _set_newton_settings(optimizer, problem, settings)
+    optimizer = _pyoptpp.OptBCQNewton(problem.nlf1_problem)
+    _set_newton_settings(optimizer, problem, settings)
     return _run(optimizer, problem)
 
 
 def run_lbfgs(
     problem: NLF1Problem, settings: dict[str, Any]
 ) -> tuple[NDArray[np.float64], int]:
-    with _no_default_output(settings):
-        optimizer = _pyoptpp.OptLBFGS(problem.nlf1_problem)
-        _set_common_settings(optimizer, problem, settings)
+    optimizer = _pyoptpp.OptLBFGS(problem.nlf1_problem)
+    _set_common_settings(optimizer, problem, settings)
     optimizer.setGradTol(settings["grad_tol"])
     problem.nlf1_problem.setIsExpensive(settings["is_expensive"])
     return _run(optimizer, problem)
@@ -78,9 +71,8 @@ def run_q_nips(
     problem.nlf1_problem.setConstraints(
         _pyoptpp.create_compound_constraint(constraints)
     )
-    with _no_default_output(settings):
-        optimizer = _pyoptpp.OptQNIPS(problem.nlf1_problem)
-        _set_common_settings(optimizer, problem, settings)
+    optimizer = _pyoptpp.OptQNIPS(problem.nlf1_problem)
+    _set_common_settings(optimizer, problem, settings)
     optimizer.setMaxFeval(settings["max_feval"])
     optimizer.setMeritFcn(_MERIT_FUNCTIONS[settings["merit_fcn"]])
     optimizer.setCenteringParameter(settings["centering_parameter"])
@@ -124,7 +116,8 @@ def _set_common_settings(
 ) -> None:
     if settings["debug"]:
         optimizer.setDebug()
-    optimizer.setOutputFile(settings.get("output_file", devnull), 0)
+    if "output_file" in settings:
+        optimizer.setOutputFile(settings["output_file"], 0)
     optimizer.setMaxIter(settings["max_iter"])
     optimizer.setFcnTol(settings["fcn_tol"])
     optimizer.setMaxStep(settings["max_step"])
@@ -152,17 +145,3 @@ def _run(
     result = (problem.nlf1_problem.getXc().to_numpy(), optimizer.getReturnCode())
     optimizer.cleanup()
     return result
-
-
-@contextmanager
-def _no_default_output(settings: dict[str, Any]) -> Generator[None, None, None]:
-    # OPT++ creates "OPT_DEFAULT.out" when an optimizer is constructed; remove it
-    # unless it existed before or is the requested output file. Wrap setOutputFile
-    # too: it closes the file, and Windows cannot delete a file that is open.
-    default_output = Path("OPT_DEFAULT.out")
-    existed = default_output.exists()
-    try:
-        yield
-    finally:
-        if not existed and settings.get("output_file") != default_output.name:
-            default_output.unlink(missing_ok=True)
