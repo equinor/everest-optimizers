@@ -77,6 +77,8 @@ It accepts the options `max_iterations`, `max_function_evaluations`,
 keyed by option name, such as `{"max_iterations": 50, "speculative": True}`.
 Unspecified options use their default values.
 
+`steplength_to_boundary` must be a number between 0 and 1, inclusive.
+
 `"output": "debug"` turns on the OPT++ debug output; the other `output` levels
 have no effect. `output_file` names the file that receives the OPT++ output;
 without it, the output is discarded.
