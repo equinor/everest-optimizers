@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from numbers import Integral, Real
+from pathlib import Path
 from typing import Any, Final
 
 import numpy as np
@@ -41,7 +42,6 @@ _CHOICE_OPTIONS: Final = {
     "output": ("debug", "verbose", "normal", "quiet", "silent"),
 }
 _FLAG_OPTIONS: Final = {"speculative"}
-_STR_OPTIONS: Final = {"output_file"}
 
 _DEFAULTS: Final[dict[str, Any]] = {
     "max_iterations": 100,
@@ -126,7 +126,6 @@ _CHECKS: Final[dict[str, tuple[Callable[[object], bool], str]]] = (
     | {"steplength_to_boundary": (_is_fraction, "a number between 0 and 1 inclusive")}
     | {key: _choice_check(key) for key in _CHOICE_OPTIONS}
     | dict.fromkeys(_FLAG_OPTIONS, (lambda value: type(value) is bool, "a boolean"))
-    | dict.fromkeys(_STR_OPTIONS, (lambda value: type(value) is str, "a string"))
 )
 
 
@@ -136,6 +135,7 @@ def minimize_optpp_q_newton(  # ruff: ignore[too-many-arguments, too-many-positi
     bounds: Bounds | None,
     linear_constraints: LinearConstraints | None,
     nonlinear_equalities: NDArray[np.bool_],
+    output_file: Path | None,
     options: dict[str, Any] | None,
 ) -> tuple[NDArray[np.float64], int]:
     """Minimize a function with the `optpp_q_newton` method.
@@ -146,6 +146,8 @@ def minimize_optpp_q_newton(  # ruff: ignore[too-many-arguments, too-many-positi
         bounds:               The variable bounds.
         linear_constraints:   The linear constraints, with at least one row.
         nonlinear_equalities: Marks the nonlinear constraints that are equalities.
+        output_file:          The file to receive OPT++ output, or `None` to
+                              discard it.
         options:              The options, keyed by option name.
 
     Returns:
@@ -165,15 +167,24 @@ def minimize_optpp_q_newton(  # ruff: ignore[too-many-arguments, too-many-positi
             problem,
             finite_bounds,
             linear_constraints,
-            _qnips_options(method_options, has_nonlinear=has_nonlinear),
+            _qnips_options(
+                method_options,
+                output_file=output_file,
+                has_nonlinear=has_nonlinear,
+            ),
         )
     if finite_bounds is not None:
         return run_bcq_newton(
-            problem, finite_bounds, _newton_options(method_options, has_bounds=True)
+            problem,
+            finite_bounds,
+            _newton_options(method_options, output_file=output_file, has_bounds=True),
         )
     if x0.size < _LARGE_SCALE:
-        return run_q_newton(problem, _newton_options(method_options, has_bounds=False))
-    return run_lbfgs(problem, _lbfgs_options(method_options))
+        return run_q_newton(
+            problem,
+            _newton_options(method_options, output_file=output_file, has_bounds=False),
+        )
+    return run_lbfgs(problem, _lbfgs_options(method_options, output_file=output_file))
 
 
 def _has_finite_bounds(bounds: Bounds) -> bool:
@@ -182,7 +193,10 @@ def _has_finite_bounds(bounds: Bounds) -> bool:
 
 
 def _common_options(
-    method_options: dict[str, Any], *, mode_override: bool
+    method_options: dict[str, Any],
+    *,
+    output_file: Path | None,
+    mode_override: bool,
 ) -> dict[str, Any]:
     options: dict[str, Any] = {
         "debug": method_options.get("output") == "debug",
@@ -191,13 +205,13 @@ def _common_options(
         "max_step": method_options["max_step"],
         "mode_override": mode_override,
     }
-    if "output_file" in method_options:
-        options["output_file"] = method_options["output_file"]
+    if output_file is not None:
+        options["_output_file"] = output_file
     return options
 
 
 def _newton_options(
-    method_options: dict[str, Any], *, has_bounds: bool
+    method_options: dict[str, Any], *, output_file: Path | None, has_bounds: bool
 ) -> dict[str, Any]:
     search_method = method_options.get("search_method")
     match search_method:
@@ -214,7 +228,9 @@ def _newton_options(
     is_expensive = search_method == "value_based_line_search" or (
         search_method is None and has_bounds
     )
-    options = _common_options(method_options, mode_override=mode_override) | {
+    options = _common_options(
+        method_options, output_file=output_file, mode_override=mode_override
+    ) | {
         "max_feval": method_options["max_function_evaluations"],
         "grad_tol": method_options["gradient_tolerance"],
         "search_strategy": search_strategy,
@@ -225,26 +241,35 @@ def _newton_options(
     return options
 
 
-def _lbfgs_options(method_options: dict[str, Any]) -> dict[str, Any]:
+def _lbfgs_options(
+    method_options: dict[str, Any], *, output_file: Path | None
+) -> dict[str, Any]:
     search_method = method_options.get("search_method")
     mode_override = (
         method_options.get("speculative", False)
         or search_method == "gradient_based_line_search"
     )
-    return _common_options(method_options, mode_override=mode_override) | {
+    return _common_options(
+        method_options, output_file=output_file, mode_override=mode_override
+    ) | {
         "grad_tol": method_options["gradient_tolerance"],
         "is_expensive": search_method == "value_based_line_search",
     }
 
 
 def _qnips_options(
-    method_options: dict[str, Any], *, has_nonlinear: bool
+    method_options: dict[str, Any],
+    *,
+    output_file: Path | None,
+    has_nonlinear: bool,
 ) -> dict[str, Any]:
     merit_fcn, steplength, centering = _MERIT_FUNCTIONS[
         method_options["merit_function"]
     ]
     mode_override = method_options.get("speculative", False) or has_nonlinear
-    return _common_options(method_options, mode_override=mode_override) | {
+    return _common_options(
+        method_options, output_file=output_file, mode_override=mode_override
+    ) | {
         "max_feval": method_options["max_function_evaluations"],
         "merit_fcn": merit_fcn,
         "step_length_to_bdry": method_options.get("steplength_to_boundary", steplength),
