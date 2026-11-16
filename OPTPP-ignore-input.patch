@@ -1,0 +1,50 @@
+diff --git a/OPTPP/src/Newton/OptNewtonLike.C b/OPTPP/src/Newton/OptNewtonLike.C
+--- a/OPTPP/src/Newton/OptNewtonLike.C
++++ b/OPTPP/src/Newton/OptNewtonLike.C
+@@ -379,9 +379,2 @@ void OptNewtonLike::initOpt()
+-//
+-// Read in OPT++ input file if it exists
+-// Be aware that anything in the input file will
+-// override any variable set so far
+-//
+-
+   nlp->initFcn();
+-  readOptInput();
+   ret_code = 0;
+diff --git a/OPTPP/src/Newton/OptBCNewtonLike.C b/OPTPP/src/Newton/OptBCNewtonLike.C
+--- a/OPTPP/src/Newton/OptBCNewtonLike.C
++++ b/OPTPP/src/Newton/OptBCNewtonLike.C
+@@ -479,10 +479,3 @@ void OptBCNewtonLike::initOpt()
+-//
+-// Read in OPT++ input file if it exists
+-// Be aware that anything in the input file will
+-// override any variable set so far
+-//
+-
+   nlp->initFcn();
+-  readOptInput();
+ 
+   if (debug_)
+diff --git a/OPTPP/src/Newton/OptLBFGS.C b/OPTPP/src/Newton/OptLBFGS.C
+--- a/OPTPP/src/Newton/OptLBFGS.C
++++ b/OPTPP/src/Newton/OptLBFGS.C
+@@ -195,5 +195,4 @@ void OptLBFGS::initOpt()
+     nlp->setDebug();
+ 
+   nlp->initFcn();
+-  readOptInput();
+   nlp->eval();
+diff --git a/OPTPP/src/Newton/OptNIPSLike.C b/OPTPP/src/Newton/OptNIPSLike.C
+--- a/OPTPP/src/Newton/OptNIPSLike.C
++++ b/OPTPP/src/Newton/OptNIPSLike.C
+@@ -446,10 +446,3 @@ void OptNIPSLike::initOpt()
+-//
+-// Read in OPT++ input file if it exists
+-// Be aware that anything in the input file will
+-// override any variable set so far
+-//
+-
+   nlp->initFcn();
+-  readOptInput();
+ 
+   if (debug_)
