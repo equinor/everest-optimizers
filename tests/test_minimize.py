@@ -309,6 +309,16 @@ def test_minimize_stops_at_max_iterations() -> None:
     assert status == -4
 
 
+def test_minimize_ignores_opt_input(work_dir: Path) -> None:
+    (work_dir / "opt.input").write_text("invalid_keyword\n", encoding="utf-8")
+    output_file = work_dir / "optimizer.out"
+    _, status = minimize(
+        np.zeros(2), evaluate=_quadratic([2.0, -1.0]), output_file=output_file
+    )
+    assert status > 0
+    assert "Unrecognized keyword" not in output_file.read_text(encoding="utf-8")
+
+
 def test_minimize_writes_no_default_output_file(work_dir: Path) -> None:
     minimize(np.zeros(2), evaluate=_quadratic([2.0, -1.0]))
     assert list(work_dir.iterdir()) == []
