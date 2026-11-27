@@ -103,7 +103,7 @@ def _is_number(value: object) -> bool:
     return isinstance(value, Real) and not isinstance(value, bool)
 
 
-def _is_fraction(value: object) -> bool:
+def _is_in_unit_interval(value: object) -> bool:
     if not _is_number(value):
         return False
     assert isinstance(value, Real)
@@ -120,7 +120,12 @@ def _choice_check(key: str) -> tuple[Callable[[object], bool], str]:
 _CHECKS: Final[dict[str, tuple[Callable[[object], bool], str]]] = (
     dict.fromkeys(_INT_OPTIONS, (_is_count, "a non-negative integer"))
     | dict.fromkeys(_FLOAT_OPTIONS, (_is_number, "a number"))
-    | {"steplength_to_boundary": (_is_fraction, "a number between 0 and 1 inclusive")}
+    | {
+        "steplength_to_boundary": (
+            _is_in_unit_interval,
+            "a number between 0 and 1 inclusive",
+        )
+    }
     | {key: _choice_check(key) for key in _CHOICE_OPTIONS}
     | dict.fromkeys(_FLAG_OPTIONS, (lambda value: type(value) is bool, "a boolean"))
     | dict.fromkeys(_STR_OPTIONS, (lambda value: type(value) is str, "a string"))
