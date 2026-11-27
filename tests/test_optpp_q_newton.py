@@ -53,14 +53,14 @@ def calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, tuple[Any, ...]]]:
 def run(
     calls: list[tuple[str, tuple[Any, ...]]],
     *,
-    size: int = 2,
+    num_variables: int = 2,
     bounds: Bounds | None = None,
     linear_constraints: LinearConstraints | None = None,
     nonlinear_equalities: NDArray[np.bool_] | None = None,
     options: dict[str, Any] | None = None,
 ) -> tuple[str, tuple[Any, ...]]:
     minimize(
-        np.zeros(size),
+        np.zeros(num_variables),
         evaluate=evaluate,
         bounds=bounds,
         linear_constraints=linear_constraints,
@@ -129,7 +129,7 @@ def test_minimize_accepts_valid_steplength_to_boundary(
 
 
 @pytest.mark.parametrize(
-    ("size", "bounds", "linear_constraints"),
+    ("num_variables", "bounds", "linear_constraints"),
     [
         (2, None, None),
         (2, (np.zeros(2), np.ones(2)), None),
@@ -139,13 +139,13 @@ def test_minimize_accepts_valid_steplength_to_boundary(
 )
 def test_minimize_rejects_tr_pds(
     calls: list[tuple[str, tuple[Any, ...]]],
-    size: int,
+    num_variables: int,
     bounds: Bounds | None,
     linear_constraints: LinearConstraints | None,
 ) -> None:
     with pytest.raises(ValueError, match="Option search_method must be one of"):
         minimize(
-            np.zeros(size),
+            np.zeros(num_variables),
             evaluate=evaluate,
             bounds=bounds,
             linear_constraints=linear_constraints,

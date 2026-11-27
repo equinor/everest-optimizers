@@ -24,11 +24,17 @@ class NLF1:
 
 class ObjectiveNLF1(NLF1):
     def __init__(
-        self, ndim: int, nconstraints: int, evaluate: _EvaluateCallback, x0: SerialDenseVector
+        self,
+        num_variables: int,
+        num_constraints: int,
+        evaluate: _EvaluateCallback,
+        x0: SerialDenseVector,
     ) -> None: ...
 
 class ConstraintNLF1(NLF1):
-    def __init__(self, ndim: int, nconstraints: int, evaluate: _EvaluateCallback) -> None: ...
+    def __init__(
+        self, num_variables: int, num_constraints: int, evaluate: _EvaluateCallback
+    ) -> None: ...
 
 class NLP:
     def __init__(self, nlf1: ConstraintNLF1) -> None: ...
@@ -38,7 +44,7 @@ class CompoundConstraint: ...
 
 class BoundConstraint(ConstraintBase):
     def __init__(
-        self, nc: int, lower: SerialDenseVector, upper: SerialDenseVector
+        self, num_variables: int, lower: SerialDenseVector, upper: SerialDenseVector
     ) -> None: ...
 
 class LinearEquation(ConstraintBase):
@@ -55,8 +61,8 @@ class NonLinearConstraint(ConstraintBase):
         nlprob: NLP,
         lower: SerialDenseVector,
         upper: SerialDenseVector,
-        ne: int,
-        ni: int,
+        num_equalities: int,
+        num_inequalities: int,
     ) -> None: ...
 
 def create_compound_constraint(

@@ -48,7 +48,8 @@ std::vector<double> to_vector(py::handle data, py::ssize_t size) {
 }
 
 Evaluation call_evaluate_callback(
-    const py::function& evaluate_callback, const T_SerialDenseVector& x, int mode, int nconstraints
+    const py::function& evaluate_callback, const T_SerialDenseVector& x, int mode,
+    int num_constraints
 ) {
   py::gil_scoped_acquire gil;
   py::array_t<double> point(x.length());
@@ -56,10 +57,10 @@ Evaluation call_evaluate_callback(
   py::tuple result = evaluate_callback(point, mode).cast<py::tuple>();
   Evaluation evaluation;
   if (mode & NLPFunction) {
-    evaluation.values = to_vector(result[0], nconstraints + 1);
+    evaluation.values = to_vector(result[0], num_constraints + 1);
   }
   if (mode & NLPGradient) {
-    evaluation.gradients = to_vector(result[1], (nconstraints + 1) * x.length());
+    evaluation.gradients = to_vector(result[1], (num_constraints + 1) * x.length());
   }
   return evaluation;
 }
@@ -69,28 +70,30 @@ Evaluation call_evaluate_callback(
 class ObjectiveNLF1 : public NLF1 {
 private:
   py::function evaluate_callback;
-  int nconstraints;
+  int num_constraints;
 
   static void evaluate_objective(
-      int mode, int ndim, const T_SerialDenseVector& x, double& value,
+      int mode, int num_variables, const T_SerialDenseVector& x, double& value,
       T_SerialDenseVector& gradient, int& result, void* context
   ) {
     auto* self = static_cast<ObjectiveNLF1*>(static_cast<NLF1*>(context));
     const Evaluation evaluation =
-        call_evaluate_callback(self->evaluate_callback, x, mode, self->nconstraints);
+        call_evaluate_callback(self->evaluate_callback, x, mode, self->num_constraints);
     if (mode & NLPFunction) {
       value = evaluation.values[0];
     }
     if (mode & NLPGradient) {
-      std::memcpy(gradient.values(), evaluation.gradients.data(), ndim * sizeof(double));
+      std::memcpy(gradient.values(), evaluation.gradients.data(), num_variables * sizeof(double));
     }
     result = mode;
   }
 
 public:
-  ObjectiveNLF1(int ndim, int nconstraints, py::function evaluate, const T_SerialDenseVector& x0)
-      : NLF1(ndim, &ObjectiveNLF1::evaluate_objective, &initialize),
-        evaluate_callback(std::move(evaluate)), nconstraints(nconstraints) {
+  ObjectiveNLF1(
+      int num_variables, int num_constraints, py::function evaluate, const T_SerialDenseVector& x0
+  )
+      : NLF1(num_variables, &ObjectiveNLF1::evaluate_objective, &initialize),
+        evaluate_callback(std::move(evaluate)), num_constraints(num_constraints) {
     setX(x0);
   }
 };
@@ -118,8 +121,9 @@ private:
   }
 
 public:
-  ConstraintNLF1(int ndim, int nconstraints, py::function evaluate)
-      : NLF1(ndim, nconstraints, nullptr, &initialize), evaluate_callback(std::move(evaluate)) {}
+  ConstraintNLF1(int num_variables, int num_constraints, py::function evaluate)
+      : NLF1(num_variables, num_constraints, nullptr, &initialize),
+        evaluate_callback(std::move(evaluate)) {}
 
   T_SerialDenseVector evalCF(const T_SerialDenseVector& x) override {
     T_SerialDenseVector values(ncnln);
@@ -199,12 +203,12 @@ PYBIND11_MODULE(_pyoptpp, m) {
       );
   py::classh<ObjectiveNLF1, NLF1>(m, "ObjectiveNLF1")
       .def(
-          py::init<int, int, py::function, const T_SerialDenseVector&>(), py::arg("ndim"),
-          py::arg("nconstraints"), py::arg("evaluate"), py::arg("x0")
+          py::init<int, int, py::function, const T_SerialDenseVector&>(), py::arg("num_variables"),
+          py::arg("num_constraints"), py::arg("evaluate"), py::arg("x0")
       );
   py::classh<ConstraintNLF1, NLF1>(m, "ConstraintNLF1")
       .def(
-          py::init<int, int, py::function>(), py::arg("ndim"), py::arg("nconstraints"),
+          py::init<int, int, py::function>(), py::arg("num_variables"), py::arg("num_constraints"),
           py::arg("evaluate")
       );
   py::classh<NLP>(m, "NLP").def(
@@ -216,8 +220,8 @@ PYBIND11_MODULE(_pyoptpp, m) {
   py::classh<CompoundConstraint>(m, "CompoundConstraint");
   py::classh<BoundConstraint, ConstraintBase>(m, "BoundConstraint")
       .def(
-          py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(), py::arg("nc"),
-          py::arg("lower"), py::arg("upper")
+          py::init<int, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
+          py::arg("num_variables"), py::arg("lower"), py::arg("upper")
       );
   py::classh<LinearEquation, ConstraintBase>(m, "LinearEquation")
       .def(
@@ -234,7 +238,8 @@ PYBIND11_MODULE(_pyoptpp, m) {
   py::classh<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint")
       .def(
           py::init<NLP*, const T_SerialDenseVector&, const T_SerialDenseVector&, int, int>(),
-          py::arg("nlprob"), py::arg("lower"), py::arg("upper"), py::arg("ne"), py::arg("ni")
+          py::arg("nlprob"), py::arg("lower"), py::arg("upper"), py::arg("num_equalities"),
+          py::arg("num_inequalities")
       );
   m.def(
       "create_compound_constraint",

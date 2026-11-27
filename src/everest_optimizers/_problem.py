@@ -43,22 +43,24 @@ class NLF1Problem:
         )
 
     def create_nonlinear_constraint(self) -> _pyoptpp.NonLinearConstraint | None:
-        count = self.constraint_order.size
-        if count == 0:
+        num_constraints = self.constraint_order.size
+        if num_constraints == 0:
             return None
-        upper = np.full(count, np.inf)
+        upper = np.full(num_constraints, np.inf)
         upper[: self.num_equalities] = 0.0
         # NonLinearConstraint keeps only a raw pointer to the NLP, which owns the
         # ConstraintNLF1, so the NLP must stay alive until the optimizer has finished.
         self._constraint_nlp = _pyoptpp.NLP(
-            _pyoptpp.ConstraintNLF1(self.x0.size, count, self._evaluate_callback)
+            _pyoptpp.ConstraintNLF1(
+                self.x0.size, num_constraints, self._evaluate_callback
+            )
         )
         return _pyoptpp.NonLinearConstraint(
             self._constraint_nlp,
-            _pyoptpp.SerialDenseVector(np.zeros(count)),
+            _pyoptpp.SerialDenseVector(np.zeros(num_constraints)),
             _pyoptpp.SerialDenseVector(upper),
             self.num_equalities,
-            count - self.num_equalities,
+            num_constraints - self.num_equalities,
         )
 
     def _create_evaluate_callback(self) -> _EvaluateCallback:

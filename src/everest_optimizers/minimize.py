@@ -66,18 +66,18 @@ def minimize(  # ruff: ignore[too-many-arguments]
 
 
 def _linear_constraints(
-    linear_constraints: LinearConstraints, size: int
+    linear_constraints: LinearConstraints, num_variables: int
 ) -> LinearConstraints | None:
     coefficients, lower, upper = linear_constraints
     coefficients = np.atleast_2d(np.asarray(coefficients, dtype=np.float64))
-    rows = coefficients.shape[0]
-    if coefficients.shape != (rows, size):
-        msg = f"The linear constraint coefficients must have shape (m, {size})"
+    num_rows = coefficients.shape[0]
+    if coefficients.shape != (num_rows, num_variables):
+        msg = f"The linear constraint coefficients must have shape (m, {num_variables})"
         raise ValueError(msg)
-    if rows == 0:
+    if num_rows == 0:
         return None
     return (
         coefficients,
-        np.broadcast_to(np.asarray(lower, dtype=np.float64), (rows,)),
-        np.broadcast_to(np.asarray(upper, dtype=np.float64), (rows,)),
+        np.broadcast_to(np.asarray(lower, dtype=np.float64), (num_rows,)),
+        np.broadcast_to(np.asarray(upper, dtype=np.float64), (num_rows,)),
     )
