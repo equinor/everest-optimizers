@@ -1,5 +1,6 @@
 """Minimization with the OPT++ `optpp_q_newton` method."""
 
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -17,6 +18,7 @@ def minimize(  # ruff: ignore[too-many-arguments]
     bounds: Bounds | None = None,
     linear_constraints: LinearConstraints | None = None,
     nonlinear_equalities: NDArray[np.bool_] | None = None,
+    output_file: Path | None = None,
     options: dict[str, Any] | None = None,
 ) -> tuple[NDArray[np.float64], int]:
     """Minimize an objective with the `optpp_q_newton` method.
@@ -29,6 +31,8 @@ def minimize(  # ruff: ignore[too-many-arguments]
                               the linear constraints.
         nonlinear_equalities: For each nonlinear constraint, whether it is an
                               equality.
+        output_file:          The file to receive OPT++ output, or `None` to
+                              discard it.
         options:              The options, keyed by option name.
 
     Returns:
@@ -61,7 +65,7 @@ def minimize(  # ruff: ignore[too-many-arguments]
         msg = "nonlinear_equalities must be one-dimensional"
         raise ValueError(msg)
     return minimize_optpp_q_newton(
-        evaluate, x0, bounds, linear_constraints, equalities, options
+        evaluate, x0, bounds, linear_constraints, equalities, output_file, options
     )
 
 
