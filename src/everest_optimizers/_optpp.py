@@ -14,7 +14,9 @@ from ._problem import NLF1Problem
 
 Bounds = tuple[NDArray[np.float64], NDArray[np.float64]]
 LinearConstraints = tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]
-_Optimizer = _pyoptpp.OptQNewton | _pyoptpp.OptBCQNewton | _pyoptpp.OptQNIPS
+_Optimizer = (
+    _pyoptpp.OptQNewton | _pyoptpp.OptBCQNewton | _pyoptpp.OptLBFGS | _pyoptpp.OptQNIPS
+)
 
 _SEARCH_STRATEGIES = {
     "trust_region": _pyoptpp.SearchStrategy.TrustRegion,
@@ -45,6 +47,17 @@ def run_bcq_newton(
     with _no_default_output(settings):
         optimizer = _pyoptpp.OptBCQNewton(problem.nlf1_problem)
         _set_newton_settings(optimizer, problem, settings)
+    return _run(optimizer, problem)
+
+
+def run_lbfgs(
+    problem: NLF1Problem, settings: dict[str, Any]
+) -> tuple[NDArray[np.float64], int]:
+    with _no_default_output(settings):
+        optimizer = _pyoptpp.OptLBFGS(problem.nlf1_problem)
+        _set_common_settings(optimizer, problem, settings)
+    optimizer.setGradTol(settings["grad_tol"])
+    problem.nlf1_problem.setIsExpensive(settings["is_expensive"])
     return _run(optimizer, problem)
 
 
