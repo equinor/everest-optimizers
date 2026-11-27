@@ -169,6 +169,22 @@ public:
   }
 };
 
+// Workaround for OPT++: NonLinearConstraint stores a raw NLP* and never deletes it.
+// This subclass owns the NLP, so the NLP and its callback live as long as the constraint.
+// The NLP exists before the base constructor runs, because that constructor calls getDim() on it.
+class NonLinearConstraintWithOwnedNLP : public NonLinearConstraint {
+private:
+  std::unique_ptr<NLP> owned_nlp;
+
+public:
+  NonLinearConstraintWithOwnedNLP(
+      std::unique_ptr<NLP> nlp, const T_SerialDenseVector& lower, const T_SerialDenseVector& upper,
+      int num_equalities, int num_inequalities
+  )
+      : NonLinearConstraint(nlp.get(), lower, upper, num_equalities, num_inequalities),
+        owned_nlp(std::move(nlp)) {}
+};
+
 } // namespace
 
 PYBIND11_MODULE(_pyoptpp, m) {
@@ -211,10 +227,6 @@ PYBIND11_MODULE(_pyoptpp, m) {
           py::init<int, int, py::function>(), py::arg("num_variables"), py::arg("num_constraints"),
           py::arg("evaluate")
       );
-  py::classh<NLP>(m, "NLP").def(
-      py::init([](std::unique_ptr<ConstraintNLF1> nlf1) { return new NLP(nlf1.release()); }),
-      py::arg("nlf1")
-  );
 
   py::classh<ConstraintBase>(m, "ConstraintBase");
   py::classh<CompoundConstraint>(m, "CompoundConstraint");
@@ -234,11 +246,16 @@ PYBIND11_MODULE(_pyoptpp, m) {
               const T_SerialDenseMatrix&, const T_SerialDenseVector&, const T_SerialDenseVector&>(),
           py::arg("A"), py::arg("lower"), py::arg("upper")
       );
-  // NonLinearConstraint keeps a non-owning pointer to the NLP, which the caller must keep alive.
   py::classh<NonLinearConstraint, ConstraintBase>(m, "NonLinearConstraint")
       .def(
-          py::init<NLP*, const T_SerialDenseVector&, const T_SerialDenseVector&, int, int>(),
-          py::arg("nlprob"), py::arg("lower"), py::arg("upper"), py::arg("num_equalities"),
+          py::init([](std::unique_ptr<ConstraintNLF1> nlf1, const T_SerialDenseVector& lower,
+                      const T_SerialDenseVector& upper, int num_equalities, int num_inequalities) {
+            return new NonLinearConstraintWithOwnedNLP(
+                std::make_unique<NLP>(nlf1.release()), lower, upper, num_equalities,
+                num_inequalities
+            );
+          }),
+          py::arg("nlf1"), py::arg("lower"), py::arg("upper"), py::arg("num_equalities"),
           py::arg("num_inequalities")
       );
   m.def(

@@ -36,9 +36,6 @@ class ConstraintNLF1(NLF1):
         self, num_variables: int, num_constraints: int, evaluate: _EvaluateCallback
     ) -> None: ...
 
-class NLP:
-    def __init__(self, nlf1: ConstraintNLF1) -> None: ...
-
 class ConstraintBase: ...
 class CompoundConstraint: ...
 
@@ -58,7 +55,7 @@ class LinearInequality(ConstraintBase):
 class NonLinearConstraint(ConstraintBase):
     def __init__(
         self,
-        nlprob: NLP,
+        nlf1: ConstraintNLF1,
         lower: SerialDenseVector,
         upper: SerialDenseVector,
         num_equalities: int,
