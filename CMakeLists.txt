@@ -39,6 +39,7 @@ message(STATUS "Finished downloading OPTPP")
 set(Teuchos_DIR ${CMAKE_CURRENT_BINARY_DIR}/trilinos/packages/teuchos)
 set(Trilinos_ENABLE_Teuchos ON CACHE BOOL "" FORCE)
 add_subdirectory(${optpp_packages_SOURCE_DIR}/trilinos EXCLUDE_FROM_ALL)
+set(DAKOTA_OPTPP ON CACHE BOOL "Build the Dakota OPT++ interface" FORCE)
 add_subdirectory(${optpp_packages_SOURCE_DIR}/OPTPP EXCLUDE_FROM_ALL)
 add_subdirectory(src/optpp_python)
 
