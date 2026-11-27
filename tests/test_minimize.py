@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pytest
 
-from everest_optimizers import EvaluationMode, minimize
+from everest_optimizers import EvaluationMode, _optpp_q_newton, minimize
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -319,6 +319,56 @@ def test_minimize_stops_at_max_iterations() -> None:
         options={"max_iterations": 1},
     )
     assert status == -4
+
+
+@pytest.mark.parametrize(
+    ("runner", "problem"),
+    [
+        ("run_q_newton", {"x0": np.zeros(2)}),
+        ("run_lbfgs", {"x0": np.zeros(100)}),
+        (
+            "run_bcq_newton",
+            {"x0": np.zeros(2), "bounds": (np.full(2, -5.0), np.full(2, 5.0))},
+        ),
+        (
+            "run_q_nips",
+            {
+                "x0": np.zeros(2),
+                "linear_constraints": (
+                    np.ones((1, 2)),
+                    np.array([-np.inf]),
+                    np.array([10.0]),
+                ),
+            },
+        ),
+    ],
+)
+def test_minimize_ignores_opt_input(
+    work_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    runner: str,
+    problem: dict[str, Any],
+) -> None:
+    run_method = getattr(_optpp_q_newton, runner)
+    run_calls: list[str] = []
+
+    def track_run_calls(*args: Any) -> Any:
+        run_calls.append(runner)
+        return run_method(*args)
+
+    monkeypatch.setattr(_optpp_q_newton, runner, track_run_calls)
+
+    def run(name: str) -> list[str]:
+        output_file = work_dir / name
+        minimize(evaluate=_rosenbrock, output_file=output_file, **problem)
+        lines = output_file.read_text(encoding="utf-8").splitlines()
+        # The header carries a wall-clock timestamp.
+        return [line for line in lines if not line.startswith("Job run at")]
+
+    baseline = run("baseline.out")
+    (work_dir / "opt.input").write_text("invalid_keyword\n", encoding="utf-8")
+    assert run("with_input.out") == baseline
+    assert run_calls == [runner, runner]
 
 
 def test_minimize_writes_no_default_output_file(work_dir: Path) -> None:
